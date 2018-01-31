@@ -179,11 +179,12 @@ class Location(object):
 
 '''primer pair (list)'''
 class PrimerPair(list):
-    def __init__(self, elements, length=2, name=None, reverse=False):
+    def __init__(self, elements, length=2, name=None, reverse=False, cond=None):
         list.__init__(self, elements)
         self.length = length  # pair of primers by default
         self.reversed = reverse
         self.name = name
+        self.cond = cond
         self.variants = []  # list of intervals with metadata from input table
         if not name and all(self):
             commonPrefix(self[0].name, self[1].name)

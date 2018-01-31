@@ -57,7 +57,7 @@ class PrimerDB(object):
                 UNIQUE (vessel, well));''')
             cursor.execute('''CREATE TABLE IF NOT EXISTS pairs(
                 pairid TEXT PRIMARY KEY, uniqueid TEXT, left TEXT, right TEXT,
-                chrom TEXT, start INT, end INT, dateadded TEXT,
+                chrom TEXT, start INT, end INT, dateadded TEXT, cond TEXT DEFAULT 'STD',
                 FOREIGN KEY(left) REFERENCES primer(name) ON UPDATE CASCADE,
                 FOREIGN KEY(right) REFERENCES primer(name) ON UPDATE CASCADE,
                 UNIQUE (pairid, uniqueid) ON CONFLICT IGNORE);''')
@@ -280,7 +280,7 @@ class PrimerDB(object):
             elif type(query) in [str,unicode]:  # use primerpair name
                 subSearchName = '%'+query+'%'
                 cursor.execute('''SELECT DISTINCT p.pairid, l.tag, r.tag, l.seq, r.seq, p.left, p.right,
-                    p.chrom, p.start, p.end, l.vessel, l.well, r.vessel, r.well, 0
+                    p.chrom, p.start, p.end, l.vessel, l.well, r.vessel, r.well, p.cond, 0
                     FROM pairs AS p
                     LEFT JOIN primer as l ON p.left = l.name
                     LEFT JOIN primer as r ON p.right = r.name
@@ -329,7 +329,7 @@ class PrimerDB(object):
             else:
                 raise Exception('PrimerPairStrandError')
             # Build pair
-            primerPairs.append(PrimerPair([leftPrimer, rightPrimer],name=row[0],reverse=reverse))
+            primerPairs.append(PrimerPair([leftPrimer, rightPrimer],name=row[0],reverse=reverse,cond=row[14]))
         return primerPairs  # ordered by midpoint distance
 
     def getLocation(self,loc):
@@ -608,3 +608,20 @@ class PrimerDB(object):
             finally:
                 self.db.close()
             return rows, ['primername', 'primerset', 'tag', 'sequence', 'vessel', 'well']
+
+    def updateconditions(self, pairname):
+        '''updates the primer conditions from STD to LB'''
+        try:
+            self.db = sqlite3.connect(self.sqlite)
+        except:
+            raise
+        else:
+            #update
+            cursor = self.db.cursor()
+            rows = cursor.fetchall()
+            cursor.execute('''UPDATE OR ABORT pairs SET cond = 'LB'
+                WHERE pairid = ?''', (pairname,))
+            self.db.commit()
+            return pairname
+        finally:
+            self.db.close()

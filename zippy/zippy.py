@@ -632,6 +632,11 @@ def updatePrimerPairName(pairName, newName, db):
         print >> sys.stderr, 'Pair renaming failed'
         return nameUpdate
 
+def updatePairCond(pairname, db):
+    longbatched = db.updateconditions(pairname)
+    print >> sys.stderr, '%s should now be run on a long batch program' % (longbatched,)
+    return longbatched
+
 # blacklist primer pair in database
 def blacklistPair(pairname, db):
     blacklisted = db.blacklist(pairname)

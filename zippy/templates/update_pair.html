@@ -16,6 +16,9 @@
         <form action="/delete_pair/{{pairName}}" method="post" onsubmit="return confirm('Are you sure you want to delete this primer pair?');">
           <input type="submit" id="revWideButton" value="Delete pair">
         </form>
+        <form action="/update_pair_conditions/{{pairName}}" method="post" onsubmit="return confirm('Are you sure you want to update {{pairName}}?')">
+          <input type="submit" id="revWideButton" value="Update conditions">
+        </form>
       </div>
   </div>
   <div class="holdBottom">
