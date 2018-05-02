@@ -22,6 +22,7 @@ from collections import Counter
 from . import PlateError, char_range, imageDir, githash
 from .primer import parsePrimerName, PrimerPair, Primer
 from urllib import unquote
+#import XlsxWriter
 
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
@@ -302,12 +303,13 @@ class Report(object):
         self.elements.append(t)
         self.elements.append(Spacer(1, 12))
 
-    def volumeLists(self,reactions,mastermix,qsolution,excess,program):
+    def volumeLists(self,reactions,mastermix,qsolution,water,excess,program):
         # batch mix
         data = [['Reagent','Quantity','LOT','Expiry','','Reactions', str(reactions) ],
             ['MasterMix', str((1.+excess)*reactions*mastermix)+' µl', '', '', '', 'Excess', str((excess)*100)+' %' ],
             ['Q-Solution', str((1.+excess)*reactions*qsolution)+' µl', '', '', '', 'PCR Program', program ],
-            ['TOTAL', str((1.+excess)*reactions*(mastermix+qsolution))+' µl', '', '', '', 'PCR Block','']]
+            ['H2O', str((1.+excess)*reactions*water)+' µl', '', '', '', '', '' ],
+            ['TOTAL', str((1.+excess)*reactions*(mastermix+qsolution+water))+' µl', '', '', '', 'PCR Block','']]
         t = Table(data, colWidths=[2.5*cm,2.5*cm,2.5*cm,2.5*cm,0.3*cm,2.7*cm,2.5*cm], rowHeights=0.6*cm)
         t.setStyle(TableStyle([
             ('FONTSIZE',(0,1),(0,-1),10),
@@ -550,7 +552,7 @@ class Worksheet(list):
         # store ordered list of sample (str) and primers (primername, primersuffixes, locations)
         r.samplePrimerLists(orderedSamples,orderedPrimers,counts=self.reactionCount())
         # reaction volume list
-        r.volumeLists(sum([len(p) for p in self.plates]),kwargs['volumes']['mastermix'],kwargs['volumes']['qsolution'],kwargs['volumes']['excess'],kwargs['volumes']['program'])
+        r.volumeLists(sum([len(p) for p in self.plates]),kwargs['volumes']['mastermix'],kwargs['volumes']['qsolution'],kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'])
         # add checkboxes
         checkTasks = ['New primers ordered', 'Plate orientation checked', 'Primer checked and storage assigned'] if primertest \
             else ['Plate orientation checked', 'DNA barcodes relabeled']
@@ -573,6 +575,7 @@ class Worksheet(list):
             for i,t in enumerate([ x for x in sorted(self,key=lambda x: (x.sample,x.primerpair)) if not x.control ]):
                 for v in t.primerpairobject.variants:
                     fields += [[ t.sample, '', t.primerpair, ' '.join(unquote(v.name).split(',')[:-1]), unquote(v.name).split(',')[-1], '', '']]
+                    print(fields)
             # create result table
             r.setNextPageTemplate('landscape')
             r.pageBreak()

@@ -248,7 +248,7 @@ class PrimerPair(list):
         return "%s(%r)" % (self.__class__, self.__dict__)
 
     def __str__(self):
-        return '{}\t{}\t{}\t{}\t{:.1f}\t{:.1f}\t{}\t{:.1f}\t{:.1f}\t{}\t{}\t{}'.format(
+        return '{}\t{}\t{}\t{}\t{:.1f}\t{:.1f}\t{}\t{:.1f}\t{:.1f}\t{}\t{}\t{}\t{}'.format(
             self.name,
             str(self[0].location) if self[0] and self[0].location else '',
             str(self[1].location) if self[1] and self[1].location else '',
@@ -260,7 +260,8 @@ class PrimerPair(list):
             self[1].gc if self[1] else 0,
             self[0].targetposition.chrom if self[0] and self[1] and self[0].targetposition else '',
             self[0].targetposition.offset+self[0].targetposition.length if self[0] and self[1] and self[0].targetposition else '',
-            self[1].targetposition.offset if self[0] and self[1] and self[1].targetposition else '')
+            self[1].targetposition.offset if self[0] and self[1] and self[1].targetposition else '',
+            self.cond)
 
     def sequencingTarget(self):
         return (self[0].targetposition.chrom if self[0] and self[1] and self[0].targetposition else None, \

@@ -270,7 +270,7 @@ class PrimerDB(object):
             if datematch.match(str(query)): # query date
                 subSearchName = '%'+query+'%'
                 cursor.execute('''SELECT DISTINCT p.pairid, l.tag, r.tag, l.seq, r.seq, p.left, p.right,
-                    p.chrom, p.start, p.end, l.vessel, l.well, r.vessel, r.well, 0
+                    p.chrom, p.start, p.end, l.vessel, l.well, r.vessel, r.well, p.cond, 0
                     FROM pairs AS p
                     LEFT JOIN primer as l ON p.left = l.name
                     LEFT JOIN primer as r ON p.right = r.name
@@ -289,7 +289,7 @@ class PrimerDB(object):
                     (subSearchName,))
             else:  # is interval
                 cursor.execute('''SELECT DISTINCT p.pairid, l.tag, r.tag, l.seq, r.seq, p.left, p.right,
-                    p.chrom, p.start, p.end, l.vessel, l.well, r.vessel, r.well,
+                    p.chrom, p.start, p.end, l.vessel, l.well, r.vessel, r.well, p.cond,
                     abs(p.start+((p.end-p.start)/2) - ?) as midpointdistance
                     FROM pairs AS p
                     LEFT JOIN primer as l ON p.left = l.name
