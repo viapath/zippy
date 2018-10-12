@@ -23,15 +23,15 @@ essential:
 	sudo yum -y groupinstall 'Development Tools'
 	sudo yum install -y postgresql postgresql-server postgresql-devel #postgresql-server-dev-9.4
 	# add apache user
-	#sudo groupadd www-data
-	#sudo adduser $(WWWUSER) $(WWWGROUP)
-	#sudo usermod 1003 $(WWWUSER)#Pero 1003 es el gid que le tocó por azar al grupo www-data
-	#sudo usermod -s /bin/false $(WWWUSER)
-	#sudo usermod -L $(WWWUSER)
+	sudo groupadd $(WWWGROUP)
+	sudo adduser -g $$(WWWGROUP) (WWWUSER)
+	sudo usermod 1003 $(WWWUSER)#Pero 1003 es el gid que le tocó por azar al grupo www-data
+	sudo usermod -s /bin/false $(WWWUSER)
+	sudo usermod -L $(WWWUSER)
 	# install apache/wsgi
 	#sudo yum -y install expat mod_wsgi# apache2-utils libexpat1 ssl-cert apache2.2-common 
 	# disable default site
-	#a2dissite 000-default
+	a2dissite 000-default
 
 bowtie:
 	wget -c http://netix.dl.sourceforge.net/project/bowtie-bio/bowtie2/2.2.6/bowtie2-2.2.6-linux-x86_64.zip && \
@@ -64,28 +64,30 @@ unicorn:
 
 # webservice install (production)
 webservice:
-	rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
+	sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
 	# make WWW directories
-	mkdir -p $(ZIPPYWWW)
-	cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
-	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
+	sudo mkdir -p $(ZIPPYWWW)
+	sudo cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
-	cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
+	#sudo cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
+	sudo cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
 	# enable site and restart
-	a2ensite zippy
-	/etc/init.d/apache2 restart
+	#a2ensite zippy
+	sudo systemctl restart httpd
 
 # same for development environment (not maintained)
 webservice-dev:
 	# make WWW directories
-	mkdir -p $(ZIPPYWWW)
-	cp install/zippy_dev.wsgi $(ZIPPYWWW)/zippy.wsgi
-	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
+	sudo mkdir -p $(ZIPPYWWW)
+	sudo cp install/zippy_dev.wsgi $(ZIPPYWWW)/zippy.wsgi
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
-	cp install/zippy_dev.hostconfig /etc/apache2/sites-available/zippy.conf
+	#sudo cp install/zippy_dev.hostconfig /etc/apache2/sites-available/zippy.conf
+	sudo cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
 	# enable site and restart
-	a2ensite zippy
-	/etc/init.d/apache2 restart
+	#a2ensite zippy
+	sudo systemctl restart httpd
 
 #### genome resources
 import-resources:
