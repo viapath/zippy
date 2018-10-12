@@ -78,7 +78,7 @@ webservice:
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
 	#sudo cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
-	sudo cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
+	#sudo cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
 	# enable site and restart
 	#a2ensite zippy
 	sudo systemctl restart httpd
