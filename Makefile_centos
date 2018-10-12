@@ -28,7 +28,7 @@ essential:
 	sudo groupadd -f $(WWWGROUP)
 	user_doesnt_exist=$(id -u $(WWWUSER) > /dev/null 2>&1; echo $?)
 	echo user $(WWWUSER) not preexistent: $(user_doesnt_exist)
-	if [ $(user_doesnt_exist) ]
+	if [ ${user_doesnt_exist} ]
 	then
 		sudo adduser -g $(WWWGROUP) $(WWWUSER)
 	fi
