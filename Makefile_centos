@@ -26,13 +26,12 @@ essential:
 	sudo yum install -y postgresql postgresql-server postgresql-devel #postgresql-server-dev-9.4
 	# add apache user
 	sudo groupadd -f $(WWWGROUP)
-	#user_doesnt_exist=$(id -u $(WWWUSER) > /dev/null 2>&1; echo $?)
-	user_doesnt_exist=$(id -u $(WWWUSER) > /dev/null 2>&1; if [ $? == 1 ]; then echo true; else echo false; fi)
-	echo user $(WWWUSER) not preexistent: $(user_doesnt_exist)
-	if ${user_doesnt_exist}
-	then
-		sudo adduser -g $(WWWGROUP) $(WWWUSER)
-	fi
+	id -u ${WWWUSER} > /dev/null 2>&1; if [ $? == 1 ]; then echo true; fi
+	#echo user $(WWWUSER) not preexistent: ${user_doesnt_exist}
+	#if ${user_doesnt_exist};
+	#then
+	#	sudo adduser -g $(WWWGROUP) $(WWWUSER)
+	#fi
 	#sudo usermod 1003 $(WWWUSER)#Pero 1003 es el gid que le tocó por azar al grupo www-data
 	sudo usermod -s /bin/false $(WWWUSER)
 	sudo usermod -L $(WWWUSER)
