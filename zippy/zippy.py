@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/local/zippy/venv/bin/python
+
 
 __doc__=="""
 ################################################################
@@ -678,8 +679,10 @@ def main():
 
     #   configuration files
     global_group = parser.add_argument_group('Global options')
-    global_group.add_argument("-c", dest="config", default='zippy.json',metavar="JSON_FILE", \
-        help="configuration file [zippy.json]")
+    zippy_json_path=os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),"zippy.json")
+    global_group.add_argument("-c", dest="config", default=zippy_json_path,metavar="JSON_FILE", \
+        help="configuration file [{0}]".format(zippy_json_path))
+
     global_group.add_argument("--tiers", dest="tiers", default='0,1,2', \
         help="Allowed design tiers (0,1,...,n)")
 

@@ -26,4 +26,5 @@ EXPOSE 80
 
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 CMD /bin/bash /zippy/zippyd.sh
-
+#The path of zippy.py is
+# sudo docker run -it lucioric/zippy usr/local/zippy/venv/bin/python /zippy/zippy/zippy.py

@@ -22,6 +22,8 @@ app.secret_key = 'Zippy is the best handpuppet out there'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['DOWNLOAD_FOLDER'] = 'results'
 app.config['CONFIG_FILE'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'zippy.json')
+with open("elog.log","a") as fh:
+    fh.write("iniciando\n")
 # read password (SHA1 hash, not the safest)
 with open(app.config['CONFIG_FILE']) as conf:
     config = json.load(conf, object_hook=ascii_encode_dict)
@@ -33,6 +35,12 @@ def allowed_file(filename):
 def login_required(func):
     @wraps(func)
     def wrap(*args, **kwargs):
+        #Skip logins now
+        print("slog")
+        with open("elog.log","a") as fh:
+            fh.write("sloge\n")
+        session["logged_in"]=True
+        return func(*args, **kwargs)
         if 'logged_in' in session:
             return func(*args, **kwargs)
         else:
@@ -50,6 +58,8 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
+    session['logged_in'] = True
+    return redirect(url_for('index'))
     if request.method == 'POST':
         if bcrypt.hashpw(request.form['password'].rstrip().encode('utf-8'), app.config['PASSWORD']) == app.config['PASSWORD']:
             session['logged_in'] = True

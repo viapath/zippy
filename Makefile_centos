@@ -17,43 +17,44 @@ install: essential bowtie zippy-install
 
 # requirements
 essential:
-	#yum install -y wget sqlite3 unzip git htop python-pip python2.7-dev ncurses-dev python-virtualenv
-	#yum install -y libxslt-dev libxml2-dev libffi-dev redis-server
-	#yum install -y build-essential libjpeg-dev libfreetype6-dev python-dev python-imaging libcurl3-dev mysql-client
-	#yum install -y postgresql postgresql-client postgresql-server-dev-9.4
+	sudo yum install -y wget sqlite unzip git htop python-pip python2-devel ncurses-devel python-virtualenv
+	sudo yum install -y libxslt-devel libxml2-devel libffi-devel
+	sudo yum install -y python-devel python-imaging mysql #libcurl3-devel libfreetype6-devel build-essential libjpeg-dev
+	sudo yum -y groupinstall 'Development Tools'
+	sudo yum install -y postgresql postgresql-server postgresql-devel #postgresql-server-dev-9.4
 	# add apache user
-	#groupadd www-data
-	#adduser $(WWWUSER) $(WWWGROUP)
-	#usermod 1003 $(WWWUSER)#Pero 1003 es el gid que le tocó por azar al grupo www-data
-	#usermod -s /bin/false $(WWWUSER)
-	#usermod -L $(WWWUSER)
+	#sudo groupadd www-data
+	#sudo adduser $(WWWUSER) $(WWWGROUP)
+	#sudo usermod 1003 $(WWWUSER)#Pero 1003 es el gid que le tocó por azar al grupo www-data
+	#sudo usermod -s /bin/false $(WWWUSER)
+	#sudo usermod -L $(WWWUSER)
 	# install apache/wsgi
-	#yum -y apache2 apache2.2-common apache2-mpm-prefork apache2-utils libexpat1 ssl-cert
-	#yum -y libapache2-mod-wsgi
+	#sudo yum -y install expat mod_wsgi# apache2-utils libexpat1 ssl-cert apache2.2-common 
 	# disable default site
 	#a2dissite 000-default
 
 bowtie:
 	wget -c http://netix.dl.sourceforge.net/project/bowtie-bio/bowtie2/2.2.6/bowtie2-2.2.6-linux-x86_64.zip && \
 	unzip bowtie2-2.2.6-linux-x86_64.zip && \
-	cd bowtie2-2.2.6 && mv bowtie2* /usr/local/bin
+	cd bowtie2-2.2.6 && sudo mv bowtie2* /usr/local/bin
 	rm -rf bowtie2-2.2.6 bowtie2-2.2.6-linux-x86_64.zip
 
 # zippy setup (will move to distutils in future release)
 zippy-install:
 	# virtualenv
-	mkdir -p $(ZIPPYPATH)
-	cd $(ZIPPYPATH) && virtualenv venv
-	$(ZIPPYPATH)/venv/bin/pip install Cython==0.24
-	$(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
+	sudo mkdir -p $(ZIPPYPATH)
+	cd $(ZIPPYPATH) && sudo virtualenv venv
+	sudo $(ZIPPYPATH)/venv/bin/pip install -U pip
+	sudo $(ZIPPYPATH)/venv/bin/pip install Cython==0.24
+	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
 	# create empty database
-	mkdir -p $(ZIPPYVAR)
+	sudo mkdir -p $(ZIPPYVAR)
+	sudo chmod -R 777 $(ZIPPYVAR)
 	touch $(ZIPPYVAR)/zippy.sqlite
 	touch $(ZIPPYVAR)/zippy.log
 	touch $(ZIPPYVAR)/.blacklist.cache
 	mkdir -p $(ZIPPYVAR)/uploads
 	mkdir -p $(ZIPPYVAR)/results
-	chmod -R 777 $(ZIPPYVAR)
 
 # gunicorn/nginx webserver
 unicorn:
@@ -89,7 +90,7 @@ webservice-dev:
 #### genome resources
 import-resources:
 	# Copy resource files
-	mkdir -p $(ZIPPYVAR)/resources
+	sudo  -p $(ZIPPYVAR)/resources
 	rsync -avPp resources $(ZIPPYVAR)
 	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 
@@ -112,8 +113,8 @@ annotation: variation-download refgene-download
 
 variation-download:
 	mkdir -p $(ZIPPYVAR)/resources && cd $(ZIPPYVAR)/resources && \
-	wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b147_GRCh37p13/VCF/00-common_all.vcf.gz && \
-	wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b147_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
+	wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz && \
+	wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
 
 refgene-download:
 	mkdir -p $(ZIPPYVAR)/resources && cd $(ZIPPYVAR)/resources && \
