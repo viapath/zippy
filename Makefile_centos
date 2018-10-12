@@ -20,14 +20,15 @@ essential:
 	sudo yum -y install epel-release #Install the EPEL repository, as needed for htop ans Python2 PIP
 	sudo yum repolist #Get the EPEL repository packages info
 	sudo yum install -y wget sqlite unzip git htop python2-pip python2-devel ncurses-devel python-virtualenv
-	sudo yum install -y libxslt-devel libxml2-devel libffi-devel
+	sudo yum install -y libxslt-devel libxml2-devel libffi-devel httpd
 	sudo yum install -y python-devel python-imaging mysql #libcurl3-devel libfreetype6-devel build-essential libjpeg-dev
 	sudo yum -y groupinstall 'Development Tools'
 	sudo yum install -y postgresql postgresql-server postgresql-devel #postgresql-server-dev-9.4
 	# add apache user
 	sudo groupadd -f $(WWWGROUP)
 	user_doesnt_exist=$(id -u $(WWWUSER) > /dev/null 2>&1; echo $?)
-	if [[ $user_doesnt_exist ]]
+	echo user $(WWWUSER) not preexistent: $user_doesnt_exist
+	if [ $user_doesnt_exist ]
 	then
 		sudo adduser -g $(WWWGROUP) $(WWWUSER)
 	fi
