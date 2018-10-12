@@ -25,8 +25,8 @@ essential:
 	sudo yum -y groupinstall 'Development Tools'
 	sudo yum install -y postgresql postgresql-server postgresql-devel #postgresql-server-dev-9.4
 	# add apache user
-	sudo groupadd $(WWWGROUP)
-	sudo adduser -f -g $(WWWGROUP) $(WWWUSER)
+	sudo groupadd -f $(WWWGROUP)
+	sudo adduser -g $(WWWGROUP) $(WWWUSER)
 	#sudo usermod 1003 $(WWWUSER)#Pero 1003 es el gid que le tocó por azar al grupo www-data
 	sudo usermod -s /bin/false $(WWWUSER)
 	sudo usermod -L $(WWWUSER)
