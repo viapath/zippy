@@ -92,7 +92,7 @@ webservice-dev:
 #### genome resources
 import-resources:
 	# Copy resource files
-	sudo  -p $(ZIPPYVAR)/resources
+	sudo  mkdir -p $(ZIPPYVAR)/resources
 	rsync -avPp resources $(ZIPPYVAR)
 	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 
