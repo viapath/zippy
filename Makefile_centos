@@ -28,15 +28,15 @@ essential:
 	sudo groupadd -f $(WWWGROUP)
 	user_doesnt_exist=$(id -u $(WWWUSER) > /dev/null 2>&1; echo $?)
 	echo user $(WWWUSER) not preexistent: $user_doesnt_exist
-	if [ $user_doesnt_exist ]
+	if [ $(user_doesnt_exist) ]
 	then
 		sudo adduser -g $(WWWGROUP) $(WWWUSER)
 	fi
 	#sudo usermod 1003 $(WWWUSER)#Pero 1003 es el gid que le tocó por azar al grupo www-data
 	sudo usermod -s /bin/false $(WWWUSER)
 	sudo usermod -L $(WWWUSER)
-	# install apache/wsgi
-	#sudo yum -y install expat mod_wsgi# apache2-utils libexpat1 ssl-cert apache2.2-common 
+	sudo mkdir -p $(ZIPPYVAR)
+	sudo chmod -R 777 $(ZIPPYVAR)
 	# disable default site
 	a2dissite 000-default
 
@@ -55,8 +55,6 @@ zippy-install:
 	sudo $(ZIPPYPATH)/venv/bin/pip install Cython==0.24
 	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
 	# create empty database
-	sudo mkdir -p $(ZIPPYVAR)
-	sudo chmod -R 777 $(ZIPPYVAR)
 	touch $(ZIPPYVAR)/zippy.sqlite
 	touch $(ZIPPYVAR)/zippy.log
 	touch $(ZIPPYVAR)/.blacklist.cache
