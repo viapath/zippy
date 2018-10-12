@@ -26,19 +26,15 @@ essential:
 	sudo yum install -y postgresql postgresql-server postgresql-devel #postgresql-server-dev-9.4
 	# add apache user
 	sudo groupadd -f $(WWWGROUP)
-	id -u ${WWWUSER} > /dev/null 2>&1; if [ $? == 1 ]; then echo true; fi
-	#echo user $(WWWUSER) not preexistent: ${user_doesnt_exist}
-	#if ${user_doesnt_exist};
-	#then
-	#	sudo adduser -g $(WWWGROUP) $(WWWUSER)
-	#fi
+	id -u ${WWWUSER} > /dev/null 2>&1; if [ ${?-0} -eq 1 ]; then echo user $(WWWUSER) did not exists; sudo adduser -g $(WWWGROUP) $(WWWUSER); fi
 	#sudo usermod 1003 $(WWWUSER)#Pero 1003 es el gid que le tocó por azar al grupo www-data
 	sudo usermod -s /bin/false $(WWWUSER)
 	sudo usermod -L $(WWWUSER)
 	sudo mkdir -p $(ZIPPYVAR)
 	sudo chmod -R 777 $(ZIPPYVAR)
 	# disable default site
-	a2dissite 000-default
+	#a2dissite 000-default
+	
 
 bowtie:
 	wget -c http://netix.dl.sourceforge.net/project/bowtie-bio/bowtie2/2.2.6/bowtie2-2.2.6-linux-x86_64.zip && \
@@ -76,7 +72,7 @@ webservice:
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
 	#sudo cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
-	#sudo cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
+	sudo cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
 	# enable site and restart
 	#a2ensite zippy
 	sudo systemctl restart httpd
