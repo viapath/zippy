@@ -1,5 +1,4 @@
 debian:
-  script: docker build
+  script: docker build - < Dockerfile
 centos:
-  script: make -f Makefile_centos all
-  image: centos:centos7.3.1611
+  script: docker build - < Dockerfile_centos7
