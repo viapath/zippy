@@ -1,0 +1,6 @@
+debian:
+debian2:
+  script: docker build
+centos:
+  script: make -f Makefile_centos all
+  image: centos:centos7.3.1611
