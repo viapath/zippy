@@ -1,0 +1,2 @@
+lang: python
+install: make -f Makefile_centos all
