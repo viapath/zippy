@@ -18,9 +18,9 @@ install: essential bowtie zippy-install
 # requirements
 essential:
 	yum install -y wget sqlite unzip git htop python-pip python2-devel ncurses-devel python-virtualenv
-	yum install -y libxslt-devel libxml2-devel libffi-devel redis Cython
+	yum install -y libxslt-devel libxml2-devel libffi-devel redis
 	echo y|yum groupinstall 'Development Tools'
-	yum install -y libjpeg-devel freetype-devel python-imaging mysql #-client llibcurl3-devel postgresql postgresql-devel
+	yum install -y libjpeg-devel freetype-devel python-imaging mysql postgresql postgresql-devel #-client llibcurl3-devel
 	#Python-dev(el) no se pone por que ya etá python2-devel y se supone que usamos Python 2
 	#En Centos, mysql, redis y postgresql vienen en un solo paquete para servidor y para cliente, sin el sufijo -server ni -client
 	# add apache user
@@ -50,7 +50,7 @@ zippy-install:
 	mkdir -p $(ZIPPYPATH)
 	cd $(ZIPPYPATH) && virtualenv venv
 	$(ZIPPYPATH)/venv/bin/pip install --upgrade pip
-	#$(ZIPPYPATH)/venv/bin/pip install Cython==0.24
+	$(ZIPPYPATH)/venv/bin/pip install Cython==0.24
 	$(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
 	# create empty database
 	mkdir -p $(ZIPPYVAR)
