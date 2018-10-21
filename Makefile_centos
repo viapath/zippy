@@ -18,7 +18,7 @@ install: essential bowtie zippy-install
 # requirements
 essential:
 	yum install -y wget sqlite unzip git htop python-pip python2-devel ncurses-devel python-virtualenv
-	yum install -y libxslt-devel libxml2-devel libffi-devel redis
+	yum install -y libxslt-devel libxml2-devel libffi-devel redis Cython
 	echo y|yum groupinstall 'Development Tools'
 	yum install -y libjpeg-devel freetype-devel python-imaging mysql #-client llibcurl3-devel postgresql postgresql-devel
 	#Python-dev(el) no se pone por que ya etá python2-devel y se supone que usamos Python 2
