@@ -1,0 +1,2 @@
+centos_build:
+  script: make -f Makefile_centos

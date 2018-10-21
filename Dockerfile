@@ -6,10 +6,10 @@ RUN apt-get update && apt-get -y upgrade
 # prepare genome
 RUN apt-get -y install less make wget
 ADD Makefile /zippy/Makefile
-RUN cd zippy && make genome-download
 ADD package-requirements.txt /zippy/package-requirements.txt
 RUN cd zippy && make install
 RUN cd zippy && make genome-index
+RUN cd zippy && make genome-download
 
 # get annotation
 RUN cd zippy && make variation-download
