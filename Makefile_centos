@@ -17,45 +17,48 @@ install: essential bowtie zippy-install
 
 # requirements
 essential:
-	sudo yum -y install epel-release #Install the EPEL repository, as needed for htop ans Python2 PIP
-	sudo yum repolist #Get the EPEL repository packages info
-	sudo yum install -y wget sqlite unzip git htop python2-pip python2-devel ncurses-devel python-virtualenv
-	sudo yum install -y libxslt-devel libxml2-devel libffi-devel httpd
-	sudo yum install -y python-devel python-imaging mysql #libcurl3-devel libfreetype6-devel build-essential libjpeg-dev
-	sudo yum -y groupinstall 'Development Tools'
-	sudo yum install -y postgresql postgresql-server postgresql-devel #postgresql-server-dev-9.4
+	yum install -y wget sqlite unzip git htop python-pip python2-devel ncurses-devel python-virtualenv
+	yum install -y libxslt-devel libxml2-devel libffi-devel redis
+	yum groupinstall 'Development Tools'
+	yum install -y libjpeg-devel freetype-devel python-imaging mysql #-client llibcurl3-devel postgresql postgresql-devel
+	#Python-dev(el) no se pone por que ya etá python2-devel y se supone que usamos Python 2
+	#En Centos, mysql, redis y postgresql vienen en un solo paquete para servidor y para cliente, sin el sufijo -server ni -client
 	# add apache user
-	sudo groupadd -f $(WWWGROUP)
-	id -u ${WWWUSER} > /dev/null 2>&1; if [ ${?-0} -eq 1 ]; then echo user $(WWWUSER) did not exists; sudo adduser -g $(WWWGROUP) $(WWWUSER); fi
-	#sudo usermod 1003 $(WWWUSER)#Pero 1003 es el gid que le tocó por azar al grupo www-data
-	sudo usermod -s /bin/false $(WWWUSER)
-	sudo usermod -L $(WWWUSER)
-	sudo mkdir -p $(ZIPPYVAR)
-	sudo chmod -R 777 $(ZIPPYVAR)
+	groupadd -f $(WWWGROUP)
+	getent passwd $(WWWUSER)>/dev/null||adduser $(WWWUSER) -g $(WWWGROUP)#If the user does exists, does not execute the part of the command. This behavior is
+	#achieved because this instruction is taken as a boolean construct (as all in shell finally, that lines have a return code), with || as the operator (OR).
+	#If the first command (before the ||) gives a zero return value (if the user exists) there is no need to execute the second part of the statement to 
+	#calculate the return value of the line
+	#usermod -g $(WWWGROUP) $(WWWUSER)#Pero 1003 es el gid que le tocó por azar al grupo www-data
+	usermod -s /bin/false $(WWWUSER)
+	usermod -L $(WWWUSER)
+	# install apache/wsgi
+	#yum -y apache2 apache2.2-common apache2-mpm-prefork apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi
 	# disable default site
 	#a2dissite 000-default
-	
 
 bowtie:
 	wget -c http://netix.dl.sourceforge.net/project/bowtie-bio/bowtie2/2.2.6/bowtie2-2.2.6-linux-x86_64.zip && \
 	unzip bowtie2-2.2.6-linux-x86_64.zip && \
-	cd bowtie2-2.2.6 && sudo mv bowtie2* /usr/local/bin
+	cd bowtie2-2.2.6 && mv bowtie2* /usr/local/bin
 	rm -rf bowtie2-2.2.6 bowtie2-2.2.6-linux-x86_64.zip
 
 # zippy setup (will move to distutils in future release)
 zippy-install:
 	# virtualenv
-	sudo mkdir -p $(ZIPPYPATH)
-	cd $(ZIPPYPATH) && sudo virtualenv venv
-	sudo $(ZIPPYPATH)/venv/bin/pip install -U pip
-	sudo $(ZIPPYPATH)/venv/bin/pip install Cython==0.24
-	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
+	mkdir -p $(ZIPPYPATH)
+	cd $(ZIPPYPATH) && virtualenv venv
+	$(ZIPPYPATH)/venv/bin/pip install --upgrade pip
+	#$(ZIPPYPATH)/venv/bin/pip install Cython==0.24
+	$(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
 	# create empty database
+	mkdir -p $(ZIPPYVAR)
 	touch $(ZIPPYVAR)/zippy.sqlite
 	touch $(ZIPPYVAR)/zippy.log
 	touch $(ZIPPYVAR)/.blacklist.cache
 	mkdir -p $(ZIPPYVAR)/uploads
 	mkdir -p $(ZIPPYVAR)/results
+	chmod -R 777 $(ZIPPYVAR)
 
 # gunicorn/nginx webserver
 unicorn:
@@ -65,35 +68,33 @@ unicorn:
 
 # webservice install (production)
 webservice:
-	sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
+	rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
 	# make WWW directories
-	sudo mkdir -p $(ZIPPYWWW)
-	sudo cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
+	mkdir -p $(ZIPPYWWW)
+	cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
+	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
-	#sudo cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
-	sudo cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
+	cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
 	# enable site and restart
-	#a2ensite zippy
-	sudo systemctl restart httpd
+	a2ensite zippy
+	/etc/init.d/apache2 restart
 
 # same for development environment (not maintained)
 webservice-dev:
 	# make WWW directories
-	sudo mkdir -p $(ZIPPYWWW)
-	sudo cp install/zippy_dev.wsgi $(ZIPPYWWW)/zippy.wsgi
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
+	mkdir -p $(ZIPPYWWW)
+	cp install/zippy_dev.wsgi $(ZIPPYWWW)/zippy.wsgi
+	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
-	#sudo cp install/zippy_dev.hostconfig /etc/apache2/sites-available/zippy.conf
-	sudo cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
+	cp install/zippy_dev.hostconfig /etc/apache2/sites-available/zippy.conf
 	# enable site and restart
-	#a2ensite zippy
-	sudo systemctl restart httpd
+	a2ensite zippy
+	/etc/init.d/apache2 restart
 
 #### genome resources
 import-resources:
 	# Copy resource files
-	sudo  mkdir -p $(ZIPPYVAR)/resources
+	mkdir -p $(ZIPPYVAR)/resources
 	rsync -avPp resources $(ZIPPYVAR)
 	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 
@@ -110,14 +111,14 @@ genome-download:
 
 genome-index:
 	cd $(ZIPPYVAR)/resources && \
-	bowtie2-build human_g1k_v37.fasta human_g1k_v37.bowtie
+	/usr/local/bin/bowtie2-build human_g1k_v37.fasta human_g1k_v37.bowtie
 
 annotation: variation-download refgene-download
 
 variation-download:
 	mkdir -p $(ZIPPYVAR)/resources && cd $(ZIPPYVAR)/resources && \
-	wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz && \
-	wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
+	wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b147_GRCh37p13/VCF/00-common_all.vcf.gz && \
+	wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b147_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
 
 refgene-download:
 	mkdir -p $(ZIPPYVAR)/resources && cd $(ZIPPYVAR)/resources && \
