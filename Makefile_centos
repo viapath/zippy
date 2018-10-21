@@ -25,7 +25,8 @@ essential:
 	#En Centos, mysql, redis y postgresql vienen en un solo paquete para servidor y para cliente, sin el sufijo -server ni -client
 	# add apache user
 	groupadd -f $(WWWGROUP)
-	getent passwd $(WWWUSER)>/dev/null||adduser $(WWWUSER) -g $(WWWGROUP)#If the user does exists, does not execute the part of the command. This behavior is
+	getent passwd $(WWWUSER)>/dev/null||adduser $(WWWUSER) -g $(WWWGROUP)
+	#If the user does exists, does not execute the part of the command. This behavior is
 	#achieved because this instruction is taken as a boolean construct (as all in shell finally, that lines have a return code), with || as the operator (OR).
 	#If the first command (before the ||) gives a zero return value (if the user exists) there is no need to execute the second part of the statement to 
 	#calculate the return value of the line
