@@ -8,8 +8,8 @@ RUN apt-get -y install less make wget
 ADD Makefile /zippy/Makefile
 ADD package-requirements.txt /zippy/package-requirements.txt
 RUN cd zippy && make install
-RUN cd zippy && make genome-index
 RUN cd zippy && make genome-download
+RUN cd zippy && make genome-index
 
 # get annotation
 RUN cd zippy && make variation-download

@@ -104,13 +104,14 @@ genome: genome-download genome-index
 
 genome-download:
 	mkdir -p $(ZIPPYVAR)/resources
-	cd $(ZIPPYVAR)/resources && \
+	cd $(ZIPPYVAR)/resources
 	wget -qO- ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz | \
 	gzip -dcq | cat > human_g1k_v37.fasta && rm -f human_g1k_v37.fasta.gz && \
 	wget -c ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.fai
 
 genome-index:
-	cd $(ZIPPYVAR)/resources && \
+	mkdir -p $(ZIPPYVAR)/resources
+	cd $(ZIPPYVAR)/resources 
 	/usr/local/bin/bowtie2-build human_g1k_v37.fasta human_g1k_v37.bowtie
 
 annotation: variation-download refgene-download
