@@ -1,2 +1,2 @@
 centos_build:
-  script: make -f Makefile_centos
+  script: apt-get install yum; make -f Makefile_centos
