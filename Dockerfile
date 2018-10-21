@@ -1,22 +1,17 @@
-FROM debian:jessie
-MAINTAINER dbrawand@nhs.net
-
-RUN apt-get update && apt-get -y upgrade
+FROM centos:centos7.3.1611
+MAINTAINER lucioric
 
 # prepare genome
-RUN apt-get -y install less make wget
-ADD Makefile /zippy/Makefile
+RUN yum -y install less make wget curl vim
+ADD Makefile_centos /zippy/Makefile_centos
 ADD package-requirements.txt /zippy/package-requirements.txt
-RUN cd zippy && make install
-RUN cd zippy && make genome-download
-RUN cd zippy && make genome-index
+RUN cd zippy && make -f Makefile_centos install
+RUN cd zippy && make -f Makefile_centos genome-download
+RUN cd zippy && make -f Makefile_centos genome-index
 
 # get annotation
-RUN cd zippy && make variation-download
-RUN cd zippy && make refgene-download
-
-# add some convenience utils
-RUN apt-get -y install curl less vim
+RUN cd zippy && make -f Makefile_centos variation-download
+RUN cd zippy && make -f Makefile_centos refgene-download
 
 # install zippy
 ADD . /zippy

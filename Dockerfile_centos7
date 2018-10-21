@@ -3,15 +3,15 @@ MAINTAINER lucioric
 
 # prepare genome
 RUN yum -y install less make wget curl vim
-ADD Makefile_centos /zippy/Makefile
+ADD Makefile_centos /zippy/Makefile_centos
 ADD package-requirements.txt /zippy/package-requirements.txt
-RUN cd zippy && make -f makefile_centos install
-RUN cd zippy && make -f makefile_centos genome-download
-RUN cd zippy && make -f makefile_centos genome-index
+RUN cd zippy && make -f Makefile_centos install
+RUN cd zippy && make -f Makefile_centos genome-download
+RUN cd zippy && make -f Makefile_centos genome-index
 
 # get annotation
-RUN cd zippy && make -f makefile_centos variation-download
-RUN cd zippy && make -f makefile_centos refgene-download
+RUN cd zippy && make -f Makefile_centos variation-download
+RUN cd zippy && make -f Makefile_centos refgene-download
 
 # install zippy
 ADD . /zippy
