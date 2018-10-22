@@ -83,7 +83,8 @@ webservice:
 	echo "ServerName localhost" >> /etc/httpd/httpd.conf
 	#a2ensite zippy
 	systemctl restart httpd
-webservice_docker:
+# webservice install (for the interior of a docker container)
+webservice-docker:
 	rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
 	# make WWW directories
 	mkdir -p $(ZIPPYWWW)

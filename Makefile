@@ -64,6 +64,18 @@ unicorn:
 	# start gunicorn with
 	# gunicorn --bind 0.0.0.0:8000 wsgi:app
 
+# webservice install (for the interior of a docker container)
+webservice-docker:
+	rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
+	# make WWW directories
+	mkdir -p $(ZIPPYWWW)
+	cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
+	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
+	# apache WSGI config
+	cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
+	# enable site and restart
+	a2ensite zippy
+	#/etc/init.d/apache2 restart
 # webservice install (production)
 webservice:
 	rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)

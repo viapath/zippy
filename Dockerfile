@@ -6,7 +6,7 @@ RUN yum -y install less make wget curl vim
 ADD . /zippy
 
 RUN cd /zippy && make -f Makefile_centos install
-RUN cd /zippy && make -f Makefile_centos webservice_docker
+RUN cd /zippy && make -f Makefile_centos webservice-docker
 # prepare genome
 RUN cd /zippy && make -f Makefile_centos genome-download
 RUN cd /zippy && make -f Makefile_centos genome-index
