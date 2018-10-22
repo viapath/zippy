@@ -80,7 +80,7 @@ webservice:
 	ls /etc/httpd
 	echo "ServerName localhost" >> /etc/httpd/httpd.conf
 	#a2ensite zippy
-	systemctl status httpd
+	systemctl start httpd.service
 
 # same for development environment (not maintained)
 webservice-dev:
@@ -93,7 +93,7 @@ webservice-dev:
 	# enable site and restart
 	echo "ServerName localhost" >> /etc/httpd/httpd.conf
 	#a2ensite zippy
-	systemctl restart httpd
+	systemctl start httpd.service
 
 #### genome resources
 import-resources:
