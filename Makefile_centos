@@ -75,9 +75,10 @@ webservice:
 	cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
 	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
-	cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
+	cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
 	# enable site and restart
-	a2ensite zippy
+	echo "ServerName localhost" >> /etc/httpd/apache2.conf
+	#a2ensite zippy
 	/etc/init.d/apache2 restart
 
 # same for development environment (not maintained)
@@ -87,9 +88,10 @@ webservice-dev:
 	cp install/zippy_dev.wsgi $(ZIPPYWWW)/zippy.wsgi
 	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
-	cp install/zippy_dev.hostconfig /etc/apache2/sites-available/zippy.conf
+	cp install/zippy_dev.hostconfig /etc/httpd/conf.d/zippy.conf
 	# enable site and restart
-	a2ensite zippy
+	echo "ServerName localhost" >> /etc/httpd/apache2.conf
+	#a2ensite zippy
 	/etc/init.d/apache2 restart
 
 #### genome resources
