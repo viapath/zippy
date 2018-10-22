@@ -79,7 +79,7 @@ webservice:
 	# enable site and restart
 	echo "ServerName localhost" >> /etc/httpd/apache2.conf
 	#a2ensite zippy
-	/etc/init.d/apache2 restart
+	systemctl restart httpd
 
 # same for development environment (not maintained)
 webservice-dev:
@@ -92,7 +92,7 @@ webservice-dev:
 	# enable site and restart
 	echo "ServerName localhost" >> /etc/httpd/apache2.conf
 	#a2ensite zippy
-	/etc/init.d/apache2 restart
+	systemctl restart httpd
 
 #### genome resources
 import-resources:
