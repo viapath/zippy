@@ -17,7 +17,7 @@ install: essential bowtie zippy-install
 
 # requirements
 essential:
-	yum install -y wget sqlite unzip git htop python-pip python2-devel ncurses-devel python-virtualenv httpd
+	yum install -y wget sqlite unzip git htop python2-pip python2-devel ncurses-devel python-virtualenv httpd
 	yum install -y libxslt-devel libxml2-devel libffi-devel redis
 	echo y|yum groupinstall 'Development Tools'
 	yum install -y libjpeg-devel freetype-devel python-imaging mysql postgresql postgresql-devel #-client llibcurl3-devel
@@ -77,9 +77,10 @@ webservice:
 	# apache WSGI config
 	cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
 	# enable site and restart
-	echo "ServerName localhost" >> /etc/httpd/apache2.conf
+	ls /etc/httpd
+	echo "ServerName localhost" >> /etc/httpd/httpd.conf
 	#a2ensite zippy
-	systemctl restart httpd
+	systemctl status httpd
 
 # same for development environment (not maintained)
 webservice-dev:
@@ -90,7 +91,7 @@ webservice-dev:
 	# apache WSGI config
 	cp install/zippy_dev.hostconfig /etc/httpd/conf.d/zippy.conf
 	# enable site and restart
-	echo "ServerName localhost" >> /etc/httpd/apache2.conf
+	echo "ServerName localhost" >> /etc/httpd/httpd.conf
 	#a2ensite zippy
 	systemctl restart httpd
 

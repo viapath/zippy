@@ -17,7 +17,7 @@ RUN cd zippy && make -f Makefile_centos variation-download
 RUN cd zippy && make -f Makefile_centos refgene-download
 
  
-RUN cd /zippy && make -f Makefile_centos webservice
+#RUN cd /zippy && make -f Makefile_centos webservice
 EXPOSE 80
 
 CMD /bin/bash /zippy/zippyd.sh
