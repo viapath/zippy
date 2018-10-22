@@ -7,7 +7,6 @@ ADD . /zippy
 
 RUN cd /zippy && make -f Makefile_centos install
 RUN cd /zippy && make -f Makefile_centos webservice_docker
-RUN systemctl restart httpd
 # prepare genome
 RUN cd /zippy && make -f Makefile_centos genome-download
 RUN cd /zippy && make -f Makefile_centos genome-index
@@ -18,6 +17,6 @@ RUN cd /zippy && make -f Makefile_centos refgene-download
 
 EXPOSE 80
 
-CMD /bin/bash /zippy/zippyd.sh
+CMD /bin/bash /zippy/zippyd_CentOS7.sh
 #The path of zippy.py is
 # sudo docker run -it lucioric/zippy usr/local/zippy/venv/bin/python /zippy/zippy/zippy.py
