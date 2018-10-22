@@ -6,7 +6,7 @@ RUN yum -y install less make wget curl vim
 ADD Makefile_centos /zippy/Makefile_centos
 ADD package-requirements.txt /zippy/package-requirements.txt
 RUN cd zippy && make -f Makefile_centos install
-RUN cd /zippy && make webservice
+RUN cd /zippy && make -f Makefile_centos webservice
 RUN cd zippy && make -f Makefile_centos genome-download
 RUN cd zippy && make -f Makefile_centos genome-index
 
@@ -16,8 +16,8 @@ RUN cd zippy && make -f Makefile_centos refgene-download
 
 # install zippy
 ADD . /zippy
-RUN cd /zippy && make webservice
-
+ 
+RUN cd /zippy && make -f Makefile_centos webservice
 EXPOSE 80
 
 CMD /bin/bash /zippy/zippyd.sh
