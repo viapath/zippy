@@ -17,7 +17,7 @@ install: essential bowtie zippy-install
 
 # requirements
 essential:
-	yum install -y wget sqlite unzip git htop python-pip python2-devel ncurses-devel python-virtualenv
+	yum install -y wget sqlite unzip git htop python-pip python2-devel ncurses-devel python-virtualenv httpd
 	yum install -y libxslt-devel libxml2-devel libffi-devel redis
 	echo y|yum groupinstall 'Development Tools'
 	yum install -y libjpeg-devel freetype-devel python-imaging mysql postgresql postgresql-devel #-client llibcurl3-devel
