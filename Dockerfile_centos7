@@ -4,15 +4,15 @@ MAINTAINER lucioric
 RUN yum -y install less make wget curl vim
 # install zippy
 ADD . /zippy
-RUN cd zippy && make -f Makefile_centos install
+RUN cd /zippy && make -f Makefile_centos install
 RUN cd /zippy && make -f Makefile_centos webservice
 # prepare genome
-RUN cd zippy && make -f Makefile_centos genome-download
-RUN cd zippy && make -f Makefile_centos genome-index
+RUN cd /zippy && make -f Makefile_centos genome-download
+RUN cd /zippy && make -f Makefile_centos genome-index
 
 # get annotation
-RUN cd zippy && make -f Makefile_centos variation-download
-RUN cd zippy && make -f Makefile_centos refgene-download
+RUN cd /zippy && make -f Makefile_centos variation-download
+RUN cd /zippy && make -f Makefile_centos refgene-download
 
 EXPOSE 80
 

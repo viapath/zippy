@@ -80,7 +80,9 @@ webservice:
 	ls /etc/httpd
 	echo "ServerName localhost" >> /etc/httpd/httpd.conf
 	#a2ensite zippy
-	systemctl start httpd.service
+	ls /etc/init.d
+	/etc/init.d/httpd restart
+	#systemctl start httpd.service
 
 # same for development environment (not maintained)
 webservice-dev:
