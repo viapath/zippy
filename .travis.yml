@@ -1,2 +1,5 @@
 language: python
 install: make -f Makefile_centos all
+os: linux
+dist: trusty
+group: stable
