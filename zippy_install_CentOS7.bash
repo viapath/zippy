@@ -11,7 +11,7 @@ then
 else
     echo "Not in zippy folder."
     sudo mkdir -p ${srv_zippy}
-    cd /srv
+    cd ${srv_zippy}
     sudo chmod -R 777 ${srv_zippy}
     git clone --recursive https://github.com/Lucioric2000/zippy
     cd zippy

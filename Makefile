@@ -73,6 +73,7 @@ webservice-docker:
 	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
 	cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
+	echo "ServerName localhost" >> /etc/apache2/apache2.conf
 	# enable site and restart
 	a2ensite zippy
 	#/etc/init.d/apache2 restart
@@ -85,6 +86,7 @@ webservice:
 	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
 	cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
+	echo "ServerName localhost" >> /etc/apache2/apache2.conf
 	# enable site and restart
 	a2ensite zippy
 	/etc/init.d/apache2 restart
