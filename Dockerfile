@@ -1,4 +1,4 @@
-#FROM lucioric/zippy:centos1.0.0 
+FROM lucioric/zippy:centos1.0.0 
 #This dockerfile is crafted to only re install the scripts and the dependencies, but to pull the other data from lucioric/zippy:centos1.0.0
 MAINTAINER lucioric
 
