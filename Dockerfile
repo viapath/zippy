@@ -3,12 +3,12 @@ FROM lucioric/zippy:centos1.0.0
 MAINTAINER lucioric
 
 RUN yum -y install less make wget curl vim
-#As the base image is a zippy image, we first need to delete the software part of this image
-RUN cd /zippy && make -f Makefile_centos cleansoftware
-RUN cd /zippy && make -f Makefile_centos cleandb
 
 # install zippy
 ADD . /zippy
+#As the base image is a zippy image, we first need to delete the software part of this image
+RUN cd /zippy && make -f Makefile_centos cleansoftware
+RUN cd /zippy && make -f Makefile_centos cleandb
 
 RUN cd /zippy && make -f Makefile_centos install
 RUN cd /zippy && make -f Makefile_centos webservice-docker
