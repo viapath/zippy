@@ -23,4 +23,4 @@ make -f $makefilename install
 make -f $makefilename webservice
 make -f $makefilename variation-download
 make -f $makefilename refgene-download
-make -f $makefilename genome #genome index and genome download
+make -f $makefilename genome
