@@ -21,7 +21,7 @@ essential:
 	#apachectl restart graceful
 	#kill -USR1 `cat /usr/local/httpd/logs/httpd.pid`
 	#kill -USR1 `cat /usr/local/apache2/logs/httpd.pid`
-	yum install -y libxslt-devel libxml2-devel libffi-devel redis
+	yum install -y libxslt-devel libxml2-devel libffi-devel redis mod_wsgi
 	echo y|yum groupinstall 'Development Tools'
 	yum install -y libjpeg-devel freetype-devel python-imaging mysql postgresql postgresql-devel #-client llibcurl3-devel
 	#Python-dev(el) no se pone por que ya etá python2-devel y se supone que usamos Python 2
@@ -137,14 +137,20 @@ genome: genome-download genome-index
 genome-download:
 	mkdir -p $(ZIPPYVAR)/resources
 	cd $(ZIPPYVAR)/resources
-	wget -qO- ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz | \
-	gzip -dcq | cat > human_g1k_v37.fasta && rm -f human_g1k_v37.fasta.gz && \
-	wget -c ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.fai
+	ls human_g1k_v37.fasta>/dev/null && ( \
+		echo File human_g1k_v37.fasta.gz exists, not downloading it again ) || (\
+		wget -qO- ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz | \
+		gzip -dcq | cat > human_g1k_v37.fasta && rm -f human_g1k_v37.fasta.gz)
+	ls human_g1k_v37.fasta.fai>/dev/null && \
+		echo File human_g1k_v37.fasta.fai exists, not downloading it again||\
+		wget -c ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.fai
 
 genome-index:
 	mkdir -p $(ZIPPYVAR)/resources
-	cd $(ZIPPYVAR)/resources 
-	/usr/local/bin/bowtie2-build human_g1k_v37.fasta human_g1k_v37.bowtie
+	cd $(ZIPPYVAR)/resources
+	ls human_g1k_v37.bowtie.rev.2.bt2>/dev/null && \
+		echo bowtie file human_g1k_v37.bowtie exists, thus not running bowtie command ||\
+		/usr/local/bin/bowtie2-build human_g1k_v37.fasta human_g1k_v37.bowtie
 
 annotation: variation-download refgene-download
 

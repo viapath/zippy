@@ -132,14 +132,21 @@ genome: genome-download genome-index
 
 genome-download:
 	mkdir -p $(ZIPPYVAR)/resources
-	cd $(ZIPPYVAR)/resources && \
-	wget -qO- ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz | \
-	gzip -dcq | cat > human_g1k_v37.fasta && rm -f human_g1k_v37.fasta.gz && \
-	wget -c ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.fai
+	cd $(ZIPPYVAR)/resources
+	ls human_g1k_v37.fasta>/dev/null && ( \
+		echo File human_g1k_v37.fasta.gz exists, not downloading it again ) || (\
+		wget -qO- ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz | \
+		gzip -dcq | cat > human_g1k_v37.fasta && rm -f human_g1k_v37.fasta.gz)
+	ls human_g1k_v37.fasta.fai>/dev/null && \
+		echo File human_g1k_v37.fasta.fai exists, not downloading it again||\
+		wget -c ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.fai
 
 genome-index:
-	cd $(ZIPPYVAR)/resources && \
-	bowtie2-build human_g1k_v37.fasta human_g1k_v37.bowtie
+	mkdir -p $(ZIPPYVAR)/resources
+	cd $(ZIPPYVAR)/resources
+	ls human_g1k_v37.bowtie.rev.2.bt2>/dev/null && \
+		echo bowtie file human_g1k_v37.bowtie exists, thus not running bowtie command ||\
+		/usr/local/bin/bowtie2-build human_g1k_v37.fasta human_g1k_v37.bowtie
 
 annotation: variation-download refgene-download
 
