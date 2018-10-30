@@ -139,7 +139,7 @@ genome-download:
 		wget -qO- ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz | \
 		gzip -dcq | cat > human_g1k_v37.fasta && rm -f human_g1k_v37.fasta.gz)
 	ls human_g1k_v37.fasta.fai &>/dev/null && \
-		echo File human_g1k_v37.fasta.fai exists, not downloading it again||\
+		echo File human_g1k_v37.fasta.fai exists, not downloading it again || \
 		wget -c ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.fai
 
 genome-index:

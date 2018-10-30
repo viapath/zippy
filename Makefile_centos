@@ -17,13 +17,13 @@ install: essential bowtie zippy-install
 
 # requirements
 essential:
-	yum install -y wget sqlite unzip git htop python2-pip python2-devel ncurses-devel python-virtualenv httpd
+	sudo yum install -y wget sqlite unzip git htop python2-pip python2-devel ncurses-devel python-virtualenv httpd
 	#apachectl restart graceful
 	#kill -USR1 `cat /usr/local/httpd/logs/httpd.pid`
 	#kill -USR1 `cat /usr/local/apache2/logs/httpd.pid`
-	yum install -y libxslt-devel libxml2-devel libffi-devel redis mod_wsgi
-	echo y|yum groupinstall 'Development Tools'
-	yum install -y libjpeg-devel freetype-devel python-imaging mysql postgresql postgresql-devel #-client llibcurl3-devel
+	sudo yum install -y libxslt-devel libxml2-devel libffi-devel redis mod_wsgi
+	echo y|sudo yum groupinstall 'Development Tools'
+	sudo yum install -y libjpeg-devel freetype-devel python-imaging mysql postgresql postgresql-devel #-client llibcurl3-devel
 	#Python-dev(el) no se pone por que ya etá python2-devel y se supone que usamos Python 2
 	#En Centos, mysql, redis y postgresql vienen en un solo paquete para servidor y para cliente, sin el sufijo -server ni -client
 	# add apache user
@@ -140,9 +140,9 @@ genome-download:
 	ls human_g1k_v37.fasta &>/dev/null && ( \
 		echo File human_g1k_v37.fasta.gz exists, not downloading it again ) || (\
 		wget -qO- ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz | \
-		gzip -dcq | cat > human_g1k_v37.fasta && rm -f human_g1k_v37.fasta.gz)
+		gzip -dcq | cat > human_g1k_v37.fasta && rm -f human_g1k_v37.fasta.gz )
 	ls human_g1k_v37.fasta.fai &>/dev/null && \
-		echo File human_g1k_v37.fasta.fai exists, not downloading it again||\
+		echo File human_g1k_v37.fasta.fai exists, not downloading it again || \
 		wget -c ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.fai
 
 genome-index:
