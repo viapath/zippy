@@ -1,7 +1,7 @@
 #!/bin/bash
 sudo yum -y upgrade
 sudo yum install less make wget curl vim git
-srv_zippy=/srv/zippy
+srv_zippy=/srv/qgen/zippy
 
 qseqdnamatch=`expr match "$(pwd)" '.*\(zippy\)'`
 if [[ $qseqdnamatch = "zippy" ]]
@@ -12,7 +12,7 @@ then
 else
     echo "Not in zippy folder."
     sudo mkdir -p ${srv_zippy}
-    cd /srv
+    cd /srv/qgen
     git clone --recursive https://github.com/Lucioric2000/zippy
     sudo chmod -R 777 ${srv_zippy}
     cd zippy
