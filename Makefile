@@ -65,13 +65,13 @@ cleanall: cleansoftware cleandata cleandb
 cleansoftware:
 	rm -rf $(ZIPPYPATH)
 	rm -rf $(ZIPPYWWW)
-	rm /etc/apache2/sites-available/zippy.conf
+	rm -f /etc/httpd/conf.d/zippy.conf
 cleandata:
 	rm -rf $(ZIPPYVAR)
 cleandb:
-	rm -rf $(ZIPPYVAR)/zippy.sqlite
-	rm -rf $(ZIPPYVAR)/zippy.log
-	rm -rf $(ZIPPYVAR)/.blacklist.cache
+	rm -f $(ZIPPYVAR)/zippy.sqlite
+	rm -f $(ZIPPYVAR)/zippy.log
+	rm -f $(ZIPPYVAR)/.blacklist.cache
 	rm -rf $(ZIPPYVAR)/uploads
 	rm -rf $(ZIPPYVAR)/results
 
