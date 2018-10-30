@@ -108,7 +108,7 @@ webservice-docker:
 	# apache WSGI config
 	cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
 	# enable site and restart
-	echo "ServerName localhost" >> /etc/httpd/httpd.conf
+	echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
 
 # same for development environment (not maintained)
 webservice-dev:
