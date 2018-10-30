@@ -50,21 +50,6 @@ bowtie:
 # zippy setup (will move to distutils in future release)
 zippy-install:
 	# virtualenv
-	mkdir -p $(ZIPPYPATH)
-	cd $(ZIPPYPATH) && /usr/bin/virtualenv venv
-	$(ZIPPYPATH)/venv/bin/pip install --upgrade pip
-	$(ZIPPYPATH)/venv/bin/pip install Cython==0.24
-	$(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
-	# create empty database
-	mkdir -p $(ZIPPYVAR)
-	touch $(ZIPPYVAR)/zippy.sqlite
-	touch $(ZIPPYVAR)/zippy.log
-	touch $(ZIPPYVAR)/.blacklist.cache
-	mkdir -p $(ZIPPYVAR)/uploads
-	mkdir -p $(ZIPPYVAR)/results
-	chmod -R 777 $(ZIPPYVAR)
-zippy-install2:
-	# virtualenv
 	sudo mkdir -p $(ZIPPYPATH)
 	cd $(ZIPPYPATH) && sudo /usr/bin/virtualenv venv
 	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
@@ -75,9 +60,9 @@ zippy-install2:
 	touch $(ZIPPYVAR)/zippy.sqlite
 	touch $(ZIPPYVAR)/zippy.log
 	touch $(ZIPPYVAR)/.blacklist.cache
-	mkdir -p $(ZIPPYVAR)/uploads
-	mkdir -p $(ZIPPYVAR)/results
-	sudo chmod -R 777 $(ZIPPYVAR)
+	sudo mkdir -p $(ZIPPYVAR)/uploads
+	sudo mkdir -p $(ZIPPYVAR)/results
+	#chmod -R 777 $(ZIPPYVAR)
 
 #Cleans
 cleanall: cleansoftware cleandata cleandb
@@ -103,41 +88,41 @@ unicorn:
 
 # webservice install (production)
 webservice:
-	rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
+	sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
 	# make WWW directories
-	mkdir -p $(ZIPPYWWW)
-	cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
-	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
+	sudo mkdir -p $(ZIPPYWWW)
+	sudo cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
-	cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
+	sudo cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
 	# enable site and restart
 	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
 	#a2ensite zippy
-	systemctl restart httpd
+	sudo systemctl restart httpd
 # webservice install (for the interior of a docker container)
 webservice-docker:
-	rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
+	sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
 	# make WWW directories
-	mkdir -p $(ZIPPYWWW)
-	cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
-	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
+	sudo mkdir -p $(ZIPPYWWW)
+	sudo cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
-	cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
+	sudo cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
 	# enable site and restart
 	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
 
 # same for development environment (not maintained)
 webservice-dev:
 	# make WWW directories
-	mkdir -p $(ZIPPYWWW)
-	cp install/zippy_dev.wsgi $(ZIPPYWWW)/zippy.wsgi
-	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
+	sudo mkdir -p $(ZIPPYWWW)
+	sudo cp install/zippy_dev.wsgi $(ZIPPYWWW)/zippy.wsgi
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
-	cp install/zippy_dev.hostconfig /etc/httpd/conf.d/zippy.conf
+	sudo cp install/zippy_dev.hostconfig /etc/httpd/conf.d/zippy.conf
 	# enable site and restart
 	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
 	#a2ensite zippy
-	systemctl start httpd.service
+	sudo systemctl start httpd.service
 
 #### genome resources
 import-resources:
