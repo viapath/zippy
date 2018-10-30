@@ -133,10 +133,16 @@ def upload():
     else:
         print("file for upload not supplied or file-type not allowed")
         return redirect('/no_file')
+@app.route('/test/', methods=['POST','GET'])
+def testpage():
+    # read form data
+    print("testpage")
 
 @app.route('/adhoc_design/', methods=['POST'])
 def adhocdesign():
     # read form data
+    print("eerror")
+    return
     uploadFile = request.files['filePath']
     locus = request.form.get('locus')
     design = request.form.get('design')

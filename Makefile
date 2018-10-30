@@ -43,39 +43,39 @@ bowtie:
 # zippy setup (will move to distutils in future release)
 zippy-install:
 	# virtualenv
-	mkdir -p $(ZIPPYPATH)
-	cd $(ZIPPYPATH) && virtualenv venv
-	$(ZIPPYPATH)/venv/bin/pip install --upgrade pip
-	$(ZIPPYPATH)/venv/bin/pip install Cython==0.24
-	$(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
+	sudo mkdir -p $(ZIPPYPATH)
+	cd $(ZIPPYPATH) && sudo /usr/bin/virtualenv venv
+	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
+	sudo $(ZIPPYPATH)/venv/bin/pip install Cython==0.24
+	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
 	# create empty database
-	mkdir -p $(ZIPPYVAR)
+	sudo mkdir -p $(ZIPPYVAR)
 	touch $(ZIPPYVAR)/zippy.sqlite
 	touch $(ZIPPYVAR)/zippy.log
 	touch $(ZIPPYVAR)/.blacklist.cache
 	mkdir -p $(ZIPPYVAR)/uploads
 	mkdir -p $(ZIPPYVAR)/results
-	chmod -R 777 $(ZIPPYVAR)
+	sudo chmod -R 777 $(ZIPPYVAR)
 
 
 #Cleans
 cleanall: cleansoftware cleandata cleandb
 cleansoftware:
-	rm -rf $(ZIPPYPATH)
-	rm -rf $(ZIPPYWWW)
-	rm -f /etc/httpd/conf.d/zippy.conf
+	sudo rm -rf $(ZIPPYPATH)
+	sudo rm -rf $(ZIPPYWWW)
+	sudo rm -f /etc/httpd/conf.d/zippy.conf
 cleandata:
-	rm -rf $(ZIPPYVAR)
+	sudo rm -rf $(ZIPPYVAR)
 cleandb:
-	rm -f $(ZIPPYVAR)/zippy.sqlite
-	rm -f $(ZIPPYVAR)/zippy.log
-	rm -f $(ZIPPYVAR)/.blacklist.cache
-	rm -rf $(ZIPPYVAR)/uploads
-	rm -rf $(ZIPPYVAR)/results
+	sudo rm -f $(ZIPPYVAR)/zippy.sqlite
+	sudo rm -f $(ZIPPYVAR)/zippy.log
+	sudo rm -f $(ZIPPYVAR)/.blacklist.cache
+	sudo rm -rf $(ZIPPYVAR)/uploads
+	sudo rm -rf $(ZIPPYVAR)/results
 
 # gunicorn/nginx webserver
 unicorn:
-	sudo apt-get install nginx
+	apt-get install nginx
 	# start gunicorn with
 	# gunicorn --bind 0.0.0.0:8000 wsgi:app
 
@@ -88,9 +88,9 @@ webservice-docker:
 	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
 	cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
-	echo "ServerName localhost" >> /etc/apache2/apache2.conf
+	#echo "ServerName localhost" >> /etc/apache2/apache2.conf
 	# enable site and restart
-	sudo a2ensite zippy
+	a2ensite zippy
 	#/etc/init.d/apache2 restart
 # webservice install (production)
 webservice:
@@ -103,8 +103,8 @@ webservice:
 	cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
 	echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
 	# enable site and restart
-	sudo a2ensite zippy
-	sudo /etc/init.d/apache2 restart
+	a2ensite zippy
+	/etc/init.d/apache2 restart
 
 # same for development environment (not maintained)
 webservice-dev:
@@ -115,8 +115,8 @@ webservice-dev:
 	# apache WSGI config
 	cp install/zippy_dev.hostconfig /etc/apache2/sites-available/zippy.conf
 	# enable site and restart
-	sudo a2ensite zippy
-	sudo /etc/init.d/apache2 restart
+	a2ensite zippy
+	/etc/init.d/apache2 restart
 
 #### genome resources
 import-resources:
