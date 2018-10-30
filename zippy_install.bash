@@ -19,6 +19,7 @@ else
 fi
 
 python -mplatform | grep -qi Ubuntu && makefilename=Makefile || makefilename=Makefile_centos 
+make -f $makefilename cleansoftware
 make -f $makefilename install
 make -f $makefilename webservice
 make -f $makefilename variation-download
