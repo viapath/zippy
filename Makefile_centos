@@ -27,15 +27,15 @@ essential:
 	#Python-dev(el) no se pone por que ya etá python2-devel y se supone que usamos Python 2
 	#En Centos, mysql, redis y postgresql vienen en un solo paquete para servidor y para cliente, sin el sufijo -server ni -client
 	# add apache user
-	groupadd -f $(WWWGROUP)
-	getent passwd $(WWWUSER)>/dev/null||adduser $(WWWUSER) -g $(WWWGROUP)
+	sudo groupadd -f $(WWWGROUP)
+	getent passwd $(WWWUSER)>/dev/null||sudo adduser $(WWWUSER) -g $(WWWGROUP)
 	#If the user does exists, does not execute the part of the command. This behavior is
 	#achieved because this instruction is taken as a boolean construct (as all in shell finally, that lines have a return code), with || as the operator (OR).
 	#If the first command (before the ||) gives a zero return value (if the user exists) there is no need to execute the second part of the statement to 
 	#calculate the return value of the line
 	#usermod -g $(WWWGROUP) $(WWWUSER)#Pero 1003 es el gid que le tocó por azar al grupo www-data
-	usermod -s /bin/false $(WWWUSER)
-	usermod -L $(WWWUSER)
+	sudo usermod -s /bin/false $(WWWUSER)
+	sudo usermod -L $(WWWUSER)
 	# install apache/wsgi
 	#yum -y apache2 apache2.2-common apache2-mpm-prefork apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi
 	# disable default site

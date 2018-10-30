@@ -17,24 +17,22 @@ install: essential bowtie zippy-install
 
 # requirements
 essential:
-	apt-get install -y wget
-	apt-get install -y sqlite3 unzip git htop
-	apt-get install -y python-pip python2.7-dev ncurses-dev python-virtualenv
-	apt-get install -y libxslt-dev libxml2-dev libffi-dev
-	apt-get install -y redis-server
-	apt-get install -y build-essential libjpeg-dev libfreetype6-dev python-dev python-imaging libcurl3-dev
-	apt-get install -y mysql-client
-	apt-get install -y postgresql postgresql-client postgresql-server-dev-9.4
+	sudo apt-get install -y wget
+	sudo apt-get install -y sqlite3 unzip git htop libcurl3-dev
+	sudo apt-get install -y python-pip python2.7-dev ncurses-dev python-virtualenv
+	sudo apt-get install -y libxslt-dev libxml2-dev libffi-dev redis-server mysql-client
+	sudo apt-get install -y build-essential libjpeg-dev libfreetype6-dev python-dev python-imaging
+	sudo apt-get install -y postgresql postgresql-client postgresql-server-dev-9.4
 	# add apache user
-	useradd -M $(WWWUSER)
-	usermod -s /bin/false $(WWWUSER)
-	usermod -L $(WWWUSER)
-	adduser $(WWWUSER) $(WWWGROUP)
+	sudo useradd -M $(WWWUSER)
+	sudo usermod -s /bin/false $(WWWUSER)
+	sudo usermod -L $(WWWUSER)
+	sudo adduser $(WWWUSER) $(WWWGROUP)
 	# install apache/wsgi
-	apt-get install -y apache2 apache2.2-common apache2-mpm-prefork apache2-utils libexpat1 ssl-cert
-	apt-get install -y libapache2-mod-wsgi
+	sudo apt-get install -y apache2 apache2.2-common apache2-mpm-prefork apache2-utils libexpat1 ssl-cert
+	sudo apt-get install -y libapache2-mod-wsgi
 	# disable default site
-	a2dissite 000-default
+	sudo a2dissite 000-default
 
 bowtie:
 	wget -c http://netix.dl.sourceforge.net/project/bowtie-bio/bowtie2/2.2.6/bowtie2-2.2.6-linux-x86_64.zip && \
@@ -77,7 +75,7 @@ cleandb:
 
 # gunicorn/nginx webserver
 unicorn:
-	apt-get install nginx
+	sudo apt-get install nginx
 	# start gunicorn with
 	# gunicorn --bind 0.0.0.0:8000 wsgi:app
 
@@ -92,7 +90,7 @@ webservice-docker:
 	cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
 	echo "ServerName localhost" >> /etc/apache2/apache2.conf
 	# enable site and restart
-	a2ensite zippy
+	sudo a2ensite zippy
 	#/etc/init.d/apache2 restart
 # webservice install (production)
 webservice:
@@ -105,8 +103,8 @@ webservice:
 	cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
 	echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
 	# enable site and restart
-	a2ensite zippy
-	/etc/init.d/apache2 restart
+	sudo a2ensite zippy
+	sudo /etc/init.d/apache2 restart
 
 # same for development environment (not maintained)
 webservice-dev:
@@ -117,8 +115,8 @@ webservice-dev:
 	# apache WSGI config
 	cp install/zippy_dev.hostconfig /etc/apache2/sites-available/zippy.conf
 	# enable site and restart
-	a2ensite zippy
-	/etc/init.d/apache2 restart
+	sudo a2ensite zippy
+	sudo /etc/init.d/apache2 restart
 
 #### genome resources
 import-resources:
