@@ -510,7 +510,15 @@ class Primer3(object):
         self.flank = flank
         fasta = pysam.FastaFile(self.genome)
         self.designregion = ( str(self.target[0]), self.target[1]-self.flank, self.target[2]+self.flank )
-        self.sequence = fasta.fetch(*self.designregion)
+        #assert 0,(fasta,self.designregion,self.genome,target)
+        try:
+            self.sequence = fasta.fetch(*self.designregion)
+        except KeyError as kerr:
+            #Error like KeyError: "sequence 'chr10' not present"
+            assert kerr.args[0]=="sequence '{0}' not present".format(self.designregion[0])
+            assert self.designregion[0][0:3]=="chr"
+            newdesignregion=(self.designregion[0][3:],self.designregion[1],self.designregion[2])
+            self.sequence=fasta.fetch(*newdesignregion)
         self.pairs = []
         self.explain = []
 

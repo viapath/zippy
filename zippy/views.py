@@ -22,8 +22,8 @@ app.secret_key = 'Zippy is the best handpuppet out there'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['DOWNLOAD_FOLDER'] = 'results'
 app.config['CONFIG_FILE'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'zippy.json')
-with open("elog.log","a") as fh:
-    fh.write("iniciando\n")
+#with open("elog.log","a") as fh:
+#    fh.write("iniciando\n")
 # read password (SHA1 hash, not the safest)
 with open(app.config['CONFIG_FILE']) as conf:
     config = json.load(conf, object_hook=ascii_encode_dict)
@@ -36,9 +36,9 @@ def login_required(func):
     @wraps(func)
     def wrap(*args, **kwargs):
         #Skip logins now
-        print("slog")
-        with open("elog.log","a") as fh:
-            fh.write("sloge\n")
+        #print("slog")
+        #with open("elog.log","a") as fh:
+        #    fh.write("sloge\n")
         session["logged_in"]=True
         return func(*args, **kwargs)
         if 'logged_in' in session:
@@ -136,19 +136,20 @@ def upload():
 @app.route('/test/', methods=['POST','GET'])
 def testpage():
     # read form data
-    print("testpage")
+    return "testpage"
 
 @app.route('/adhoc_design/', methods=['POST'])
 def adhocdesign():
     # read form data
-    print("eerror")
-    return
+    #return '2cad'
+    #return "dde {0}".format(str(request.files.items()))
     uploadFile = request.files['filePath']
     locus = request.form.get('locus')
     design = request.form.get('design')
     tiers = map(int,request.form.getlist('tiers'))
     gap = request.form.get('gap')
     store = request.form.get('store')
+    #return str((uploadFile,design,tiers,gap,store))
 
     print >> sys.stderr, 'tiers', tiers
     print >> sys.stderr, 'locus', locus
@@ -160,8 +161,15 @@ def adhocdesign():
         if uploadFile:
             filename = secure_filename(uploadFile.filename)
             print >> sys.stderr, "Uploaded: ", filename
-            target = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            #return str((os.getcwd(),filename))
+            #return(filename)
+            try:
+                target = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            except Exception as exc:
+                import traceback
+                return str(traceback.format_exc())
             uploadFile.save(target)
+            #return str((target,sys.stderr,sys.stdout))
             print >> sys.stderr, "file saved to %s" % target
         else:
             target = locus

@@ -7,16 +7,32 @@ ZIPPYWWW=/var/www/zippy
 WWWUSER=flask
 WWWGROUP=www-data
 
+#See which distro does the host have
+platform=$(python -mplatform)
+ifneq (,$(findstring ubuntu,${platform}))
+	distro=ubuntu
+else
+	distro=centos
+endif
 # production install
-release: install resources webservice
+release: install_${distro} resources webservice
 
 # development installs (with mounted volume)
 all: install resources
 
+zippy-install: zippy-install_${distro}
+essential: essential_${distro}
 install: essential bowtie zippy-install
+webservice: webservice_${distro}
+webservice-docker: webservice-docker_${distro}
+webservice-dev: webservice-dev_${distro}
+
+deploy: zippy-install webservice
+
+
 
 # requirements
-essential:
+essential_ubuntu:
 	sudo apt-get install -y wget
 	sudo apt-get install -y sqlite3 unzip git htop libcurl3-dev
 	sudo apt-get install -y python-pip python2.7-dev ncurses-dev python-virtualenv
@@ -33,6 +49,30 @@ essential:
 	sudo apt-get install -y libapache2-mod-wsgi
 	# disable default site
 	sudo a2dissite 000-default
+essential_centos:
+	sudo yum install -y wget sqlite unzip git htop python2-pip python2-devel ncurses-devel
+	#apachectl restart graceful
+	#kill -USR1 `cat /usr/local/httpd/logs/httpd.pid`
+	#kill -USR1 `cat /usr/local/apache2/logs/httpd.pid`
+	sudo yum install -y libxslt-devel libxml2-devel libffi-devel redis mod_wsgi python-virtualenv httpd
+	echo y|sudo yum groupinstall 'Development Tools'
+	sudo yum install -y libjpeg-devel freetype-devel python-imaging mysql postgresql postgresql-devel #-client llibcurl3-devel
+	#Python-dev(el) no se pone por que ya etá python2-devel y se supone que usamos Python 2
+	#En Centos, mysql, redis y postgresql vienen en un solo paquete para servidor y para cliente, sin el sufijo -server ni -client
+	# add apache user
+	sudo groupadd -f $(WWWGROUP)
+	getent passwd $(WWWUSER)>/dev/null||sudo adduser $(WWWUSER) -g $(WWWGROUP)
+	#If the user does exists, does not execute the part of the command. This behavior is
+	#achieved because this instruction is taken as a boolean construct (as all in shell finally, that lines have a return code), with || as the operator (OR).
+	#If the first command (before the ||) gives a zero return value (if the user exists) there is no need to execute the second part of the statement to 
+	#calculate the return value of the line
+	#usermod -g $(WWWGROUP) $(WWWUSER)#Pero 1003 es el gid que le tocó por azar al grupo www-data
+	sudo usermod -s /bin/false $(WWWUSER)
+	sudo usermod -L $(WWWUSER)
+	# install apache/wsgi
+	#yum -y apache2 apache2.2-common apache2-mpm-prefork apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi
+	# disable default site
+	#a2dissite 000-default
 
 bowtie:
 	wget -c http://netix.dl.sourceforge.net/project/bowtie-bio/bowtie2/2.2.6/bowtie2-2.2.6-linux-x86_64.zip && \
@@ -41,7 +81,7 @@ bowtie:
 	rm -rf bowtie2-2.2.6 bowtie2-2.2.6-linux-x86_64.zip
 
 # zippy setup (will move to distutils in future release)
-zippy-install:
+zippy-install_ubuntu:
 	# virtualenv
 	sudo mkdir -p $(ZIPPYPATH)
 	cd $(ZIPPYPATH) && sudo /usr/bin/virtualenv venv
@@ -56,6 +96,21 @@ zippy-install:
 	mkdir -p $(ZIPPYVAR)/uploads
 	mkdir -p $(ZIPPYVAR)/results
 	sudo chmod -R 777 $(ZIPPYVAR)
+zippy-install_centos:
+	# virtualenv
+	sudo mkdir -p $(ZIPPYPATH)
+	cd $(ZIPPYPATH) && sudo /usr/bin/virtualenv venv
+	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
+	sudo $(ZIPPYPATH)/venv/bin/pip install Cython==0.24
+	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
+	# create empty database
+	sudo mkdir -p $(ZIPPYVAR)
+	touch $(ZIPPYVAR)/zippy.sqlite
+	touch $(ZIPPYVAR)/zippy.log
+	touch $(ZIPPYVAR)/.blacklist.cache
+	sudo mkdir -p $(ZIPPYVAR)/uploads
+	sudo mkdir -p $(ZIPPYVAR)/results
+	#chmod -R 777 $(ZIPPYVAR)
 
 
 #Cleans
@@ -80,7 +135,7 @@ unicorn:
 	# gunicorn --bind 0.0.0.0:8000 wsgi:app
 
 # webservice install (for the interior of a docker container)
-webservice-docker:
+webservice-docker_ubuntu:
 	rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
 	# make WWW directories
 	mkdir -p $(ZIPPYWWW)
@@ -93,7 +148,7 @@ webservice-docker:
 	a2ensite zippy
 	#/etc/init.d/apache2 restart
 # webservice install (production)
-webservice:
+webservice_ubuntu:
 	rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
 	# make WWW directories
 	mkdir -p $(ZIPPYWWW)
@@ -105,9 +160,8 @@ webservice:
 	# enable site and restart
 	a2ensite zippy
 	/etc/init.d/apache2 restart
-
 # same for development environment (not maintained)
-webservice-dev:
+webservice-dev_ubuntu:
 	# make WWW directories
 	mkdir -p $(ZIPPYWWW)
 	cp install/zippy_dev.wsgi $(ZIPPYWWW)/zippy.wsgi
@@ -117,6 +171,44 @@ webservice-dev:
 	# enable site and restart
 	a2ensite zippy
 	/etc/init.d/apache2 restart
+
+# webservice install (production)
+webservice_centos:
+	sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
+	# make WWW directories
+	sudo mkdir -p $(ZIPPYWWW)
+	sudo cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
+	# apache WSGI config
+	sudo cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
+	# enable site and restart
+	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
+	#a2ensite zippy
+	sudo systemctl restart httpd
+# webservice install (for the interior of a docker container)
+webservice-docker_centos:
+	sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
+	# make WWW directories
+	sudo mkdir -p $(ZIPPYWWW)
+	sudo cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
+	# apache WSGI config
+	sudo cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
+	# enable site and restart
+	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
+# same for development environment (not maintained)
+webservice-dev_centos:
+	# make WWW directories
+	sudo mkdir -p $(ZIPPYWWW)
+	sudo cp install/zippy_dev.wsgi $(ZIPPYWWW)/zippy.wsgi
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
+	# apache WSGI config
+	sudo cp install/zippy_dev.hostconfig /etc/httpd/conf.d/zippy.conf
+	# enable site and restart
+	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
+	#a2ensite zippy
+	sudo systemctl start httpd.service
+
 
 #### genome resources
 import-resources:

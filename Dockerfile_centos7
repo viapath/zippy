@@ -1,5 +1,5 @@
 FROM centos:centos7.3.1611
-MAINTAINER lucioric
+MAINTAINER lucioric2000@hotmail.com
 
 RUN yum -y install less make wget curl vim
 # install zippy
