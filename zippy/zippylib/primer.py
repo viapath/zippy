@@ -355,6 +355,7 @@ class PrimerPair(list):
         return int(self[0].rank)
 
     def check(self, limits):
+        print("primcheck",self,limits)
         for k,v in limits.items():
             x = getattr(self,k)()
             try:
@@ -413,6 +414,9 @@ class Primer(object):
         self.snp = []  # same order as loci attribute
         self.meta = {}  # metadata
         self.targetposition = targetposition
+        #if isinstance(self.targetposition,str):
+        #    if self.targetposition.lower().startswith("chr"):
+        #        self.targetposition=self.targetposition[3:]
         self.location = location  # storage location
         if loci:
             pass
@@ -453,10 +457,17 @@ class Primer(object):
         return True if self.snp else False
 
     def checkTarget(self):
+        #print("ct",self.targetposition,self.loci,self.targetposition.chrom)
         if self.targetposition is not None:
             for locus in self.loci:
-                if locus.chrom == self.targetposition.chrom:
+                #print("cloc",locus.chrom,self.targetposition.chrom)
+                tichrom=self.targetposition.chrom
+                if tichrom.lower().startswith("chr"):
+                    tichrom=tichrom[3:]
+                if locus.chrom == tichrom:
+                    #print("estosoffs",locus.offset,self.targetposition.offset)
                     if int(locus.offset) == int(self.targetposition.offset):
+                        #print("ctt")
                         return True
         return False
 
@@ -519,6 +530,10 @@ class Primer3(object):
             assert self.designregion[0][0:3]=="chr"
             newdesignregion=(self.designregion[0][3:],self.designregion[1],self.designregion[2])
             self.sequence=fasta.fetch(*newdesignregion)
+        except ValueError as vlerr:
+            print("dr",self.designregion)
+            raise vlerr
+            #assert 0,self.sequence
         self.pairs = []
         self.explain = []
 

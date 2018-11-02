@@ -318,6 +318,7 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                 specificPrimerPairs = []
                 blacklisted = 0
                 for i, pair in enumerate(pairs):
+                    #print("ipr",i,pair)
                     if pair.uniqueid() in blacklist:
                         blacklisted += 1
                     elif all([pair[0].checkTarget(), pair[1].checkTarget()]):
@@ -339,11 +340,14 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                 # assign designed primer pairs to intervals (remove ranks and tag)
                 intervalindex = { iv.name: iv for iv in intervals }
                 intervalprimers = { iv.name: set([ p.uniqueid() for p in ivpairs[iv] ]) for iv in intervals }
+                print("pares",pairs,intervalprimers)
                 failCount = 0
                 for pair in pairs:
                     passed = 0
                     if pair.uniqueid() not in intervalprimers[pair.name]:
+                        print("check",config['designlimits'],pair)
                         if pair.check(config['designlimits']):
+                            print("ckk")
                             # add default tag
                             for primer in pair:
                                 primer.tag = config['design']['tag']
