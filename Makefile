@@ -80,7 +80,7 @@ very_essential_ubuntu:
 	apt-get install -y sudo
 	sudo apt-get install -y sudo less make wget curl vim apt-utils
 very_essential_centos:
-	yum install-y sudo
+	yum install -y sudo
 	sudo yum install -y sudo wget less make curl vim
 
 bowtie:
