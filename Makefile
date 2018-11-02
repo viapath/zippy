@@ -35,7 +35,7 @@ deploy: zippy-install webservice
 essential_ubuntu:
 	RUN apt-get update && apt-get -y upgrade
 
-	sudo apt-get install -y less make wget curl vim apt-utils
+	sudo apt-get install -y sudo less make wget curl vim apt-utils
 	sudo apt-get install -y sqlite3 unzip git htop libcurl3-dev
 	sudo apt-get install -y python-pip python2.7-dev ncurses-dev python-virtualenv
 	sudo apt-get install -y libxslt-dev libxml2-dev libffi-dev redis-server mysql-client
@@ -52,7 +52,7 @@ essential_ubuntu:
 	# disable default site
 	sudo a2dissite 000-default
 essential_centos:
-	sudo yum install -y wget less make curl vim sqlite unzip git htop python2-pip python2-devel ncurses-devel
+	sudo yum install -y sudo wget less make curl vim sqlite unzip git htop python2-pip python2-devel ncurses-devel
 	#apachectl restart graceful
 	#kill -USR1 `cat /usr/local/httpd/logs/httpd.pid`
 	#kill -USR1 `cat /usr/local/apache2/logs/httpd.pid`
