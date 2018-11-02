@@ -61,8 +61,6 @@ essential_centos:
 	echo y|sudo yum groupinstall 'Development Tools'
 	sudo yum install -y libjpeg-devel freetype-devel python-imaging mysql postgresql postgresql-devel #-client llibcurl3-devel
 	#Python-dev(el) no se pone por que ya etá python2-devel y se supone que usamos Python 2
-	#En Centos, mysql, redis y postgresql vienen en un solo paquete para servidor y para cliente, sin el sufijo -server ni -client
-	# add apache user
 	sudo groupadd -f $(WWWGROUP)
 	getent passwd $(WWWUSER)>/dev/null||sudo adduser $(WWWUSER) -g $(WWWGROUP)
 	#If the user does exists, does not execute the part of the command. This behavior is
@@ -99,12 +97,14 @@ zippy-install_ubuntu:
 	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
 	# create empty database
 	sudo mkdir -p $(ZIPPYVAR)
+	sudo chown -R root:root $(ZIPPYVAR)
 	touch $(ZIPPYVAR)/zippy.sqlite
 	touch $(ZIPPYVAR)/zippy.log
 	touch $(ZIPPYVAR)/.blacklist.cache
 	mkdir -p $(ZIPPYVAR)/uploads
 	mkdir -p $(ZIPPYVAR)/results
-	sudo chmod -R 777 $(ZIPPYVAR)
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
+	#sudo chmod -R 777 $(ZIPPYVAR)
 zippy-install_centos:
 	# virtualenv
 	sudo mkdir -p $(ZIPPYPATH)
@@ -114,12 +114,14 @@ zippy-install_centos:
 	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
 	# create empty database
 	sudo mkdir -p $(ZIPPYVAR)
-	touch $(ZIPPYVAR)/zippy.sqlite
-	touch $(ZIPPYVAR)/zippy.log
-	touch $(ZIPPYVAR)/.blacklist.cache
+	sudo chown -R root:root $(ZIPPYVAR)
+	sudo touch $(ZIPPYVAR)/zippy.sqlite
+	sudo touch $(ZIPPYVAR)/zippy.log
+	sudo touch $(ZIPPYVAR)/.blacklist.cache
 	sudo mkdir -p $(ZIPPYVAR)/uploads
 	sudo mkdir -p $(ZIPPYVAR)/results
-	#chmod -R 777 $(ZIPPYVAR)
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
+	#sudo chmod -R 777 $(ZIPPYVAR)
 
 
 #Cleans
