@@ -53,6 +53,9 @@ essential_ubuntu:
 	# disable default site
 	sudo a2dissite 000-default
 essential_centos:
+	sudo yum -y install epel-release
+	sudo yum repolist
+	sudo yum -y update
 	sudo yum install -y sudo wget less make curl vim sqlite unzip git htop python2-pip python2-devel ncurses-devel
 	#apachectl restart graceful
 	#kill -USR1 `cat /usr/local/httpd/logs/httpd.pid`
