@@ -22,6 +22,7 @@ all: install resources
 
 zippy-install: zippy-install_${distro}
 essential: essential_${distro}
+very_essential: very_essential_${distro}
 install: essential bowtie zippy-install
 webservice: webservice_${distro}
 webservice-docker: webservice-docker_${distro}
@@ -75,6 +76,10 @@ essential_centos:
 	#yum -y apache2 apache2.2-common apache2-mpm-prefork apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi
 	# disable default site
 	#a2dissite 000-default
+very_essential_ubuntu:
+	sudo apt-get install -y sudo less make wget curl vim apt-utils
+very_essential_centos:
+	sudo yum install -y sudo wget less make curl vim
 
 bowtie:
 	wget -c http://netix.dl.sourceforge.net/project/bowtie-bio/bowtie2/2.2.6/bowtie2-2.2.6-linux-x86_64.zip && \

@@ -7,6 +7,7 @@ MAINTAINER lucioric
 # install zippy
 ADD . /zippy
 #As the base image is a zippy image, we first need to delete the software part of this image
+RUN cd /zippy && make very_essential
 RUN cd /zippy && make cleansoftware
 RUN cd /zippy && make cleandb
 
