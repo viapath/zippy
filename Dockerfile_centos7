@@ -1,22 +1,26 @@
 FROM centos:centos7.3.1611
 MAINTAINER lucioric2000@hotmail.com
 
-RUN yum -y install less make wget curl vim
-# install zippy
+#RUN yum -y install less make wget curl vim
+# install Zippy
 ADD . /zippy
 
-RUN cd /zippy && make -f Makefile_centos install
-RUN cd /zippy && make -f Makefile_centos webservice-docker
+RUN cd /zippy && make install
+RUN cd /zippy && make webservice-docker
 # prepare genome
-RUN cd /zippy && make -f Makefile_centos genome-download
-RUN cd /zippy && make -f Makefile_centos genome-index
+RUN cd /zippy && make genome-download
+RUN cd /zippy && make genome-index
 
 # get annotation
-RUN cd /zippy && make -f Makefile_centos variation-download
-RUN cd /zippy && make -f Makefile_centos refgene-download
+RUN cd /zippy && make variation-download
+RUN cd /zippy && make refgene-download
+
+# install Zippy Web service
+RUN cd /zippy && make webservice
+
 
 EXPOSE 80
 
-CMD /bin/bash /zippy/zippyd_CentOS7.sh
+CMD /bin/bash /zippy/zippyd.sh
 #The path of zippy.py is
 # sudo docker run -it lucioric/zippy usr/local/zippy/venv/bin/python /zippy/zippy/zippy.py

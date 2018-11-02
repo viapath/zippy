@@ -2,17 +2,13 @@ FROM debian:jessie
 MAINTAINER dbrawand@nhs.net
 
 #Initial packages install
-RUN apt-get update && apt-get -y upgrade
+#RUN apt-get update && apt-get -y upgrade
 # add some convenience utils
-RUN apt-get -y install curl less vim apt-utils
+#RUN apt-get -y install curl less make wget vim apt-utils
 
-
-# prepare genome
-RUN apt-get -y install less make wget
-#ADD Makefile /zippy/Makefile
-#ADD package-requirements.txt /zippy/package-requirements.txt
 ADD . /zippy
 RUN cd zippy && make install
+# prepare genome
 RUN cd zippy && make genome-download
 RUN cd zippy && make genome-index
 

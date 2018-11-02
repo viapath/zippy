@@ -18,15 +18,7 @@ else
     cd zippy
 fi
 
-#python -mplatform | grep -qi Ubuntu && makefilename=Makefile_ubuntu || makefilename=Makefile_centos 
-#make -f $makefilename cleansoftware
-#make -f $makefilename cleandb
-#make -f $makefilename install
-#make -f $makefilename webservice
-#make -f $makefilename variation-download
-#make -f $makefilename refgene-download
-#make -f $makefilename genome
-make cleansoftware
+ake cleansoftware
 make cleandb
 make install
 make webservice
