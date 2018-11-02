@@ -17,7 +17,7 @@ then
 	make genome
 else
     echo "Not in zippy folder."
-    sudo mkdir -p ${srv_zippy}
+    sudo mkdir -p /srv/qgen
     cd /srv/qgen
     git clone --recursive https://github.com/Lucioric2000/zippy
     sudo chmod -R 777 ${srv_zippy}
