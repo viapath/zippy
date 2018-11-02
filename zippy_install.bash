@@ -16,12 +16,12 @@ else
     git clone --recursive https://github.com/Lucioric2000/zippy
     sudo chmod -R 777 ${srv_zippy}
     cd zippy
+    
 fi
 
-ake cleansoftware
+make cleansoftware
 make cleandb
 make install
 make webservice
-make variation-download
-make refgene-download
+make annotation
 make genome
