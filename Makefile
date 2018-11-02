@@ -77,9 +77,10 @@ essential_centos:
 	# disable default site
 	#a2dissite 000-default
 very_essential_ubuntu:
-	apt-get install sudo
+	apt-get install -y sudo
 	sudo apt-get install -y sudo less make wget curl vim apt-utils
 very_essential_centos:
+	yum install-y sudo
 	sudo yum install -y sudo wget less make curl vim
 
 bowtie:
