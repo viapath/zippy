@@ -103,8 +103,8 @@ zippy-install_ubuntu:
 	touch $(ZIPPYVAR)/.blacklist.cache
 	mkdir -p $(ZIPPYVAR)/uploads
 	mkdir -p $(ZIPPYVAR)/results
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
-	#sudo chmod -R 777 $(ZIPPYVAR)
+	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
+	sudo chmod -R 777 $(ZIPPYVAR)
 zippy-install_centos:
 	# virtualenv
 	sudo mkdir -p $(ZIPPYPATH)
@@ -120,8 +120,8 @@ zippy-install_centos:
 	sudo touch $(ZIPPYVAR)/.blacklist.cache
 	sudo mkdir -p $(ZIPPYVAR)/uploads
 	sudo mkdir -p $(ZIPPYVAR)/results
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
-	#sudo chmod -R 777 $(ZIPPYVAR)
+	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
+	sudo chmod -R 777 $(ZIPPYVAR)
 
 
 #Cleans

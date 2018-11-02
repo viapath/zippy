@@ -514,7 +514,7 @@ class Primer3(object):
         try:
             self.sequence = fasta.fetch(*self.designregion)
         except KeyError as kerr:
-            #Error like KeyError: "sequence 'chr10' not present"
+            #print("Literal sequence not found: {0}".format(self.designregion))
             assert kerr.args[0]=="sequence '{0}' not present".format(self.designregion[0])
             assert self.designregion[0][0:3]=="chr"
             newdesignregion=(self.designregion[0][3:],self.designregion[1],self.designregion[2])
