@@ -249,16 +249,16 @@ genome-download:
 genome-index:
 	mkdir -p $(ZIPPYVAR)/resources
 	cd $(ZIPPYVAR)/resources
-	ls human_g1k_v37.bowtie.rev.2.bt2 &>/dev/null && ( \
+	echo now on $(pwd) and  $(ZIPPYVAR)/resources
+	ls $(ZIPPYVAR)/resources/human_g1k_v37.bowtie.rev.2.bt2 &> /dev/null && ( \
 		echo bowtie file human_g1k_v37.bowtie exists, thus not running bowtie command ) || \
-		/usr/local/bin/bowtie2-build human_g1k_v37.fasta human_g1k_v37.bowtie
+		echo entonces intalaria todo otra vez
+		#/usr/local/bin/bowtie2-build human_g1k_v37.fasta human_g1k_v37.bowtie
 
 annotation: variation-download refgene-download
 
 variation-download:
 	#The files specified by the following commands did not exist as of 30 th, Jly, 2018, so that were updated by the later version present: b151_GRCh37p13
-	#wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b147_GRCh37p13/VCF/00-common_all.vcf.gz && \
-	#wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b147_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
 	mkdir -p $(ZIPPYVAR)/resources && cd $(ZIPPYVAR)/resources && \
 	wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz && \
 	wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
