@@ -250,9 +250,11 @@ genome-index:
 	mkdir -p $(ZIPPYVAR)/resources
 	cd $(ZIPPYVAR)/resources
 	echo now on $(pwd) and  $(ZIPPYVAR)/resources
-	ls $(ZIPPYVAR)/resources/human_g1k_v37.bowtie.rev.2.bt2 &> /dev/null && ( \
-		echo bowtie file human_g1k_v37.bowtie exists, thus not running bowtie command ) || \
-		echo entonces intalaria todo otra vez
+	ls human_g1k_v37.bowtie.rev.2.bt2 &>/dev/null && ( \
+		echo bowtie file human_g1k_v37.bowtie exists, thus not running bowtie command ) || ( \
+		echo entonces intalaria todo otra vez && \
+		ls $(ZIPPYVAR)/resources/human_g1k_v37.bowtie.rev.2.bt2 && \
+		echo entonces )
 		#/usr/local/bin/bowtie2-build human_g1k_v37.fasta human_g1k_v37.bowtie
 
 annotation: variation-download refgene-download
