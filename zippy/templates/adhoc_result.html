@@ -2,42 +2,59 @@
 {% block content %}
 	<h3>Primer Query Results:</h3>
 	{% if resultList is not equalto [] %}
-		<hr>
-		{% for item in resultList %}
-			<b>Primer Pair Name:</b> {{item.name}}  <b>Amplicon:</b> {{item[0].targetposition.chrom}}:{{item[0].targetposition.offset+item[0].targetposition.length}}-{{item[1].targetposition.offset}} (Length: {{item[1].targetposition.offset+item[1].targetposition.length-item[0].targetposition.offset}})
-			<br><hr><br>
-			<table class="primer">
-				<th class="primer">
-					<td class="primer">Left</td>
-					<td class="primer">Right</td>
-				</th>
+		<!--hr-->
+		<table>
+			<thead>
 				<tr>
-					<td class="left"><span class="pop">Name</span></td>
-					<td class="right">{{ item[0].name }}</td>
-					<td class="right">{{ item[1].name }}</td>
+					<th>Primer query Results:</th>
+					<hr>
 				</tr>
+			</thead>
+			<tbody>
+			{% for item in resultList %}
 				<tr>
-					<td class="left"><span class="pop">Sequence</span></td>
-					<td class="right">{{ item[0].tag }}-{{ item[0].seq }}</td>
-					<td class="right">{{ item[1].tag }}-{{ item[1].seq }}</td>
+					<td>
+						<b>Primer Pair Name:</b> {{item.name}}  <b>Amplicon:</b> {{item[0].targetposition.chrom}}:{{item[0].targetposition.offset+item[0].targetposition.length}}-{{item[1].targetposition.offset}} (Length: {{item[1].targetposition.offset+item[1].targetposition.length-item[0].targetposition.offset}})
+					</td>
+					<td>
+				<!--br><hr><br-->
+					<table class="primer">
+						<th class="primer">
+							<td class="primer">Left</td>
+							<td class="primer">Right</td>
+						</th>
+						<tr>
+							<td class="left"><span class="pop">Name</span></td>
+							<td class="right">{{ item[0].name }}</td>
+							<td class="right">{{ item[1].name }}</td>
+						</tr>
+						<tr>
+							<td class="left"><span class="pop">Sequence</span></td>
+							<td class="right">{{ item[0].tag }}-{{ item[0].seq }}</td>
+							<td class="right">{{ item[1].tag }}-{{ item[1].seq }}</td>
+						</tr>
+						<tr>
+							<td class="left"><span class="pop">Locus</span></td>
+							<td class="right">{{ item[0].targetposition }}</td>
+							<td class="right">{{ item[1].targetposition }}</td>
+						</tr>
+						<tr>
+							<td class="left"><span class="pop">Tm</span></td>
+							<td class="right">{{ '%0.1f'|format(item[0].tm|float) }}˚C</td>
+							<td class="right">{{ '%0.1f'|format(item[1].tm|float) }}˚C</td>
+						</tr>
+						<tr>
+							<td class="left"><span class="pop">GC content</span></td>
+							<td class="right">{{ '%0.1f'|format((item[0].gc * 100)|float) }}%</td>
+							<td class="right">{{ '%0.1f'|format((item[1].gc * 100)|float) }}%</td>
+						</tr>
+					</table>
+					</td>
+					<hr>
 				</tr>
-				<tr>
-					<td class="left"><span class="pop">Locus</span></td>
-					<td class="right">{{ item[0].targetposition }}</td>
-					<td class="right">{{ item[1].targetposition }}</td>
-				</tr>
-				<tr>
-					<td class="left"><span class="pop">Tm</span></td>
-					<td class="right">{{ '%0.1f'|format(item[0].tm|float) }}˚C</td>
-					<td class="right">{{ '%0.1f'|format(item[1].tm|float) }}˚C</td>
-				</tr>
-				<tr>
-					<td class="left"><span class="pop">GC content</span></td>
-					<td class="right">{{ '%0.1f'|format((item[0].gc * 100)|float) }}%</td>
-					<td class="right">{{ '%0.1f'|format((item[1].gc * 100)|float) }}%</td>
-				</tr>
-			</table>
-		{% endfor %}
+				</tbody>
+			{% endfor %}
+		</tbody>
 	{% endif %}
 	{% if missedIntervals is not equalto [] %}
 		<table class="region">
