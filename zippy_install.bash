@@ -9,12 +9,12 @@ then
     echo "Already in zippy folder."
     sudo chmod -R 777 ${srv_zippy}
     git pull origin master
-	make cleansoftware
-	make cleandb
-	make install
-	make webservice
-	make annotation
-	make genome
+    make cleansoftware
+    make cleandb
+    make install
+    make webservice
+    make annotation
+    make genome
 else
     if [[ -d "${srv_zippy}" ]]
     then
@@ -28,9 +28,10 @@ else
     else
         echo "Not in zippy folder."
         sudo mkdir -p /srv/qgen
+        sudo chmod -R 777 /srv/qgen
         cd /srv/qgen
-        git clone --recursive https://github.com/Lucioric2000/zippy
-        sudo chmod -R 777 ${srv_zippy}
+        sudo git clone --recursive https://github.com/Lucioric2000/zippy
+        #sudo chmod -R 777 ${srv_zippy}
         cd zippy
         ./zippy_install.bash $@
     fi

@@ -6,6 +6,7 @@ ZIPPYWWW=/var/www/zippy
 
 WWWUSER=flask
 WWWGROUP=www-data
+genome=human_g1k_v37
 
 #See which distro does the host have
 platform=$(python -mplatform)
@@ -237,22 +238,22 @@ genome: genome-download genome-index
 
 genome-download:
 	mkdir -p $(ZIPPYVAR)/resources
-	cd $(ZIPPYVAR)/resources
-	ls human_g1k_v37.fasta &>/dev/null && ( \
-		echo File human_g1k_v37.fasta.gz exists, not downloading it again ) || ( \
-		wget -qO- ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.gz | \
-		gzip -dcq | cat > human_g1k_v37.fasta && rm -f human_g1k_v37.fasta.gz )
-	ls human_g1k_v37.fasta.fai &>/dev/null && \
-		echo File human_g1k_v37.fasta.fai exists, not downloading it again || \
-		wget -c ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/human_g1k_v37.fasta.fai
+	#cd $(ZIPPYVAR)/resources
+	ls $(ZIPPYVAR)/resources/${genome}.fasta &>/dev/null && ( \
+		echo File ${genome}.fasta.gz exists, not downloading it again ) || ( \
+		cd $(ZIPPYVAR)/resources; \
+		echo Downloading genome to $(ZIPPYVAR)/resources/${genome} ; \
+		wget -qO- ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz | \
+		gzip -dcq | cat >${genome}.fasta && rm -f ${genome}.fasta.gz )
+	ls ${genome}.fasta.fai &>/dev/null && \
+		echo File $(ZIPPYVAR)/resources/${genome}.fasta.fai exists, not downloading it again || \
+		( cd $(ZIPPYVAR)/resources; wget -c ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai )
 
 genome-index:
 	mkdir -p $(ZIPPYVAR)/resources
-	cd $(ZIPPYVAR)/resources
-	echo now on $(pwd) and  $(ZIPPYVAR)/resources
-	ls human_g1k_v37.bowtie.rev.2.bt2 &>/dev/null && ( \
-		echo bowtie file human_g1k_v37.bowtie exists, thus not running bowtie command ) || \
-		/usr/local/bin/bowtie2-build human_g1k_v37.fasta human_g1k_v37.bowtie
+	ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null && ( \
+		echo bowtie file $(ZIPPYVAR)/resources/${genome}.bowtie exists, thus not running bowtie command ) || \
+		( cd $(ZIPPYVAR)/resources; /usr/local/bin/bowtie2-build ${genome}.fasta ${genome}.bowtie )
 
 annotation: variation-download refgene-download
 
