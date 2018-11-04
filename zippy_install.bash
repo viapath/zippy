@@ -18,21 +18,18 @@ then
 else
     if [[ -d "${srv_zippy}" ]]
     then
-        cd "${srv_zippy}"
-        ./zippy_install.bash $@
+        echo "Not in zippy folder, but this folder exists."
+        cd "${srv_zippy}" && ./zippy_install.bash $@
         exit
     elif [[ -e "${srv_zippy}" ]]
     then
         echo "File ${srv_zippy} exists but it is not a directory, thus we can not create a directory with that path tho hold the software reposotory. \
         See if it is safe to delete or move it, and then execute again this script."
     else
-        echo "Not in zippy folder."
+        echo "Not in zippy folder, and the zippy folder does not exist."
         sudo mkdir -p /srv/qgen
         sudo chmod -R 777 /srv/qgen
-        cd /srv/qgen
-        sudo git clone --recursive https://github.com/Lucioric2000/zippy
-        #sudo chmod -R 777 ${srv_zippy}
-        cd zippy
-        ./zippy_install.bash $@
+        cd /srv/qgen && git clone --recursive https://github.com/Lucioric2000/zippy
+        cd "${srv_zippy}" && ./zippy_install.bash $@
     fi
 fi
