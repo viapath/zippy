@@ -245,7 +245,7 @@ genome-download:
 		echo Downloading genome to $(ZIPPYVAR)/resources/${genome} ; \
 		wget -qO- ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz | \
 		gzip -dcq | cat >${genome}.fasta && rm -f ${genome}.fasta.gz )
-	ls ${genome}.fasta.fai &>/dev/null && \
+	ls $(ZIPPYVAR)/resources/${genome}.fasta.fai &>/dev/null && \
 		echo File $(ZIPPYVAR)/resources/${genome}.fasta.fai exists, not downloading it again || \
 		( cd $(ZIPPYVAR)/resources; wget -c ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai )
 
