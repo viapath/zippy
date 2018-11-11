@@ -240,32 +240,32 @@ genome: genome-download genome-index
 
 genome-download:
 	sudo mkdir -p $(ZIPPYVAR)/resources
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 	#cd $(ZIPPYVAR)/resources
 	ls $(ZIPPYVAR)/resources/${genome}.fasta &>/dev/null && ( \
 		echo File ${genome}.fasta.gz exists, not downloading it again ) || ( \
 		cd $(ZIPPYVAR)/resources; \
 		echo Downloading genome to $(ZIPPYVAR)/resources/${genome} ; \
-		wget -qO- ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz | \
-		gzip -dcq | cat >${genome}.fasta && rm -f ${genome}.fasta.gz )
+		sudo wget -qO- ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz | \
+		sudo gzip -dcq | sudo cat >${genome}.fasta && sudo rm -f ${genome}.fasta.gz )
 	ls $(ZIPPYVAR)/resources/${genome}.fasta.fai &>/dev/null && \
 		echo File $(ZIPPYVAR)/resources/${genome}.fasta.fai exists, not downloading it again || \
-		( cd $(ZIPPYVAR)/resources; wget -c ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai )
+		( cd $(ZIPPYVAR)/resources; sudo wget -c ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai )
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 
 genome-index:
 	sudo mkdir -p $(ZIPPYVAR)/resources
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 	ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null && ( \
 		echo bowtie file $(ZIPPYVAR)/resources/${genome}.bowtie exists, thus not running bowtie command ) || \
-		( cd $(ZIPPYVAR)/resources; /usr/local/bin/bowtie2-build ${genome}.fasta ${genome}.bowtie )
+		( cd $(ZIPPYVAR)/resources; sudo /usr/local/bin/bowtie2-build ${genome}.fasta ${genome}.bowtie )
 
 annotation: variation-download refgene-download
 
 variation-download:
 	#The files specified by the following commands did not exist as of 30 th, Jly, 2018, so that were updated by the later version present: b151_GRCh37p13
 	sudo mkdir -p $(ZIPPYVAR)/resources && sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR) && cd $(ZIPPYVAR)/resources && \
-	wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz && \
-	wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
+	sudo wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz && \
+	sudo wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
 
 refgene-download:
 	sudo mkdir -p $(ZIPPYVAR)/resources && sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR) && cd $(ZIPPYVAR)/resources && \
