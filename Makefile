@@ -119,7 +119,7 @@ zippy-install_centos:
 	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
 	# create empty database
 	sudo mkdir -p $(ZIPPYVAR)
-	sudo chown -R root:root $(ZIPPYVAR)
+	#sudo chown -R root:root $(ZIPPYVAR)
 	sudo touch $(ZIPPYVAR)/zippy.sqlite
 	sudo touch $(ZIPPYVAR)/zippy.log
 	sudo touch $(ZIPPYVAR)/.blacklist.cache
@@ -127,7 +127,7 @@ zippy-install_centos:
 	sudo mkdir -p $(ZIPPYVAR)/results
 
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
-	#sudo chmod -R 777 $(ZIPPYVAR)
+	sudo chmod -R 777 $(ZIPPYVAR)
 
 
 #Cleans
