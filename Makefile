@@ -125,7 +125,6 @@ zippy-install_centos:
 	sudo touch $(ZIPPYVAR)/.blacklist.cache
 	sudo mkdir -p $(ZIPPYVAR)/uploads
 	sudo mkdir -p $(ZIPPYVAR)/results
-	ls -lh $(ZIPPYVAR)
 
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 	sudo chmod -R 777 $(ZIPPYVAR)
