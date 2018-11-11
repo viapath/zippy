@@ -127,7 +127,6 @@ zippy-install_centos:
 	sudo mkdir -p $(ZIPPYVAR)/results
 
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
-	sudo chmod -R 777 $(ZIPPYVAR)
 
 
 #Cleans
@@ -240,17 +239,20 @@ genome: genome-download genome-index
 
 genome-download:
 	sudo mkdir -p $(ZIPPYVAR)/resources
+	sudo chmod -R 777 $(ZIPPYVAR)/resources
 	#cd $(ZIPPYVAR)/resources
 	ls $(ZIPPYVAR)/resources/${genome}.fasta &>/dev/null && ( \
 		echo File ${genome}.fasta.gz exists, not downloading it again ) || ( \
 		cd $(ZIPPYVAR)/resources; \
 		echo Downloading genome to $(ZIPPYVAR)/resources/${genome} ; \
-		sudo wget -qO- ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz | \
-		sudo gzip -dcq | sudo cat >${genome}.fasta && sudo rm -f ${genome}.fasta.gz )
+		wget -qO- ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz | \
+		gzip -dcq | cat >${genome}.fasta && rm -f ${genome}.fasta.gz )
 	ls $(ZIPPYVAR)/resources/${genome}.fasta.fai &>/dev/null && \
 		echo File $(ZIPPYVAR)/resources/${genome}.fasta.fai exists, not downloading it again || \
-		( cd $(ZIPPYVAR)/resources; sudo wget -c ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai )
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
+		( cd $(ZIPPYVAR)/resources; wget -c ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai )
+	sudo chmod 644 $(ZIPPYVAR)/resources/*
+	sudo chmod 755 $(ZIPPYVAR)/resources
+	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 
 genome-index:
 	sudo mkdir -p $(ZIPPYVAR)/resources
