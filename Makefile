@@ -107,6 +107,7 @@ zippy-install_ubuntu:
 	touch $(ZIPPYVAR)/.blacklist.cache
 	mkdir -p $(ZIPPYVAR)/uploads
 	mkdir -p $(ZIPPYVAR)/results
+	#sudo chown -R flask:www-data /var/local/zippy
 	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 	sudo chmod -R 777 $(ZIPPYVAR)
 zippy-install_centos:
@@ -124,6 +125,7 @@ zippy-install_centos:
 	sudo touch $(ZIPPYVAR)/.blacklist.cache
 	sudo mkdir -p $(ZIPPYVAR)/uploads
 	sudo mkdir -p $(ZIPPYVAR)/results
+
 	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 	sudo chmod -R 777 $(ZIPPYVAR)
 
@@ -182,7 +184,7 @@ webservice-dev_ubuntu:
 	cp install/zippy_dev.wsgi $(ZIPPYWWW)/zippy.wsgi
 	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
-	cp install/zippy_dev.hostconfig /etc/apache2/sites-available/zippy.conf
+	cp install/zippy_dev.hostconfig /etc/apache2/sites-available/zippy_dev.conf
 	# enable site and restart
 	a2ensite zippy
 	/etc/init.d/apache2 restart
@@ -215,10 +217,10 @@ webservice-docker_centos:
 webservice-dev_centos:
 	# make WWW directories
 	sudo mkdir -p $(ZIPPYWWW)
-	sudo cp install/zippy_dev.wsgi $(ZIPPYWWW)/zippy.wsgi
+	sudo cp install/zippy_dev.wsgi $(ZIPPYWWW)/zippy_dev.wsgi
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
-	sudo cp install/zippy_dev.hostconfig /etc/httpd/conf.d/zippy.conf
+	sudo cp install/zippy_dev.hostconfig /etc/httpd/conf.d/zippy_dev.conf
 	# enable site and restart
 	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
 	#a2ensite zippy
