@@ -1,6 +1,6 @@
 #!/bin/bash
 sudo yum -y upgrade
-sudo yum install less make wget curl vim git sudo
+sudo yum -y install less make wget curl vim git sudo
 srv_zippy=/srv/qgen/zippy
 
 qseqdnamatch=`expr match "$(pwd)" '.*\(zippy\)'`

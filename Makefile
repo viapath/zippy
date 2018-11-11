@@ -126,8 +126,8 @@ zippy-install_centos:
 	sudo mkdir -p $(ZIPPYVAR)/uploads
 	sudo mkdir -p $(ZIPPYVAR)/results
 
-	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
-	sudo chmod -R 777 $(ZIPPYVAR)
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
+	#sudo chmod -R 777 $(ZIPPYVAR)
 
 
 #Cleans
