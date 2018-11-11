@@ -1,7 +1,5 @@
-#Listen 9999
-#<VirtualHost *:9999>
-Listen 4999
-<VirtualHost *:4999>
+Listen 9999
+<VirtualHost *:9999>
 	ServerAdmin dbrawand@nhs.net
     ServerName zippy
 
