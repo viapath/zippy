@@ -266,7 +266,7 @@ unstash-resources:
 	#	sudo ln -s /srv/zippy_resources/$file $(ZIPPYVAR)/$file
 	#done
 	#sudo mv /srv/zippy_resources/* $(ZIPPYVAR)/resources/
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
+	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 resources: genome annotation
 
