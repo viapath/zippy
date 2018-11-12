@@ -252,7 +252,7 @@ genome-download:
 		( cd $(ZIPPYVAR)/resources; wget -c ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai )
 	sudo chmod 644 $(ZIPPYVAR)/resources/*
 	sudo chmod 755 $(ZIPPYVAR)/resources
-	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 genome-index:
 	sudo mkdir -p $(ZIPPYVAR)/resources
@@ -261,6 +261,8 @@ genome-index:
 		echo bowtie file $(ZIPPYVAR)/resources/${genome}.bowtie exists, thus not running bowtie command ) || \
 		( cd $(ZIPPYVAR)/resources; sudo /usr/local/bin/bowtie2-build ${genome}.fasta ${genome}.bowtie )
 	sudo chmod 644 $(ZIPPYVAR)/resources/*
+	sudo chmod 755 $(ZIPPYVAR)/resources
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 annotation: variation-download refgene-download
 
@@ -269,11 +271,16 @@ variation-download:
 	sudo mkdir -p $(ZIPPYVAR)/resources && cd $(ZIPPYVAR)/resources && \
 	sudo wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz && \
 	sudo wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
+	sudo chmod 644 $(ZIPPYVAR)/resources/*
+	sudo chmod 755 $(ZIPPYVAR)/resources
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 refgene-download:
 	sudo chmod 777 $(ZIPPYVAR)/resources
 	sudo mkdir -p $(ZIPPYVAR)/resources && cd $(ZIPPYVAR)/resources && \
 	sudo mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -N -D hg19 -P 3306 \
 	 -e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" > refGene
-	 	sudo chmod 755 $(ZIPPYVAR)/resources
+	sudo chmod 644 $(ZIPPYVAR)/resources/*
+	sudo chmod 755 $(ZIPPYVAR)/resources
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
