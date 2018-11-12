@@ -23,7 +23,9 @@ else
     if [[ -d "${srv_zippy}" ]]
     then
         echo "Not in zippy folder, but this folder exists."
-        cd "${srv_zippy}" && ./zippy_install.bash $@
+        cd "${srv_zippy}"
+        git pull origin master
+        ./zippy_install.bash $@
         exit
     elif [[ -e "${srv_zippy}" ]]
     then

@@ -243,11 +243,13 @@ import-resources:
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 stash-resources:
 	# Copy resource files
+	echo Stashing resources
 	sudo mkdir -p /srv/zippy_resources
 	sudo mv $(ZIPPYVAR)/resources/* /srv/zippy_resources/
 	sudo chown -R $(WWWUSER):$(WWWGROUP) /srv/zippy_resources
 unstash-resources:
 	# Copy resource files
+	echo Unstashing respurces
 	sudo mkdir -p /srv/zippy_resources
 	sudo mv /srv/zippy_resources/* $(ZIPPYVAR)/resources/
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
