@@ -104,9 +104,14 @@ zippy-install_ubuntu:
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	# create empty database
 	sudo mkdir -p $(ZIPPYVAR)
-	touch $(ZIPPYVAR)/zippy.sqlite
-	touch $(ZIPPYVAR)/zippy.log
-	touch $(ZIPPYVAR)/.blacklist.cache
+	sudo touch $(ZIPPYVAR)/zippy.sqlite
+	sudo touch $(ZIPPYVAR)/zippy.log
+	sudo touch $(ZIPPYVAR)/.blacklist.cache
+	sudo touch $(ZIPPYVAR)/zippy.bed
+	sudo chmod 666 $(ZIPPYVAR)/zippy.sqlite
+	sudo chmod 666 $(ZIPPYVAR)/zippy.log
+	sudo chmod 666 $(ZIPPYVAR)/.blacklist.cache
+	sudo chmod 666 $(ZIPPYVAR)/zippy.bed
 	mkdir -p $(ZIPPYVAR)/uploads
 	mkdir -p $(ZIPPYVAR)/results
 	#sudo chown -R flask:www-data /var/local/zippy
@@ -127,9 +132,11 @@ zippy-install_centos:
 	sudo touch $(ZIPPYVAR)/zippy.sqlite
 	sudo touch $(ZIPPYVAR)/zippy.log
 	sudo touch $(ZIPPYVAR)/.blacklist.cache
+	sudo touch $(ZIPPYVAR)/zippy.bed
 	sudo chmod 666 $(ZIPPYVAR)/zippy.sqlite
 	sudo chmod 666 $(ZIPPYVAR)/zippy.log
 	sudo chmod 666 $(ZIPPYVAR)/.blacklist.cache
+	sudo chmod 666 $(ZIPPYVAR)/zippy.bed
 	sudo mkdir -p $(ZIPPYVAR)/uploads
 	sudo mkdir -p $(ZIPPYVAR)/results
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
