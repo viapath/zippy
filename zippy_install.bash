@@ -16,7 +16,7 @@ then
     make install
     make unstash-resources
     make webservice
-    make webservice-dev
+    #make webservice-dev
     make annotation
     make genome
 else
