@@ -46,7 +46,6 @@ class PrimerDB(object):
             self.db = sqlite3.connect(self.sqlite)
         except Exception as exc:
             raise exc.__class__("{0} at file {1}, at {2}".format(exc.args,self.sqlite,username))
-        assert 0,self.sqlite
         self.dump = dump  # Primer BED file created by destructor
         # create file table if not exists
         cursor = self.db.cursor()
