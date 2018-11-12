@@ -97,7 +97,8 @@ bowtie:
 zippy-install_ubuntu:
 	# virtualenv
 	sudo mkdir -p $(ZIPPYPATH)
-	cd $(ZIPPYPATH) && sudo /usr/bin/virtualenv venv
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
+	cd $(ZIPPYPATH) && /usr/bin/virtualenv venv
 	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
 	sudo $(ZIPPYPATH)/venv/bin/pip install Cython==0.24
 	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
@@ -114,6 +115,7 @@ zippy-install_ubuntu:
 zippy-install_centos:
 	# virtualenv
 	sudo mkdir -p $(ZIPPYPATH)
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	#Todos los comandos en adelante temía sudo, ahora se le quitó
 	cd $(ZIPPYPATH) && /usr/bin/virtualenv venv
 	$(ZIPPYPATH)/venv/bin/pip install --upgrade pip
