@@ -127,9 +127,9 @@ zippy-install_centos:
 	sudo touch $(ZIPPYVAR)/zippy.sqlite
 	sudo touch $(ZIPPYVAR)/zippy.log
 	sudo touch $(ZIPPYVAR)/.blacklist.cache
-	sudo chmod 664 $(ZIPPYVAR)/zippy.sqlite
-	sudo chmod 664 $(ZIPPYVAR)/zippy.log
-	sudo chmod 664 $(ZIPPYVAR)/.blacklist.cache
+	sudo chmod 666 $(ZIPPYVAR)/zippy.sqlite
+	sudo chmod 666 $(ZIPPYVAR)/zippy.log
+	sudo chmod 666 $(ZIPPYVAR)/.blacklist.cache
 	sudo mkdir -p $(ZIPPYVAR)/uploads
 	sudo mkdir -p $(ZIPPYVAR)/results
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
