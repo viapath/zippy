@@ -103,34 +103,37 @@ zippy-install_ubuntu:
 	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
 	# create empty database
 	sudo mkdir -p $(ZIPPYVAR)
-	sudo chown -R root:root $(ZIPPYVAR)
 	touch $(ZIPPYVAR)/zippy.sqlite
 	touch $(ZIPPYVAR)/zippy.log
 	touch $(ZIPPYVAR)/.blacklist.cache
 	mkdir -p $(ZIPPYVAR)/uploads
 	mkdir -p $(ZIPPYVAR)/results
 	#sudo chown -R flask:www-data /var/local/zippy
-	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 	sudo chmod -R 777 $(ZIPPYVAR)
 zippy-install_centos:
 	# virtualenv
 	sudo mkdir -p $(ZIPPYPATH)
-	cd $(ZIPPYPATH) && sudo /usr/bin/virtualenv venv
-	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
-	sudo $(ZIPPYPATH)/venv/bin/pip install Cython==0.24
-	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
+	#Todos los comandos en adelante temía sudo, ahora se le quitó
+	cd $(ZIPPYPATH) && /usr/bin/virtualenv venv
+	$(ZIPPYPATH)/venv/bin/pip install --upgrade pip
+	$(ZIPPYPATH)/venv/bin/pip install Cython==0.24
+	$(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
 	# create empty database
 	sudo mkdir -p $(ZIPPYVAR)
 	#sudo chown -R root:root $(ZIPPYVAR)
 	sudo touch $(ZIPPYVAR)/zippy.sqlite
 	sudo touch $(ZIPPYVAR)/zippy.log
 	sudo touch $(ZIPPYVAR)/.blacklist.cache
+	sudo chmod 664 $(ZIPPYVAR)/zippy.sqlite
+	sudo chmod 664 $(ZIPPYVAR)/zippy.log
+	sudo chmod 664 $(ZIPPYVAR)/.blacklist.cache
 	sudo mkdir -p $(ZIPPYVAR)/uploads
 	sudo mkdir -p $(ZIPPYVAR)/results
 
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 
-
+x
 #Cleans
 cleanall: cleansoftware cleandata cleandb
 cleansoftware:
@@ -203,7 +206,7 @@ webservice_centos:
 	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
 	sudo systemctl restart httpd
 	#Opens the port 80 in the firewall in the system, for public access
-	sudo firewall-cmd --zone=public --add-service=httpd --permanent
+	sudo firewall-cmd --zone=public --add-service=http --permanent
 	sudo firewall-cmd --reload
 # webservice install (for the interior of a docker container)
 webservice-docker_centos:
@@ -303,5 +306,5 @@ refgene-download:
 
 #sudo firewall-cmd --zone=public --list-all
 #sudo firewall-cmd --zone=public --add-port=5000/tcp
-#sudo firewall-cmd --zone=public --add-service=httpd
+#sudo firewall-cmd --zone=public --add-service=http
 #sudo firewall-cmd --reload
