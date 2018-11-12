@@ -128,14 +128,14 @@ zippy-install_centos:
 	# create empty database
 	sudo mkdir -p $(ZIPPYVAR)
 	#sudo chown -R root:root $(ZIPPYVAR)
-	sudo touch $(ZIPPYVAR)/zippy.sqlite
-	sudo touch $(ZIPPYVAR)/zippy.log
-	sudo touch $(ZIPPYVAR)/.blacklist.cache
-	sudo touch $(ZIPPYVAR)/zippy.bed
-	sudo chmod 666 $(ZIPPYVAR)/zippy.sqlite
-	sudo chmod 666 $(ZIPPYVAR)/zippy.log
-	sudo chmod 666 $(ZIPPYVAR)/.blacklist.cache
-	sudo chmod 666 $(ZIPPYVAR)/zippy.bed
+	#sudo touch $(ZIPPYVAR)/zippy.sqlite
+	#sudo touch $(ZIPPYVAR)/zippy.log
+	#sudo touch $(ZIPPYVAR)/.blacklist.cache
+	#sudo touch $(ZIPPYVAR)/zippy.bed
+	#sudo chmod 666 $(ZIPPYVAR)/zippy.sqlite
+	#sudo chmod 666 $(ZIPPYVAR)/zippy.log
+	#sudo chmod 666 $(ZIPPYVAR)/.blacklist.cache
+	#sudo chmod 666 $(ZIPPYVAR)/zippy.bed
 	sudo mkdir -p $(ZIPPYVAR)/uploads
 	sudo mkdir -p $(ZIPPYVAR)/results
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
@@ -259,12 +259,12 @@ unstash-resources:
 	# Copy resource files
 	echo Unstashing resources
 	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
-	sudo mkdir -p $(ZIPPYVAR)/resources
-	for file in $(ls /srv/zippy_resources);
-	do
-		sudo rm $(ZIPPYVAR)/$file
-		sudo ln -s /srv/zippy_resources/$file $(ZIPPYVAR)/$file
-	done
+	#sudo mkdir -p $(ZIPPYVAR)/resources
+	#for file in $(ls /srv/zippy_resources);
+	#do
+	#	sudo rm $(ZIPPYVAR)/$file
+	#	sudo ln -s /srv/zippy_resources/$file $(ZIPPYVAR)/$file
+	#done
 	#sudo mv /srv/zippy_resources/* $(ZIPPYVAR)/resources/
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
