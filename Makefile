@@ -110,11 +110,10 @@ zippy-install_ubuntu:
 	mkdir -p $(ZIPPYVAR)/results
 	#sudo chown -R flask:www-data /var/local/zippy
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
-	sudo chmod -R 777 $(ZIPPYVAR)
+	#sudo chmod -R 777 $(ZIPPYVAR)
 zippy-install_centos:
 	# virtualenv
 	sudo mkdir -p $(ZIPPYPATH)
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 	#Todos los comandos en adelante temía sudo, ahora se le quitó
 	cd $(ZIPPYPATH) && /usr/bin/virtualenv venv
 	$(ZIPPYPATH)/venv/bin/pip install --upgrade pip
@@ -131,6 +130,7 @@ zippy-install_centos:
 	sudo chmod 664 $(ZIPPYVAR)/.blacklist.cache
 	sudo mkdir -p $(ZIPPYVAR)/uploads
 	sudo mkdir -p $(ZIPPYVAR)/results
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 
 
 #Cleans
@@ -249,8 +249,8 @@ stash-resources:
 	sudo chown -R $(WWWUSER):$(WWWGROUP) /srv/zippy_resources
 unstash-resources:
 	# Copy resource files
-	echo Unstashing respurces
-	sudo mkdir -p /srv/zippy_resources
+	echo Unstashing resources
+	sudo mkdir -p $(ZIPPYVAR)/resources
 	sudo mv /srv/zippy_resources/* $(ZIPPYVAR)/resources/
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
