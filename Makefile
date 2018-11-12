@@ -133,7 +133,6 @@ zippy-install_centos:
 	sudo mkdir -p $(ZIPPYVAR)/results
 
 
-x
 #Cleans
 cleanall: cleansoftware cleandata cleandb
 cleansoftware:
