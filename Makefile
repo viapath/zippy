@@ -97,11 +97,11 @@ bowtie:
 zippy-install_ubuntu:
 	# virtualenv
 	sudo mkdir -p $(ZIPPYPATH)
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
-	cd $(ZIPPYPATH) && /usr/bin/virtualenv venv
+	cd $(ZIPPYPATH) && sudo /usr/bin/virtualenv venv
 	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
 	sudo $(ZIPPYPATH)/venv/bin/pip install Cython==0.24
 	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	# create empty database
 	sudo mkdir -p $(ZIPPYVAR)
 	touch $(ZIPPYVAR)/zippy.sqlite
@@ -115,12 +115,12 @@ zippy-install_ubuntu:
 zippy-install_centos:
 	# virtualenv
 	sudo mkdir -p $(ZIPPYPATH)
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	#Todos los comandos en adelante temía sudo, ahora se le quitó
-	cd $(ZIPPYPATH) && /usr/bin/virtualenv venv
-	$(ZIPPYPATH)/venv/bin/pip install --upgrade pip
-	$(ZIPPYPATH)/venv/bin/pip install Cython==0.24
-	$(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
+	cd $(ZIPPYPATH) && sudo /usr/bin/virtualenv venv
+	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
+	sudo $(ZIPPYPATH)/venv/bin/pip install Cython==0.24
+	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	# create empty database
 	sudo mkdir -p $(ZIPPYVAR)
 	#sudo chown -R root:root $(ZIPPYVAR)
