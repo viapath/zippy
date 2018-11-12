@@ -201,8 +201,10 @@ webservice_centos:
 	sudo cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
 	# enable site and restart
 	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
-	#a2ensite zippy
 	sudo systemctl restart httpd
+	#Opens the port 80 in the firewall in the system, for public access
+	sudo firewall-cmd --zone=public --add-service=httpd --permanent
+	sudo firewall-cmd --reload
 # webservice install (for the interior of a docker container)
 webservice-docker_centos:
 	sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
@@ -226,6 +228,9 @@ webservice-dev_centos:
 	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
 	#a2ensite zippy
 	sudo systemctl start httpd.service
+	#Opens the port 5000 in the firewall in the system
+	sudo firewall-cmd --zone=public --add-port=5000/tcp --permanent
+	sudo firewall-cmd --reload
 
 
 #### genome resources
@@ -234,6 +239,16 @@ import-resources:
 	sudo mkdir -p $(ZIPPYVAR)/resources
 	rsync -avPp resources $(ZIPPYVAR)
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
+stash-resources:
+	# Copy resource files
+	sudo mkdir -p /srv/zippy_resources
+	sudo mv $(ZIPPYVAR)/resources/* /srv/zippy_resources/
+	sudo chown -R $(WWWUSER):$(WWWGROUP) /srv/zippy_resources
+unstash-resources:
+	# Copy resource files
+	sudo mkdir -p /srv/zippy_resources
+	sudo mv /srv/zippy_resources/* $(ZIPPYVAR)/resources/
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 resources: genome annotation
 
