@@ -9,7 +9,6 @@ genome=human_g1k_v37
 
 #See which distro does the host have
 platform=$(python -mplatform)
-echo Platform: ${platform}
 ifneq (,$(findstring ubuntu,${platform}))
 	distro=ubuntu
 	WWWGROUP=www-data
@@ -37,8 +36,8 @@ deploy: zippy-install webservice
 
 # requirements
 essential_ubuntu:
-	RUN apt-get update && apt-get -y upgrade
-
+	echo Platform: ${platform}
+	apt-get update && apt-get -y upgrade
 	sudo apt-get install -y sudo less make wget curl vim apt-utils
 	sudo apt-get install -y sqlite3 unzip git htop libcurl3-dev
 	sudo apt-get install -y python-pip python2.7-dev ncurses-dev python-virtualenv
@@ -56,6 +55,7 @@ essential_ubuntu:
 	# disable default site
 	sudo a2dissite 000-default
 essential_centos:
+	echo Platform: ${platform}
 	sudo yum -y install epel-release
 	sudo yum repolist
 	sudo yum -y update
@@ -259,7 +259,7 @@ genome-download:
 genome-index:
 	sudo mkdir -p $(ZIPPYVAR)/resources
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
-	ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null && ( \
+	ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null && sudo chmod -R 777 $(ZIPPYVAR)/resources && ( \
 		echo bowtie file $(ZIPPYVAR)/resources/${genome}.bowtie exists, thus not running bowtie command ) || \
 		( cd $(ZIPPYVAR)/resources; sudo /usr/local/bin/bowtie2-build ${genome}.fasta ${genome}.bowtie )
 	sudo chmod 644 $(ZIPPYVAR)/resources/*
@@ -270,7 +270,7 @@ annotation: variation-download refgene-download
 
 variation-download:
 	#The files specified by the following commands did not exist as of 30 th, Jly, 2018, so that were updated by the later version present: b151_GRCh37p13
-	sudo mkdir -p $(ZIPPYVAR)/resources && cd $(ZIPPYVAR)/resources && \
+	sudo mkdir -p $(ZIPPYVAR)/resources && cd $(ZIPPYVAR)/resources && sudo chmod -R 777 $(ZIPPYVAR)/resources && \
 	sudo wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz && \
 	sudo wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
 	sudo chmod 644 $(ZIPPYVAR)/resources/*
@@ -279,8 +279,8 @@ variation-download:
 
 refgene-download:
 	sudo chmod 777 $(ZIPPYVAR)/resources
-	sudo mkdir -p $(ZIPPYVAR)/resources && cd $(ZIPPYVAR)/resources && \
-	sudo mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -N -D hg19 -P 3306 \
+	sudo mkdir -p $(ZIPPYVAR)/resources && sudo chmod -R 777 $(ZIPPYVAR)/resources && cd $(ZIPPYVAR)/resources && \
+	mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -N -D hg19 -P 3306 \
 	 -e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" > refGene
 	sudo chmod 644 $(ZIPPYVAR)/resources/*
 	sudo chmod 755 $(ZIPPYVAR)/resources
