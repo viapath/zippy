@@ -208,7 +208,7 @@ webservice_centos:
 	sudo cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
-	sudo cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
+	sudo cp install/zippy.hostconfig_centos /etc/httpd/conf.d/zippy.conf
 	# enable site and restart
 	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
 	sudo systemctl restart httpd
@@ -233,7 +233,7 @@ webservice-dev_centos:
 	sudo cp install/zippy_dev.wsgi $(ZIPPYWWW)/zippy_dev.wsgi
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
-	sudo cp install/zippy_dev.hostconfig /etc/httpd/conf.d/zippy.conf
+	sudo cp install/zippy_dev.hostconfig_centos /etc/httpd/conf.d/zippy.conf
 	# enable site and restart
 	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
 	#a2ensite zippy
