@@ -256,7 +256,7 @@ genome-download:
 
 genome-index:
 	sudo mkdir -p $(ZIPPYVAR)/resources
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 	ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null && ( \
 		echo bowtie file $(ZIPPYVAR)/resources/${genome}.bowtie exists, thus not running bowtie command ) || \
 		( cd $(ZIPPYVAR)/resources; sudo /usr/local/bin/bowtie2-build ${genome}.fasta ${genome}.bowtie )
@@ -284,3 +284,7 @@ refgene-download:
 	sudo chmod 755 $(ZIPPYVAR)/resources
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
+#sudo firewall-cmd --zone=public --list-all
+#sudo firewall-cmd --zone=public --add-port=5000/tcp
+#sudo firewall-cmd --zone=public --add-service=httpd
+#sudo firewall-cmd --reload
