@@ -218,6 +218,8 @@ webservice_centos:
 	#Opens the port 80 in the firewall in the system, for public access
 	sudo firewall-cmd --zone=public --add-service=http --permanent
 	sudo firewall-cmd --reload
+	#Disable SELINUX, this disabling is full while we don't know how to open only the sippy directories to SELINUX.
+	sudo setenforce 0
 # webservice install (for the interior of a docker container)
 webservice-docker_centos:
 	sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
