@@ -301,7 +301,7 @@ genome-index:
 	#ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null && sudo chmod -R 777 $(ZIPPYVAR)/resources && ( \
 	ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null ( \
 		echo bowtie file $(ZIPPYVAR)/resources/${genome}.bowtie exists, thus not running bowtie command ) || \
-		( cd $(ZIPPYVAR)/resources; sudo /usr/local/bin/bowtie2-build ${genome}.fasta ${genome}.bowtie )
+		( cd $(ZIPPYVAR)/resources; /usr/local/bin/bowtie2-build ${genome}.fasta ${genome}.bowtie )
 	#sudo chmod 644 $(ZIPPYVAR)/resources/*
 	#sudo chmod 755 $(ZIPPYVAR)/resources
 	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
@@ -314,8 +314,8 @@ variation-download:
 	#sudo mkdir -p $(ZIPPYVAR)/resources
 	#cd $(ZIPPYVAR)/resources && sudo chmod -R 777 $(ZIPPYVAR)/resources && \
 	cd $(ZIPPYVAR)/resources && \
-	( ls 00-common_all.vcf.gz &>/dev/null && echo 00-common_all.vcf.gz already found || sudo wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz )
-	cd $(ZIPPYVAR)/resources && sudo wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
+	( ls 00-common_all.vcf.gz &>/dev/null && echo 00-common_all.vcf.gz already found || wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz )
+	cd $(ZIPPYVAR)/resources && wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
 	#sudo chmod 644 $(ZIPPYVAR)/resources/*
 	#sudo chmod 755 $(ZIPPYVAR)/resources
 	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
