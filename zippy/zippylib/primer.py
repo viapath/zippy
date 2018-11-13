@@ -524,7 +524,7 @@ class Primer3(object):
         try:
             fasta = pysam.FastaFile(self.genome)
         except Exception as exc:
-            assert 0,(exc,self.genome,username())
+            assert 0,(exc,self.genome,username(),os.path.exists(self.genome))
         self.designregion = ( str(self.target[0]), self.target[1]-self.flank, self.target[2]+self.flank )
         #assert 0,(fasta,self.designregion,self.genome,target)
         try:
