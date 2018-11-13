@@ -139,6 +139,7 @@ zippy-install_centos:
 	#sudo chmod 666 $(ZIPPYVAR)/zippy.bed
 	sudo mkdir -p $(ZIPPYVAR)/uploads
 	sudo mkdir -p $(ZIPPYVAR)/results
+	sudo mkdir -p $(ZIPPYVAR)/resources
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 
 
@@ -276,9 +277,9 @@ resources: genome annotation
 genome: genome-download genome-index
 
 genome-download:
-	sudo mkdir -p $(ZIPPYVAR)/resources
+	#sudo mkdir -p $(ZIPPYVAR)/resources
 	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
-	sudo chmod -R 777 $(ZIPPYVAR)/resources
+	#sudo chmod -R 777 $(ZIPPYVAR)/resources
 	#cd $(ZIPPYVAR)/resources
 	ls $(ZIPPYVAR)/resources/${genome}.fasta &>/dev/null && ( \
 		echo File ${genome}.fasta.gz exists, not downloading it again ) || ( \
@@ -294,10 +295,11 @@ genome-download:
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 genome-index:
-	sudo mkdir -p $(ZIPPYVAR)/resources
+	#sudo mkdir -p $(ZIPPYVAR)/resources
 	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
-	ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null && sudo chmod -R 777 $(ZIPPYVAR)/resources && ( \
+	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
+	#ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null && sudo chmod -R 777 $(ZIPPYVAR)/resources && ( \
+	ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null ( \
 		echo bowtie file $(ZIPPYVAR)/resources/${genome}.bowtie exists, thus not running bowtie command ) || \
 		( cd $(ZIPPYVAR)/resources; sudo /usr/local/bin/bowtie2-build ${genome}.fasta ${genome}.bowtie )
 	sudo chmod 644 $(ZIPPYVAR)/resources/*
@@ -309,8 +311,9 @@ annotation: variation-download refgene-download
 variation-download:
 	#The files specified by the following commands did not exist as of 30 th, Jly, 2018, so that were updated by the later version present: b151_GRCh37p13
 	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
-	sudo mkdir -p $(ZIPPYVAR)/resources
-	cd $(ZIPPYVAR)/resources && sudo chmod -R 777 $(ZIPPYVAR)/resources && \
+	#sudo mkdir -p $(ZIPPYVAR)/resources
+	#cd $(ZIPPYVAR)/resources && sudo chmod -R 777 $(ZIPPYVAR)/resources && \
+	cd $(ZIPPYVAR)/resources && \
 	sudo wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz && \
 	sudo wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
 	sudo chmod 644 $(ZIPPYVAR)/resources/*
@@ -319,8 +322,9 @@ variation-download:
 
 refgene-download:
 	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
-	sudo chmod 777 $(ZIPPYVAR)/resources
-	sudo mkdir -p $(ZIPPYVAR)/resources && sudo chmod -R 777 $(ZIPPYVAR)/resources && cd $(ZIPPYVAR)/resources && \
+	#sudo chmod 777 $(ZIPPYVAR)/resources
+	#sudo mkdir -p $(ZIPPYVAR)/resources && sudo chmod -R 777 $(ZIPPYVAR)/resources && cd $(ZIPPYVAR)/resources && \
+	cd $(ZIPPYVAR)/resources && \
 	mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -N -D hg19 -P 3306 \
 	 -e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" > refGene
 	sudo chmod 644 $(ZIPPYVAR)/resources/*
