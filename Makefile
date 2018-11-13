@@ -290,9 +290,9 @@ genome-download:
 	ls $(ZIPPYVAR)/resources/${genome}.fasta.fai &>/dev/null && \
 		echo File $(ZIPPYVAR)/resources/${genome}.fasta.fai exists, not downloading it again || \
 		( cd $(ZIPPYVAR)/resources; wget -c ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai )
-	sudo chmod 644 $(ZIPPYVAR)/resources/*
-	sudo chmod 755 $(ZIPPYVAR)/resources
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
+	#sudo chmod 644 $(ZIPPYVAR)/resources/*
+	#sudo chmod 755 $(ZIPPYVAR)/resources
+	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 genome-index:
 	#sudo mkdir -p $(ZIPPYVAR)/resources
@@ -302,9 +302,9 @@ genome-index:
 	ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null ( \
 		echo bowtie file $(ZIPPYVAR)/resources/${genome}.bowtie exists, thus not running bowtie command ) || \
 		( cd $(ZIPPYVAR)/resources; sudo /usr/local/bin/bowtie2-build ${genome}.fasta ${genome}.bowtie )
-	sudo chmod 644 $(ZIPPYVAR)/resources/*
-	sudo chmod 755 $(ZIPPYVAR)/resources
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
+	#sudo chmod 644 $(ZIPPYVAR)/resources/*
+	#sudo chmod 755 $(ZIPPYVAR)/resources
+	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 annotation: variation-download refgene-download
 
@@ -318,7 +318,7 @@ variation-download:
 	cd $(ZIPPYVAR)/resources && sudo wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
 	#sudo chmod 644 $(ZIPPYVAR)/resources/*
 	#sudo chmod 755 $(ZIPPYVAR)/resources
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
+	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 refgene-download:
 	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
@@ -329,7 +329,7 @@ refgene-download:
 	 -e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" > refGene
 	#sudo chmod 644 $(ZIPPYVAR)/resources/*
 	#sudo chmod 755 $(ZIPPYVAR)/resources
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
+	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 #sudo firewall-cmd --zone=public --list-all
 #sudo firewall-cmd --zone=public --add-port=5000/tcp

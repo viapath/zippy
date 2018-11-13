@@ -17,8 +17,8 @@ then
     #make unstash-resources
     make webservice
     #make webservice-dev
-    make annotation
-    make genome
+    sudo -u apache -g apache make annotation
+    sudo -u apache -g apache make genome
 else
     if [[ -d "${srv_zippy}" ]]
     then
