@@ -148,7 +148,7 @@ class BED(IntervalList):
         counter = Counter()
         intervalindex = defaultdict(list)
         for line in fh:
-            if line.startswith("#"):
+            if line.startswith("#") or line.startswith("track"):
                 continue
             else:
                 # create interval
