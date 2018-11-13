@@ -89,10 +89,10 @@ very_essential_centos:
 	sudo yum install -y sudo wget less make curl vim
 
 bowtie:
-	wget -c http://netix.dl.sourceforge.net/project/bowtie-bio/bowtie2/2.2.6/bowtie2-2.2.6-linux-x86_64.zip && \
-	unzip bowtie2-2.2.6-linux-x86_64.zip && \
-	cd bowtie2-2.2.6 && sudo mv bowtie2* /usr/local/bin
-	rm -rf bowtie2-2.2.6 bowtie2-2.2.6-linux-x86_64.zip
+	#wget -c http://netix.dl.sourceforge.net/project/bowtie-bio/bowtie2/2.2.6/bowtie2-2.2.6-linux-x86_64.zip && \
+	#unzip bowtie2-2.2.6-linux-x86_64.zip && \
+	#cd bowtie2-2.2.6 && sudo mv bowtie2* /usr/local/bin
+	#rm -rf bowtie2-2.2.6 bowtie2-2.2.6-linux-x86_64.zip
 
 # zippy setup (will move to distutils in future release)
 zippy-install_ubuntu:
