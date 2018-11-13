@@ -9,7 +9,7 @@ __maintainer__ = "David Brawand"
 __email__ = "dbrawand@nhs.net"
 __status__ = "Production"
 
-import sys, os, re, datetime
+import sys, os, re, datetime, pwd
 from hashlib import md5, sha1
 import primer3
 import pysam
@@ -20,6 +20,8 @@ from string import maketrans
 from urllib import unquote
 revcmp = maketrans('ACGTNacgtn','TGCANtgcan')
 
+def username():
+    return pwd.getpwuid(os.getuid()).pw_name
 '''returns common prefix (substring)'''
 def commonPrefix(left,right,stripchars='-_ ',commonlength=3):
     if left and right:
@@ -519,7 +521,10 @@ class Primer3(object):
         self.genome = genome
         self.target = target
         self.flank = flank
-        fasta = pysam.FastaFile(self.genome)
+        try:
+            fasta = pysam.FastaFile(self.genome)
+        except Exception as exc:
+            assert 0,(exc,self.genome,, username())
         self.designregion = ( str(self.target[0]), self.target[1]-self.flank, self.target[2]+self.flank )
         #assert 0,(fasta,self.designregion,self.genome,target)
         try:

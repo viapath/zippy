@@ -8,7 +8,7 @@ __maintainer__ = "David Brawand"
 __email__ = "dbrawand@nhs.net"
 __status__ = "Production"
 
-import sys, os, re, ast
+import sys, os, re, ast, pwd
 import datetime
 import json
 import hashlib
@@ -20,6 +20,8 @@ from collections import defaultdict
 from . import flatten
 from .primer import Primer, Locus, PrimerPair, Location, parsePrimerName
 
+def username():
+    return pwd.getpwuid(os.getuid()).pw_name
 # changes conflicting name
 def changeConflictingName(n):
     f = n.split('_')
@@ -41,11 +43,10 @@ class PrimerDB(object):
         # open database and get a cursor
         self.sqlite = database
         import pwd, os
-        username=pwd.getpwuid(os.getuid()).pw_name
         try:
             self.db = sqlite3.connect(self.sqlite)
         except Exception as exc:
-            raise exc.__class__("{0} at file {1}, attempted to open under user {2}".format(exc.args,self.sqlite,username))
+            raise exc.__class__("{0} at file {1}, attempted to open under user {2}".format(exc.args,self.sqlite,username()))
         self.dump = dump  # Primer BED file created by destructor
         # create file table if not exists
         cursor = self.db.cursor()
