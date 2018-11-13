@@ -219,7 +219,7 @@ webservice_centos:
 # webservice install (for the interior of a docker container)
 webservice-docker_centos:
 	sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
-	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	# make WWW directories
 	sudo mkdir -p $(ZIPPYWWW)
 	sudo cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
