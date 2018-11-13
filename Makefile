@@ -4,7 +4,6 @@ ZIPPYPATH=/usr/local/zippy
 ZIPPYVAR=/var/local/zippy
 ZIPPYWWW=/var/www/zippy
 
-WWWUSER=flask
 genome=human_g1k_v37
 
 #See which distro does the host have
@@ -12,9 +11,11 @@ platform=$(python -mplatform)
 ifneq (,$(findstring ubuntu,${platform}))
 	distro=ubuntu
 	WWWGROUP=www-data
+	WWWUSER=flask
 else
 	distro=centos
 	WWWGROUP=apache
+	WWWUSER=apache
 endif
 # production install
 release: install_${distro} resources webservice

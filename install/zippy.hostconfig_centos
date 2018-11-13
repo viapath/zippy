@@ -4,7 +4,7 @@
 	ServerAdmin dbrawand@nhs.net
     ServerName zippy
 
-    WSGIDaemonProcess zippy user=flask group=apache threads=5 home=/var/local/zippy/
+    WSGIDaemonProcess zippy user=apache group=apache threads=5 home=/var/local/zippy/
     WSGIScriptAlias / /var/www/zippy/zippy.wsgi
 
     <Directory /var/www/zippy>
