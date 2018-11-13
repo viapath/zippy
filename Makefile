@@ -314,10 +314,10 @@ variation-download:
 	#sudo mkdir -p $(ZIPPYVAR)/resources
 	#cd $(ZIPPYVAR)/resources && sudo chmod -R 777 $(ZIPPYVAR)/resources && \
 	cd $(ZIPPYVAR)/resources && \
-	sudo wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz && \
-	sudo wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
-	sudo chmod 644 $(ZIPPYVAR)/resources/*
-	sudo chmod 755 $(ZIPPYVAR)/resources
+	( ls 00-common_all.vcf.gz &>/dev/null && echo 00-common_all.vcf.gz already found || sudo wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz )
+	cd $(ZIPPYVAR)/resources && sudo wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
+	#sudo chmod 644 $(ZIPPYVAR)/resources/*
+	#sudo chmod 755 $(ZIPPYVAR)/resources
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 refgene-download:
@@ -327,8 +327,8 @@ refgene-download:
 	cd $(ZIPPYVAR)/resources && \
 	mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -N -D hg19 -P 3306 \
 	 -e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" > refGene
-	sudo chmod 644 $(ZIPPYVAR)/resources/*
-	sudo chmod 755 $(ZIPPYVAR)/resources
+	#sudo chmod 644 $(ZIPPYVAR)/resources/*
+	#sudo chmod 755 $(ZIPPYVAR)/resources
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 #sudo firewall-cmd --zone=public --list-all
