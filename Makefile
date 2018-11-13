@@ -181,7 +181,7 @@ webservice_ubuntu:
 	# make WWW directories
 	mkdir -p $(ZIPPYWWW)
 	cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
-	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
 	cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
 	echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf

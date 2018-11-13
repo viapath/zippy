@@ -9,12 +9,12 @@ then
     echo "Already in zippy folder."
     sudo chmod -R 777 ${srv_zippy}
     git pull origin master
-    make stash-resources
-    #make cleansoftware
-    #make cleandb
-    make cleanall
+    #make stash-resources
+    make cleansoftware
+    make cleandb
+    #make cleanall
     make install
-    make unstash-resources
+    #make unstash-resources
     make webservice
     #make webservice-dev
     make annotation
