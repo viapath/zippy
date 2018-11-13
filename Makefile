@@ -168,7 +168,7 @@ webservice-docker_ubuntu:
 	# make WWW directories
 	mkdir -p $(ZIPPYWWW)
 	cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
-	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
 	cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
 	#echo "ServerName localhost" >> /etc/apache2/apache2.conf
@@ -193,7 +193,7 @@ webservice-dev_ubuntu:
 	# make WWW directories
 	mkdir -p $(ZIPPYWWW)
 	cp install/zippy_dev.wsgi $(ZIPPYWWW)/zippy.wsgi
-	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
 	cp install/zippy_dev.hostconfig /etc/apache2/sites-available/zippy.conf
 	# enable site and restart
@@ -203,7 +203,7 @@ webservice-dev_ubuntu:
 # webservice install (production)
 webservice_centos:
 	sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
-	chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	# make WWW directories
 	sudo mkdir -p $(ZIPPYWWW)
 	sudo cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
