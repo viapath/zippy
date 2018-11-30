@@ -217,10 +217,9 @@ webservice_centos:
 	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
 	sudo systemctl restart httpd
 	#Opens the port 80 in the firewall in the system, for public access
-	sudo firewall-cmd --zone=public --add-service=http --permanent
-	sudo firewall-cmd --reload
 	#Disable SELINUX, this disabling is full while we don't know how to open only the sippy directories to SELINUX.
-	sudo setenforce 0
+	sudo firewall-cmd --zone=public --add-service=http --permanent && sudo firewall-cmd --reload||echo "You don't have a firewall running"
+	sudo setenforce 0||echo "Could not activate SELINUX properly"
 # webservice install (for the interior of a docker container)
 webservice-docker_centos:
 	sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
@@ -246,8 +245,7 @@ webservice-dev_centos:
 	#a2ensite zippy
 	sudo systemctl start httpd.service
 	#Opens the port 5000 in the firewall in the system
-	sudo firewall-cmd --zone=public --add-port=5000/tcp --permanent
-	sudo firewall-cmd --reload
+	sudo firewall-cmd --zone=public --add-port=5000/tcp --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
 
 
 #### genome resources

@@ -615,6 +615,8 @@ def updateLocation(primername, location, database, force=False):
 def searchByName(searchName, db):
     primersInDB = db.query(searchName)
     print >> sys.stderr, 'Found {} primer pairs with string "{}"'.format(len(primersInDB),searchName)
+    for primerpair in primersInDB:
+        print >> sys.stderr, primerpair
     return primersInDB
 
 # update name of primer in database
@@ -715,7 +717,7 @@ def main():
 
     ## query database for primers by name
     parser_query = subparsers.add_parser('query', help='Query database for primers with specified sub-string in name')
-    parser_query.add_argument("subString", default=None, metavar="Sub-string within name", \
+    parser_query.add_argument("subString", default='', nargs='?', metavar="Sub-string within name", \
         help="String found within primer name")
     parser_query.set_defaults(which='query')
 
@@ -804,7 +806,8 @@ def main():
         elif options.redundancies:
             data,colnames = db.getRedundantPrimers()
         else:
-            print >> sys.stderr, "What to dump stranger?"
+            print >> sys.stderr, "What to dump?. Options are --amplicons, --ordersheet, --locations, --redundancies, --table, --outfile <outfile>, "+\
+                "written as one or more of these options after dhe dump word (if more than one option these should be separated by spaces)"
             sys.exit(1)
         # format data output
         if options.outfile:
