@@ -120,6 +120,7 @@ zippy-install_ubuntu:
 	#sudo chmod -R 777 $(ZIPPYVAR)
 zippy-install_centos:
 	# virtualenv
+	git pull origin master
 	sudo mkdir -p $(ZIPPYPATH)
 	cd $(ZIPPYPATH) && sudo /usr/bin/virtualenv venv
 	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
