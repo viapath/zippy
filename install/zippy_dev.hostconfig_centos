@@ -2,7 +2,7 @@
 #<VirtualHost *:9999>
 <VirtualHost *:80>
 	ServerAdmin dbrawand@nhs.net
-    ServerName zippy
+    #ServerName bioinfojdp.freelancecuernavaca.com
 
     WSGIDaemonProcess zippy user=apache group=apache threads=5 home=/srv/qgen/zippy/
     WSGIScriptAlias / /var/www/zippy/zippy_dev.wsgi

@@ -21,7 +21,7 @@ endif
 release: install_${distro} resources webservice
 
 # development installs (with mounted volume)
-all: install resources
+all: install resources webervice
 
 zippy-install: zippy-install_${distro}
 essential: essential_${distro}
@@ -97,6 +97,8 @@ bowtie:
 # zippy setup (will move to distutils in future release)
 zippy-install_ubuntu:
 	# virtualenv
+	echo "Updating the code from GitHub..."
+	git pull origin master
 	sudo mkdir -p $(ZIPPYPATH)
 	cd $(ZIPPYPATH) && sudo /usr/bin/virtualenv venv
 	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
@@ -120,6 +122,7 @@ zippy-install_ubuntu:
 	#sudo chmod -R 777 $(ZIPPYVAR)
 zippy-install_centos:
 	# virtualenv
+	echo "Updating the code from GitHub..."
 	git pull origin master
 	sudo mkdir -p $(ZIPPYPATH)
 	cd $(ZIPPYPATH) && sudo /usr/bin/virtualenv venv
@@ -188,7 +191,7 @@ webservice_ubuntu:
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
 	cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
-	echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
+	#echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
 	# enable site and restart
 	a2ensite zippy
 	/etc/init.d/apache2 restart
