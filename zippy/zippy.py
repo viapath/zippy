@@ -410,7 +410,7 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
     else:
         # select by best pairs independently (always print database primers)
         for iv in sorted(ivpairs.keys()):
-            print "IV", unquote(iv.name)
+            print >> sys.stderr,"IV", unquote(iv.name)
             if not ivpairs[iv]:
                 missedIntervals.append(iv)
             for i, p in enumerate(sorted(ivpairs[iv])):
@@ -434,6 +434,7 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
 
 # query database / design primer for VCF,BED,GenePred or interval
 def zippyPrimerQuery(config, targets, design=True, outfile=None, db=None, store=False, tiers=[0], gap=None):
+    #assert 0,targets
     intervals = readTargets(targets, config['tiling'])  # get intervals from file or commandline
     if gap:  # gap PCR primers
         try:
@@ -768,7 +769,9 @@ def main():
     # read config and open database
     with open(options.config) as conf:
         config = json.load(conf, object_hook=ascii_encode_dict)
-    here = config['primerbed'] if 'primerbed' in config.keys() and config['primerbed'] else None
+    #here = config['primerbed'] if 'primerbed' in config.keys() and config['primerbed'] else None
+    #here = config['ampliconbed'] if 'ampliconbed' in config.keys() and config['ampliconbed'] else None
+    here=options.outfile
     db = PrimerDB(config['database'],dump=here)
 
     if options.which=='add':  # read primers and add to database

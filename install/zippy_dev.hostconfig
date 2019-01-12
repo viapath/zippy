@@ -2,11 +2,9 @@
 #<VirtualHost *:9999>
 <VirtualHost *:80>
 	ServerAdmin dbrawand@nhs.net
-    #ServerName bioinfojdp.freelancecuernavaca.com
-
+    SetEnv FLASK_ENV development
     WSGIDaemonProcess zippy user=flask group=www-data threads=5 home=/srv/qgen/zippy/
     WSGIScriptAlias / /var/www/zippy/zippy_dev.wsgi
-
     <Directory /var/www/zippy>
         WSGIProcessGroup zippy
         WSGIApplicationGroup %{GLOBAL}
@@ -21,4 +19,28 @@
         Order deny,allow
         Allow from all
     </Directory>
+
+
+</VirtualHost>
+<VirtualHost *:80>
+    ServerAdmin dbrawand@nhs.net
+    ServerName bioinfojdp.freelancecuernavaca.com
+    SetEnv FLASK_ENV development
+    WSGIDaemonProcess zippy_developer user=flask group=www-data threads=5 home=/srv/qgen/zippy/
+    WSGIScriptAlias / /var/www/zippy/zippy_dev.wsgi
+    <Directory /var/www/zippy>
+        WSGIProcessGroup zippy_developer
+        WSGIApplicationGroup %{GLOBAL}
+        WSGIScriptReloading On
+        Order deny,allow
+        Allow from all
+    </Directory>
+    <Directory /srv/qgen/zippy>
+        WSGIProcessGroup zippy_developer
+        WSGIApplicationGroup %{GLOBAL}
+        WSGIScriptReloading On
+        Order deny,allow
+        Allow from all
+    </Directory>
+
 </VirtualHost>

@@ -47,8 +47,8 @@ class PrimerDB(object):
             self.db = sqlite3.connect(self.sqlite)
         except Exception as exc:
             raise exc.__class__("{0} at file {1}, attempted to open under user {2}".format(exc.args,self.sqlite,username()))
-        if dump is not None:
-            self.dump = dump  # Primer BED file created by destructor
+        #if dump is not None:
+        self.dumpl = dump  # Primer BED file created by destructor
         # create file table if not exists
         cursor = self.db.cursor()
         try:
@@ -106,7 +106,7 @@ class PrimerDB(object):
 
     def writeAmpliconDump(self):
         ## dump amplicons to bed file
-        if self.dump:
+        if self.dumpl:
             try:
                 self.db = sqlite3.connect(self.sqlite)
             except:
@@ -120,11 +120,12 @@ class PrimerDB(object):
                 rows = cursor.fetchall()
                 # write bed file
                 try:
-                    with open(self.dump,'w') as fh:
+                    with open(self.dumpl,'w') as fh:
+                    #with sys.stdout as fh:
                         for row in rows:
                             print >> fh, '\t'.join(map(str,row))
                 except IOError:
-                    print >> sys.stderr, "cannot write to %s" % self.dump
+                    print >> sys.stderr, "cannot write to %s" % self.dumpl
                     pass  # fail silently (eg if data cannot be written)
                 except:
                     raise

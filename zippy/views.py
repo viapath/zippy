@@ -131,7 +131,13 @@ def upload():
 @app.route('/test/', methods=['POST','GET'])
 def testpage():
     # read form data
-    return "testpage"
+    #return "teste"
+    try:
+        assert 0,'tp'
+    except MemoryError as exc:
+        import traceback
+        return str(traceback.format_exc())
+
 
 @app.route('/adhoc_design/', methods=['POST'])
 def adhocdesign():
@@ -151,7 +157,9 @@ def adhocdesign():
     print >> sys.stderr, 'gap', gap
 
     # if locus:
-    if re.match('\w{1,2}:\d+-\d+',locus) or (uploadFile and allowed_file(uploadFile.filename)):
+    rematch=re.match('\w{1,6}:\d+[-:]\d+',locus)
+    #return str((rematch,locus,(uploadFile and allowed_file(uploadFile.filename))))
+    if rematch or (uploadFile and allowed_file(uploadFile.filename)):
         # get target
         if uploadFile:
             filename = secure_filename(uploadFile.filename)

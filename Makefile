@@ -199,7 +199,7 @@ webservice_ubuntu:
 webservice-dev_ubuntu:
 	# make WWW directories
 	mkdir -p $(ZIPPYWWW)
-	cp install/zippy_dev.wsgi $(ZIPPYWWW)/zippy.wsgi
+	cp install/zippy_dev.wsgi $(ZIPPYWWW)/zippy_dev.wsgi
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
 	cp install/zippy_dev.hostconfig /etc/apache2/sites-available/zippy.conf
@@ -234,10 +234,10 @@ webservice-docker_centos:
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
 	sudo cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
-	# enable site and restart
-	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
 # same for development environment (not maintained)
 webservice-dev_centos:
+	sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	# make WWW directories
 	sudo mkdir -p $(ZIPPYWWW)
 	sudo cp install/zippy_dev.wsgi $(ZIPPYWWW)/zippy_dev.wsgi
@@ -245,8 +245,6 @@ webservice-dev_centos:
 	# apache WSGI config
 	sudo cp install/zippy_dev.hostconfig_centos /etc/httpd/conf.d/zippy.conf
 	# enable site and restart
-	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
-	#a2ensite zippy
 	sudo systemctl start httpd.service
 	#Opens the port 5000 in the firewall in the system
 	sudo firewall-cmd --zone=public --add-port=5000/tcp --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
