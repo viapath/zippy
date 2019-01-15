@@ -158,7 +158,6 @@ def adhocdesign():
 
     # if locus:
     rematch=re.match('\w{1,6}:\d+[-:]\d+',locus)
-    #return str((rematch,locus,(uploadFile and allowed_file(uploadFile.filename))))
     if rematch or (uploadFile and allowed_file(uploadFile.filename)):
         # get target
         if uploadFile:

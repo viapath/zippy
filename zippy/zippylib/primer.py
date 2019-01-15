@@ -518,7 +518,6 @@ class Primer3(object):
         self.genome = genome
         self.target = target
         self.flank = flank
-        #try:
         fasta = pysam.FastaFile(self.genome)
         lowerlimit=max(0,target[1]-self.flank)
         upperlimit=max(0,target[2]-self.flank)
@@ -532,8 +531,8 @@ class Primer3(object):
         else:
             lowerlimit=min(lowerlimit,fasta.lengths[fndref])
             upperlimit=min(upperlimit,fasta.lengths[fndref])
-        self.target=(target[0],lowerlimit+self.flank,upperlimit+self.flank)#Assign the target after clipping to valid positions
-        #self.target=target
+        #self.target=(target[0],lowerlimit+self.flank,upperlimit+self.flank)#Assign the target after clipping to valid positions
+        self.target=(target[0],lowerlimit,upperlimit)#Assign the target after clipping to valid positions
         self.designregion = ( str(self.target[0]), lowerlimit, upperlimit )
         #self.designregion = ( str(self.target[0]), lowerlimit+self.flank, upperlimit+self.flank )
         try:
@@ -542,7 +541,8 @@ class Primer3(object):
             #print("Literal sequence not found: {0}".format(self.designregion))
             assert kerr.args[0]=="sequence '{0}' not present".format(self.designregion[0])
             assert self.designregion[0][0:3].lower()=="chr"
-            self.target=(self.designregion[0][3:],lowerlimit+self.flank,upperlimit+self.flank)
+            #self.target=(self.designregion[0][3:],lowerlimit+self.flank,upperlimit+self.flank)
+            self.target=(self.designregion[0][3:],lowerlimit,upperlimit)
             self.designregion=(self.designregion[0][3:],lowerlimit,upperlimit,self.target)
             #self.designregion=(self.designregion[0][3:],lowerlimit+self.flank,upperlimit+self.flank,self.target)
             self.sequence=fasta.fetch(*self.designregion)
@@ -583,18 +583,13 @@ class Primer3(object):
         seq = {
             'SEQUENCE_ID': str(name),
             'SEQUENCE_TEMPLATE': str(self.sequence),
-            #'SEQUENCE_PRIMER_PAIR_OK_REGION_LIST': self.clip([0, self.flank, len(self.sequence)-self.flank, self.flank],len(self.sequence))
-            'SEQUENCE_PRIMER_PAIR_OK_REGION_LIST': [0, self.flank, len(self.sequence)-self.flank, self.flank]
+            'SEQUENCE_PRIMER_PAIR_OK_REGION_LIST': self.clip([0, self.flank, len(self.sequence)-self.flank, self.flank],len(self.sequence))
+            #'SEQUENCE_PRIMER_PAIR_OK_REGION_LIST': [0, self.flank, len(self.sequence)-self.flank, self.flank]
         }
-        # design primers
-        #interval=
-        parscopy=pars.copy()
-        #assert 0,parscopy
+         #parscopy=pars.copy()
         #parscopy["PRIMER_PRODUCT_SIZE_RANGE"]=self.clip2(parscopy["PRIMER_PRODUCT_SIZE_RANGE"],len(seq["SEQUENCE_TEMPLATE"]))
-        #try:
-        primers = primer3.bindings.designPrimers(seq,parscopy)
-        #except Exception as exc:
-        #    assert 0,(exc,seq,pars,parscopy,self,'dr',self.designregion)
+        # design primers
+        primers = primer3.bindings.designPrimers(seq,pars)
         # parse primer
         primerdata, explain = defaultdict(dict), []
         for k,v in primers.items():
