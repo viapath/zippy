@@ -326,7 +326,7 @@ def readTargets(targets,tiling):
         rev = None if m.group(4) is None else True if m.group(4) == '-' else False
         intervals = [ Interval(m.group(1),m.group(2),m.group(3),reverse=rev) ]
     else:
-        raise Exception('FileNotFound')
+        raise Exception("FileNotFound: {0}".format(targets))
     return intervals
 
 

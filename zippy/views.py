@@ -145,7 +145,7 @@ def adhocdesign():
     #return '2cad'
     #return "dde {0}".format(str(request.files.items()))
     uploadFile = request.files['filePath']
-    locus = request.form.get('locus')
+    locus = request.form.get('locus').strip()
     design = request.form.get('design')
     tiers = map(int,request.form.getlist('tiers'))
     gap = request.form.get('gap')
@@ -172,15 +172,19 @@ def adhocdesign():
             uploadFile.save(target)
             #return str((target,sys.stderr,sys.stdout))
             print >> sys.stderr, "file saved to %s" % target
+            if len(locus)>0:
+                args=(target,locus)
+            else:
+                args=target
         else:
-            target = locus
+            args = locus
         #return str((target,locus))
         # read config
         with open(app.config['CONFIG_FILE']) as conf:
             config = json.load(conf, object_hook=ascii_encode_dict)
             db = PrimerDB(config['database'],dump=config['ampliconbed'])
         # run Zippy
-        primerTable, resultList, missedIntervals = zippyPrimerQuery(config, (target,locus), design, None, db, store, tiers, gap)
+        primerTable, resultList, missedIntervals = zippyPrimerQuery(config, args, design, None, db, store, tiers, gap)
 
         print >> sys.stderr, primerTable
 

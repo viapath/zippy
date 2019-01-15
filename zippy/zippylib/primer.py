@@ -512,15 +512,17 @@ class Locus(object):
 
 '''primer3 wrapper class'''
 class Primer3(object):
+    def __repr__(self):
+        return "<Primer 3 {0} {1} {2}>".format(self.genome,self.target,self.flank)
     def __init__(self,genome,target,flank=200):
         self.genome = genome
         self.target = target
         self.flank = flank
         #try:
         fasta = pysam.FastaFile(self.genome)
-        lowerlimit=max(0,self.target[1]-self.flank)
-        upperlimit=max(0,self.target[2]-self.flank)
-        strselftarget0=str(self.target[0])
+        lowerlimit=max(0,target[1]-self.flank)
+        upperlimit=max(0,target[2]-self.flank)
+        strselftarget0=str(target[0])
         if strselftarget0[0:3].lower()=="chr":
             strselftarget0=strselftarget0[3:]
         try:
@@ -530,14 +532,19 @@ class Primer3(object):
         else:
             lowerlimit=min(lowerlimit,fasta.lengths[fndref])
             upperlimit=min(upperlimit,fasta.lengths[fndref])
+        self.target=(target[0],lowerlimit+self.flank,upperlimit+self.flank)#Assign the target after clipping to valid positions
+        #self.target=target
         self.designregion = ( str(self.target[0]), lowerlimit, upperlimit )
+        #self.designregion = ( str(self.target[0]), lowerlimit+self.flank, upperlimit+self.flank )
         try:
             self.sequence = fasta.fetch(*self.designregion)
         except KeyError as kerr:
             #print("Literal sequence not found: {0}".format(self.designregion))
             assert kerr.args[0]=="sequence '{0}' not present".format(self.designregion[0])
             assert self.designregion[0][0:3].lower()=="chr"
+            self.target=(self.designregion[0][3:],lowerlimit+self.flank,upperlimit+self.flank)
             self.designregion=(self.designregion[0][3:],lowerlimit,upperlimit,self.target)
+            #self.designregion=(self.designregion[0][3:],lowerlimit+self.flank,upperlimit+self.flank,self.target)
             self.sequence=fasta.fetch(*self.designregion)
         except ValueError as vlerr:
             #print("dr",self.designregion)
@@ -549,15 +556,45 @@ class Primer3(object):
     def __len__(self):
         return len(self.pairs)
 
+    @staticmethod
+    def clip2(iterable,strlen):
+        clipped=[]
+        for sublist in iterable:
+            clipped.append([])
+            for element in sublist:
+                if element<0:
+                    element=0
+                elif element>strlen:
+                    element=strlen
+                clipped[-1].append(element)
+        return clipped
+    @staticmethod
+    def clip(iterable,strlen):
+        clipped=[]
+        for element in iterable:
+            if element<0:
+                element=0
+            elif element>strlen:
+                element=strlen
+            clipped.append(element)
+        return clipped
     def design(self,name,pars):
         # Sequence args
         seq = {
             'SEQUENCE_ID': str(name),
             'SEQUENCE_TEMPLATE': str(self.sequence),
+            #'SEQUENCE_PRIMER_PAIR_OK_REGION_LIST': self.clip([0, self.flank, len(self.sequence)-self.flank, self.flank],len(self.sequence))
             'SEQUENCE_PRIMER_PAIR_OK_REGION_LIST': [0, self.flank, len(self.sequence)-self.flank, self.flank]
         }
         # design primers
-        primers = primer3.bindings.designPrimers(seq,pars)
+        #interval=
+        parscopy=pars.copy()
+        #assert 0,parscopy
+        #parscopy["PRIMER_PRODUCT_SIZE_RANGE"]=self.clip2(parscopy["PRIMER_PRODUCT_SIZE_RANGE"],len(seq["SEQUENCE_TEMPLATE"]))
+        #try:
+        primers = primer3.bindings.designPrimers(seq,parscopy)
+        #except Exception as exc:
+        #    assert 0,(exc,seq,pars,parscopy,self,'dr',self.designregion)
         # parse primer
         primerdata, explain = defaultdict(dict), []
         for k,v in primers.items():

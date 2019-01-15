@@ -300,11 +300,16 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                     print >> sys.stderr, "WARNING: could not determine maximum amplicon size, default setting applied"
                     designIntervalOversize = 2000
                 #assert 0,(config['design']['genome'], iv.locus(), designIntervalOversize,config['design']['primer3'][tier]['PRIMER_PRODUCT_SIZE_RANGE'])
+                p3 = Primer3(config['design']['genome'], iv.locus(), designIntervalOversize)
                 try:
-                    p3 = Primer3(config['design']['genome'], iv.locus(), designIntervalOversize)
-                except MemoryError as verr:
-                    assert 0,verr
-                p3.design(iv.name, config['design']['primer3'][tier])
+                    p3.design(iv.name, config['design']['primer3'][tier])
+                except IOError as ioerr:
+                    if ioerr.args==('SEQUENCE_INCLUDED_REGION length < min PRIMER_PRODUCT_SIZE_RANGE',):
+                        pass
+                    elif ioerr.args==('PRIMER_PAIR_OK_REGION_LIST beyond end of sequence',):
+                        pass
+                    else:
+                        assert 0,ioerr
                 if p3.pairs:
                     designedPairs[iv] = p3.pairs
                 #else: print >> sys.stderr, '\n' +'\n'.join(p3.explain)
