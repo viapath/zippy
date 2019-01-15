@@ -313,7 +313,7 @@ input[type=submit]:focus {
 }
 
 .pop-link {
-	color: #00802b;
+	/*color: #00802b;*/
 	color: #4a6fb5;
 	font-weight: bold;
 	font-style: normal;
@@ -321,7 +321,8 @@ input[type=submit]:focus {
 }
 
 .pop-link:hover {
-	color: #00e64d;
+	/*color: #00e64d;*/
+	color: #0c10bf;
 	font-style: oblique;
 }
 

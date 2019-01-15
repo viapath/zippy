@@ -520,19 +520,29 @@ class Primer3(object):
         fasta = pysam.FastaFile(self.genome)
         lowerlimit=max(0,self.target[1]-self.flank)
         upperlimit=max(0,self.target[2]-self.flank)
+        strselftarget0=str(self.target[0])
+        if strselftarget0[0:3].lower()=="chr":
+            strselftarget0=strselftarget0[3:]
+        try:
+            fndref=fasta.references.index(strselftarget0)
+        except ValueError as verr:
+            pass#assert 0,(verr,fasta.references)
+        else:
+            lowerlimit=min(lowerlimit,fasta.lengths[fndref])
+            upperlimit=min(upperlimit,fasta.lengths[fndref])
         self.designregion = ( str(self.target[0]), lowerlimit, upperlimit )
         try:
             self.sequence = fasta.fetch(*self.designregion)
         except KeyError as kerr:
             #print("Literal sequence not found: {0}".format(self.designregion))
             assert kerr.args[0]=="sequence '{0}' not present".format(self.designregion[0])
-            assert self.designregion[0][0:3]=="chr"
-            newdesignregion=(self.designregion[0][3:],self.designregion[1],self.designregion[2])
-            self.sequence=fasta.fetch(*newdesignregion)
+            assert self.designregion[0][0:3].lower()=="chr"
+            self.designregion=(self.designregion[0][3:],lowerlimit,upperlimit,self.target)
+            self.sequence=fasta.fetch(*self.designregion)
         except ValueError as vlerr:
             #print("dr",self.designregion)
             #raise vlerr
-            assert 0,(vlerr,self.designregion)
+            assert 0,(vlerr,fasta.references,self.designregion,fasta.lengths,len(fasta),fndref)
         self.pairs = []
         self.explain = []
 

@@ -446,10 +446,7 @@ def zippyPrimerQuery(config, targets, design=True, outfile=None, db=None, store=
             for intervalforfile in intervalsforfile:
                 if intervalforlocus.overlap(intervalforfile):
                     intervalforfile.union_with(intervalforlocus)
-                    #assert 0,(intervalforlocus,intervalforfile,list(intervalsforfile))
                     overlappings.append(intervalforfile)
-            print >> sys.stderr, "aerr"
-            #assert 0,(intervalsforfile,list(intervalsforfile),intervalforlocus,overlappings)
             intervals=overlappings
     else:
         intervals = readTargets(targets, config['tiling'])  # get intervals from file or commandline
