@@ -13,7 +13,7 @@
         Allow from all
     </Directory>
 </VirtualHost>
-<VirtualHost *:80>
+<VirtualHost 173.212.225.155:80>
     #Virtual host for the developers host name
     ServerAdmin dbrawand@nhs.net
     ServerName bioinfojdp.freelancecuernavaca.com
@@ -21,7 +21,7 @@
     WSGIScriptAlias / /var/www/zippy/zippy.wsgi
 
     <Directory /var/www/zippy>
-        WSGIProcessGroup zippy
+        WSGIProcessGroup zippy_developer
         WSGIApplicationGroup %{GLOBAL}
         WSGIScriptReloading On
         Order deny,allow

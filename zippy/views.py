@@ -164,8 +164,6 @@ def adhocdesign():
         if uploadFile:
             filename = secure_filename(uploadFile.filename)
             print >> sys.stderr, "Uploaded: ", filename
-            #return str((os.getcwd(),filename))
-            #return(filename)
             try:
                 target = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             except Exception as exc:
@@ -176,12 +174,13 @@ def adhocdesign():
             print >> sys.stderr, "file saved to %s" % target
         else:
             target = locus
+        #return str((target,locus))
         # read config
         with open(app.config['CONFIG_FILE']) as conf:
             config = json.load(conf, object_hook=ascii_encode_dict)
             db = PrimerDB(config['database'],dump=config['ampliconbed'])
         # run Zippy
-        primerTable, resultList, missedIntervals = zippyPrimerQuery(config, target, design, None, db, store, tiers, gap)
+        primerTable, resultList, missedIntervals = zippyPrimerQuery(config, (target,locus), design, None, db, store, tiers, gap)
 
         print >> sys.stderr, primerTable
 

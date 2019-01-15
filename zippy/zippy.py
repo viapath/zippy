@@ -299,7 +299,11 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                 except:
                     print >> sys.stderr, "WARNING: could not determine maximum amplicon size, default setting applied"
                     designIntervalOversize = 2000
-                p3 = Primer3(config['design']['genome'], iv.locus(), designIntervalOversize)
+                #assert 0,(config['design']['genome'], iv.locus(), designIntervalOversize,config['design']['primer3'][tier]['PRIMER_PRODUCT_SIZE_RANGE'])
+                try:
+                    p3 = Primer3(config['design']['genome'], iv.locus(), designIntervalOversize)
+                except MemoryError as verr:
+                    assert 0,verr
                 p3.design(iv.name, config['design']['primer3'][tier])
                 if p3.pairs:
                     designedPairs[iv] = p3.pairs
@@ -340,14 +344,13 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                 # assign designed primer pairs to intervals (remove ranks and tag)
                 intervalindex = { iv.name: iv for iv in intervals }
                 intervalprimers = { iv.name: set([ p.uniqueid() for p in ivpairs[iv] ]) for iv in intervals }
-                print("pares",pairs,intervalprimers)
+                #print "pares",pairs,"intprims",intervalprimers
                 failCount = 0
                 for pair in pairs:
                     passed = 0
                     if pair.uniqueid() not in intervalprimers[pair.name]:
-                        print("check",config['designlimits'],pair)
+                        #print "check",config['designlimits'],"pair",pair
                         if pair.check(config['designlimits']):
-                            print("ckk")
                             # add default tag
                             for primer in pair:
                                 primer.tag = config['design']['tag']
@@ -435,7 +438,21 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
 # query database / design primer for VCF,BED,GenePred or interval
 def zippyPrimerQuery(config, targets, design=True, outfile=None, db=None, store=False, tiers=[0], gap=None):
     #assert 0,targets
-    intervals = readTargets(targets, config['tiling'])  # get intervals from file or commandline
+    if isinstance(targets,tuple):
+        intervalforlocus = readTargets(targets[1], config['tiling'])  # get intervals from file or commandline
+        overlappings=[]
+        for intervalforlocus in intervalforlocus:
+            intervalsforfile = readTargets(targets[0], config['tiling'])  # get intervals from file or commandline
+            for intervalforfile in intervalsforfile:
+                if intervalforlocus.overlap(intervalforfile):
+                    intervalforfile.union_with(intervalforlocus)
+                    #assert 0,(intervalforlocus,intervalforfile,list(intervalsforfile))
+                    overlappings.append(intervalforfile)
+            print >> sys.stderr, "aerr"
+            #assert 0,(intervalsforfile,list(intervalsforfile),intervalforlocus,overlappings)
+            intervals=overlappings
+    else:
+        intervals = readTargets(targets, config['tiling'])  # get intervals from file or commandline
     if gap:  # gap PCR primers
         try:
             assert len(intervals)==1

@@ -1,6 +1,6 @@
 #Listen 9999
 #<VirtualHost *:9999>
-<VirtualHost *:80>
+<VirtualHost *:801>
 	ServerAdmin dbrawand@nhs.net
     SetEnv FLASK_ENV development
     WSGIDaemonProcess zippy user=flask group=www-data threads=5 home=/srv/qgen/zippy/
@@ -19,10 +19,8 @@
         Order deny,allow
         Allow from all
     </Directory>
-
-
 </VirtualHost>
-<VirtualHost *:80>
+<VirtualHost 173.212.225.155:801>
     ServerAdmin dbrawand@nhs.net
     ServerName bioinfojdp.freelancecuernavaca.com
     SetEnv FLASK_ENV development
@@ -42,5 +40,18 @@
         Order deny,allow
         Allow from all
     </Directory>
+</VirtualHost>
 
+<VirtualHost *:80>
+    ServerAdmin dbrawand@nhs.net
+    <Location "/">
+        ProxyPass http://localhost:5000/
+    </Location>
+</VirtualHost>
+<VirtualHost 173.212.225.155:80>
+    ServerAdmin dbrawand@nhs.net
+    ServerName bioinfojdp.freelancecuernavaca.com
+    <Location "/">
+        ProxyPass http://localhost:5000/
+    </Location>
 </VirtualHost>

@@ -23,6 +23,9 @@ class Interval(object):
         self.subintervals = IntervalList([])
         return
 
+    def name_by_range(self):
+        return self.chrom+':'+str(self.chromStart)+'-'+str(self.chromEnd) 
+
     def midpoint(self):
         return int(self.chromStart + (self.chromEnd - self.chromStart)/2.0)
 
@@ -82,6 +85,19 @@ class Interval(object):
             if subintervals and (self.subintervals or other.subintervals):
                 self.subintervals += other.subintervals
                 self.flattenSubintervals()
+    def union_with(self,other,subintervals=False):
+        if self.chrom == other.chrom and self.strand == other.strand:
+            self_name_by_range=self.name_by_range()
+            self.chromStart = self.chromStart if other.chromStart < self.chromStart else other.chromStart
+            self.chromEnd = self.chromEnd if other.chromEnd > self.chromEnd else other.chromEnd
+            if other.name != self.name:
+                if self.name==self_name_by_range and other.name==other.name_by_range():
+                    self.name=self.name_by_range()
+                else:
+                    self.name + '_U_' + other.name
+            if subintervals and (self.subintervals or other.subintervals):
+                self.subintervals += other.subintervals
+                self.unionSubintervals()
 
     def addSubintervals(self,add):
         for e in add:
@@ -99,6 +115,16 @@ class Interval(object):
             for i in range(1,len(self.subintervals)):
                 if merged[-1].overlap(self.subintervals[i]):
                     merged[-1].merge(self.subintervals[i])
+                else:
+                    merged.append(self.subintervals[i])
+            self.subintervals = IntervalList(merged)
+    def unionSubintervals(self):
+        if self.subintervals:
+            self.subintervals.sort()
+            merged = [ self.subintervals[0] ]
+            for i in range(1,len(self.subintervals)):
+                if merged[-1].overlap(self.subintervals[i]):
+                    merged[-1].union(self.subintervals[i])
                 else:
                     merged.append(self.subintervals[i])
             self.subintervals = IntervalList(merged)

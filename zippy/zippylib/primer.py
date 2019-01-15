@@ -357,7 +357,7 @@ class PrimerPair(list):
         return int(self[0].rank)
 
     def check(self, limits):
-        print("primcheck",self,limits)
+        #print("primcheck",self,"lims",limits)
         for k,v in limits.items():
             x = getattr(self,k)()
             try:
@@ -428,7 +428,6 @@ class Primer(object):
 
     def __repr__(self):
         return '<Primer ('+self.name+'):'+str(self.tag)+'-'+self.seq+' Mappings:'+str(len(self.loci))+' Target:'+str(self.targetposition)+'>'
-        #return "%s(%r)" % (self.__class__, self.__dict__)
 
     def __str__(self):
         return '{:<20}\t{:>}-{:<}\t{:>}\t{:.2f}\t{:.1f}\t{:<}'.format(\
@@ -459,17 +458,13 @@ class Primer(object):
         return True if self.snp else False
 
     def checkTarget(self):
-        #print("ct",self.targetposition,self.loci,self.targetposition.chrom)
         if self.targetposition is not None:
             for locus in self.loci:
-                #print("cloc",locus.chrom,self.targetposition.chrom)
                 tichrom=self.targetposition.chrom
                 if tichrom.lower().startswith("chr"):
                     tichrom=tichrom[3:]
                 if locus.chrom == tichrom:
-                    #print("estosoffs",locus.offset,self.targetposition.offset)
                     if int(locus.offset) == int(self.targetposition.offset):
-                        #print("ctt")
                         return True
         return False
 
@@ -521,12 +516,11 @@ class Primer3(object):
         self.genome = genome
         self.target = target
         self.flank = flank
-        try:
-            fasta = pysam.FastaFile(self.genome)
-        except Exception as exc:
-            assert 0,(exc,self.genome,username(),os.path.exists(self.genome))
-        self.designregion = ( str(self.target[0]), self.target[1]-self.flank, self.target[2]+self.flank )
-        #assert 0,(fasta,self.designregion,self.genome,target)
+        #try:
+        fasta = pysam.FastaFile(self.genome)
+        lowerlimit=max(0,self.target[1]-self.flank)
+        upperlimit=max(0,self.target[2]-self.flank)
+        self.designregion = ( str(self.target[0]), lowerlimit, upperlimit )
         try:
             self.sequence = fasta.fetch(*self.designregion)
         except KeyError as kerr:
@@ -536,9 +530,9 @@ class Primer3(object):
             newdesignregion=(self.designregion[0][3:],self.designregion[1],self.designregion[2])
             self.sequence=fasta.fetch(*newdesignregion)
         except ValueError as vlerr:
-            print("dr",self.designregion)
-            raise vlerr
-            #assert 0,self.sequence
+            #print("dr",self.designregion)
+            #raise vlerr
+            assert 0,(vlerr,self.designregion)
         self.pairs = []
         self.explain = []
 

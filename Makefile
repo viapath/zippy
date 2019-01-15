@@ -31,7 +31,8 @@ webservice: webservice_${distro}
 webservice-docker: webservice-docker_${distro}
 webservice-dev: webservice-dev_${distro}
 
-deploy: zippy-install webservice
+deploy: cleansoftware cleandb zippy-install webservice
+deploy-dev: cleansoftware cleandb zippy-install webservice-dev
 
 
 
@@ -191,9 +192,8 @@ webservice_ubuntu:
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
 	cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
-	#echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
-	# enable site and restart
 	a2ensite zippy
+	/etc/init.d/apache2 start
 	/etc/init.d/apache2 restart
 # same for development environment (not maintained)
 webservice-dev_ubuntu:
@@ -205,6 +205,7 @@ webservice-dev_ubuntu:
 	cp install/zippy_dev.hostconfig /etc/apache2/sites-available/zippy.conf
 	# enable site and restart
 	a2ensite zippy
+	/etc/init.d/apache2 start
 	/etc/init.d/apache2 restart
 
 # webservice install (production)
@@ -219,6 +220,7 @@ webservice_centos:
 	sudo cp install/zippy.hostconfig_centos /etc/httpd/conf.d/zippy.conf
 	# enable site and restart
 	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
+	sudo systemctl start httpd
 	sudo systemctl restart httpd
 	#Opens the port 80 in the firewall in the system, for public access
 	#Disable SELINUX, this disabling is full while we don't know how to open only the sippy directories to SELINUX.
@@ -246,6 +248,7 @@ webservice-dev_centos:
 	sudo cp install/zippy_dev.hostconfig_centos /etc/httpd/conf.d/zippy.conf
 	# enable site and restart
 	sudo systemctl start httpd.service
+	sudo systemctl restart httpd.service
 	#Opens the port 5000 in the firewall in the system
 	sudo firewall-cmd --zone=public --add-port=5000/tcp --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
 

@@ -22,7 +22,7 @@
     </Directory>
 
 </VirtualHost>
-<VirtualHost *:801>
+<VirtualHost 173.212.225.155:801>
     ServerAdmin dbrawand@nhs.net
     ServerName bioinfojdp.freelancecuernavaca.com
     #SetEnv FLASK_ENV development
@@ -44,13 +44,19 @@
         Order deny,allow
         Allow from all
     </Directory>
-
 </VirtualHost>
+
 <VirtualHost *:80>
+    ServerAdmin dbrawand@nhs.net
+    <Location "/">
+        ProxyPass http://localhost:5000/
+    </Location>
+</VirtualHost>
+<VirtualHost 173.212.225.155:80>
     ServerAdmin dbrawand@nhs.net
     ServerName bioinfojdp.freelancecuernavaca.com
     <Location "/">
         ProxyPass http://localhost:5000/
     </Location>
-
 </VirtualHost>
+

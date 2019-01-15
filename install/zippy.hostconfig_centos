@@ -1,25 +1,28 @@
 #Listen 9999
 #<VirtualHost *:9999>
-<Directory /var/www/zippy>
-    WSGIProcessGroup zippy
-    WSGIApplicationGroup %{GLOBAL}
-    WSGIScriptReloading On
-    Order deny,allow
-    Allow from all
-</Directory>
-WSGIDaemonProcess zippy user=apache group=apache threads=5 home=/var/local/zippy/
-WSGIScriptAlias / /var/www/zippy/zippy.wsgi
 <VirtualHost *:80>
+    WSGIDaemonProcess zippy user=apache group=apache threads=5 home=/var/local/zippy/
+    WSGIScriptAlias / /var/www/zippy/zippy.wsgi
+    <Directory /var/www/zippy>
+        WSGIProcessGroup zippy
+        WSGIApplicationGroup %{GLOBAL}
+        WSGIScriptReloading On
+        Order deny,allow
+        Allow from all
+    </Directory>
     ServerAdmin dbrawand@nhs.net
-
-
 </VirtualHost>
 <VirtualHost 173.212.225.155:80>
     ServerAdmin dbrawand@nhs.net
     #Virtual host for the developers host name
     ServerName bioinfojdp.freelancecuernavaca.com
-
-    #WSGIDaemonProcess zippy user=apache group=apache threads=5 home=/var/local/zippy/
-    #WSGIScriptAlias / /var/www/zippy/zippy.wsgi
-
+    <Directory /var/www/zippy>
+        WSGIProcessGroup zippy_developer
+        WSGIApplicationGroup %{GLOBAL}
+        WSGIScriptReloading On
+        Order deny,allow
+        Allow from all
+    </Directory>
+    WSGIDaemonProcess zippy_developer user=apache group=apache threads=5 home=/var/local/zippy/
+    WSGIScriptAlias / /var/www/zippy/zippy.wsgi
 </VirtualHost>
