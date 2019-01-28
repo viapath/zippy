@@ -21,7 +21,7 @@ endif
 release: install_${distro} resources webservice
 
 # development installs (with mounted volume)
-all: install resources webervice
+all: install resources webservice
 
 zippy-install: zippy-install_${distro}
 essential: essential_${distro}
