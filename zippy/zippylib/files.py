@@ -302,9 +302,9 @@ class Data(object):
                 fh.close()
         else: # write as is
             fh = sys.stdout if fi == '-' else open(fi,'w')
-            print >> fi, self.header
+            print >> fh, self.header
             for d in self.data:
-                print >> fi, '\t'.join(map(str,[ d[f] for f in self.header]))
+                print >> fh, '\t'.join(map(str,[ d[f] for f in self.header]))
             if fi != '-':
                 fh.close()
 

@@ -791,7 +791,7 @@ def main():
         config = json.load(conf, object_hook=ascii_encode_dict)
     #here = config['primerbed'] if 'primerbed' in config.keys() and config['primerbed'] else None
     #here = config['ampliconbed'] if 'ampliconbed' in config.keys() and config['ampliconbed'] else None
-    here=options.outfile
+    here=getattr(options,'outfile','')
     db = PrimerDB(config['database'],dump=here)
 
     if options.which=='add':  # read primers and add to database

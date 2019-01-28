@@ -251,6 +251,8 @@ webservice-dev_centos:
 	sudo systemctl restart httpd.service
 	#Opens the port 5000 in the firewall in the system
 	sudo firewall-cmd --zone=public --add-port=5000/tcp --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
+run:
+	source /usr/local/zippy/venv/bin/activate; python run.py
 
 
 #### genome resources
