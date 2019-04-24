@@ -159,7 +159,7 @@ class Report(object):
         self.elements.append(Spacer(1, 2))
         data = [[ 'Date','','','Operator','','','Worklist',self.worklist]]
         t = Table(data, \
-            colWidths=[2.3*cm, 2.3*cm, 0.85*cm, 2.3*cm, 2.3*cm, 0.85*cm, 2.3*cm, 2.3*cm], rowHeights=0.6*cm)
+            colWidths=[2.3*cm, 2.3*cm, 0.7*cm, 2.3*cm, 2.3*cm, 0.7*cm, 2.3*cm, 2.6*cm], rowHeights=0.6*cm)
         t.setStyle(TABLE_STYLE)
         self.elements.append(t)
         self.elements.append(Spacer(1, 12))
@@ -308,8 +308,8 @@ class Report(object):
         data = [['Reagent','Quantity','LOT','Expiry','','Reactions', str(reactions) ],
             ['MasterMix', str((1.+excess)*reactions*mastermix)+' µl', '', '', '', 'Excess', str((excess)*100)+' %' ],
             ['Q-Solution', str((1.+excess)*reactions*qsolution)+' µl', '', '', '', 'PCR Program', program ],
-            ['H2O', str((1.+excess)*reactions*water)+' µl', '', '', '', '', '' ],
-            ['TOTAL', str((1.+excess)*reactions*(mastermix+qsolution+water))+' µl', '', '', '', 'PCR Block','']]
+            ['H2O', str((1.+excess)*reactions*water)+' µl', '', '', '', 'PCR Block', '' ],
+            ['TOTAL', str((1.+excess)*reactions*(mastermix+qsolution+water))+' µl', '', '', '', '','']]
         t = Table(data, colWidths=[2.5*cm,2.5*cm,2.5*cm,2.5*cm,0.3*cm,2.7*cm,2.5*cm], rowHeights=0.6*cm)
         t.setStyle(TableStyle([
             ('FONTSIZE',(0,1),(0,-1),10),
@@ -322,6 +322,7 @@ class Report(object):
             ('LINEABOVE', (0,1),(3,1), 1, colors.black),
             ('BACKGROUND',(2,-1),(3,-1),colors.lightgrey),
             ('BACKGROUND', (0,0), (3,0), colors.bisque),
+            ('BACKGROUND',(5,-1),(6,-1),colors.lightgrey),
             ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
             ('ALIGN',(0,0),(-1,-1),'RIGHT'),
             ('BOX', (0,0), (3,-1), 1, colors.black),
