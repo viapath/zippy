@@ -332,6 +332,48 @@ class Report(object):
         self.elements.append(KeepTogether(t))
         self.elements.append(Spacer(1, 12))
 
+    def pcrLongProgram(self):
+        data = [['','Temp','Time','No. of Cycles'],
+            ['Stage1', '94', '14m', '1'],
+            ['Stage2', '95', '30s', '5'],
+            ['', '62', '30s', ''],
+            ['', '72', '1m 30s', ''],
+            ['Stage3', '95', '30s', '5'],
+            ['', '60', '30s', ''],
+            ['', '72', '1m 30s', ''],
+            ['Stage4', '95', '30s', ''],
+            ['', '58', '30s', ''],
+            ['', '72', '1m 30s', ''],
+            ['Stage5', '10', '10m', '1']]
+        # data_std = [['Stage','Temp','Time','No. of Cycles']
+        #     ['Stage1', '95', '15m', '1'],
+        #     ['Stage2', '94', '30s', '35'],
+        #     ['', '60', '1m30s', ''],
+        #     ['', '72', '1m', ''],
+        #     ['Stage3', '72', '10m', '1'],
+        #     ['Stage4', '10', '10m', '1']
+        #     ['', '', '', '']]
+        t = Table(data, colWidths=[2.5*cm,2.0*cm,2.0*cm,3.0*cm], rowHeights=0.6*cm)
+        t.setStyle(TableStyle([
+            ('BOX', (0,0), (3,-1), 1, colors.black),
+            ('FONTSIZE', (0,0), (3,0), 12),
+            ('FONTSIZE', (0,1), (0,5), 12),
+            ('FONTSIZE', (1,1), (-1,-1), 8),
+            ('INNERGRID', (0,0), (3,1), 0.25, colors.black),
+            ('LINEABOVE', (0,2), (3,2), 0.25, colors.black),
+            ('LINEBEFORE', (1,2), (1,-1), 0.25, colors.black),
+            ('LINEBEFORE', (3,0), (3,-1), 0.25, colors.black),
+            ('INNERGRID', (1,2), (2,-1), 0.25, colors.black),
+            ('LINEABOVE', (0,5), (3,5), 0.25, colors.black),
+            ('LINEABOVE', (0,-4), (3,-4), 0.25, colors.black),
+            ('LINEABOVE', (0,-1), (3,-1), 0.25, colors.black),
+            ]))
+        self.elements.append(Spacer(1, 12))
+        self.elements.append(KeepTogether(t))
+        self.elements.append(Spacer(1, 12))
+
+    #def pcrProgram(self,title='Program',table=[],tableHeafer=['Stage','Temp','Time','No. of Cycles'],)
+
     def checkBoxes(self,title='Checks',table=[],tableHeader=['Check','SampleID','Date','Operator','Checker'],tickbox=[],tickboxNames=['YES','NO'],textLines={}):
         # title
         if title:
@@ -558,8 +600,9 @@ class Worksheet(list):
         r.volumeLists(sum([len(p) for p in self.plates]),kwargs['volumes']['mastermix'],kwargs['volumes']['qsolution'],kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'])
         # add checkboxes
         checkTasks = ['New primers ordered', 'Plate orientation checked', 'Primer checked and storage assigned'] if primertest \
-    else ['Plate orientation checked', 'DNA label checked:','1.Failing Barcode','2.Dilution Tube','3.Barcode Override','3.External Tube']
+    else ['Plate orientation checked', 'DNA label checked:','1.Failing Barcode','2.Dilution Tube','3.Barcode Override','4.External Tube-HERE']
         r.checkBoxes(title='',table=checkTasks)
+        r.pcrLongProgram()
         # plate layout
         r.plateLayouts(plates)
         # print result table
