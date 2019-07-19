@@ -332,7 +332,7 @@ class Report(object):
         self.elements.append(KeepTogether(t))
         self.elements.append(Spacer(1, 12))
 
-    def checkBoxes(self,title='Checks',table=[],tableHeader=['Task','Date','Checker'],tickbox=[],tickboxNames=['YES','NO'],textLines={}):
+    def checkBoxes(self,title='Checks',table=[],tableHeader=['Check','SampleID','Date','Operator','Checker'],tickbox=[],tickboxNames=['YES','NO'],textLines={}):
         # title
         if title:
             self.elements.append(Paragraph(title, self.styles["Heading4"]))
@@ -347,12 +347,14 @@ class Report(object):
                 ('BOX', (0,0), (-1,-1), 1, colors.black),
                 ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
                 ('LINEABOVE', (0,1), (-1,1), 1, colors.black),
+                ('BACKGROUND', (1,1), (1,1), colors.lightgrey),
+                ('BACKGROUND', (1,2), (-1,2), colors.lightgrey),
                 ('BACKGROUND', (0,0), (-1,0), colors.bisque)
                 ])
             data = [tableHeader]
             for i in range(len(table)):
                 data.append([ table[i], '', '' ])
-            t = Table(data, colWidths=[7.5*cm,4*cm,4*cm], rowHeights=0.6*cm)
+            t = Table(data, colWidths=[5.5*cm,3.5*cm,3.5*cm,2*cm,2*cm], rowHeights=0.6*cm)
             t.setStyle(TABLE_STYLE)
             self.elements.append(KeepTogether(t))
             self.elements.append(Spacer(1, 6))
@@ -556,7 +558,7 @@ class Worksheet(list):
         r.volumeLists(sum([len(p) for p in self.plates]),kwargs['volumes']['mastermix'],kwargs['volumes']['qsolution'],kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'])
         # add checkboxes
         checkTasks = ['New primers ordered', 'Plate orientation checked', 'Primer checked and storage assigned'] if primertest \
-            else ['Plate orientation checked', 'DNA barcodes relabeled']
+    else ['Plate orientation checked', 'DNA label checked:','1.Failing Barcode','2.Dilution Tube','3.Barcode Override','3.External Tube']
         r.checkBoxes(title='',table=checkTasks)
         # plate layout
         r.plateLayouts(plates)
