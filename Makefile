@@ -79,7 +79,7 @@ essential_centos:
 	sudo usermod -s /bin/false $(WWWUSER)
 	sudo usermod -L $(WWWUSER)
 	# install apache/wsgi
-	yum -y install apache2 apache2.2-common apache2-mpm-prefork apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi
+	#yum -y install apache2 apache2.2-common apache2-mpm-prefork apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi
 	# disable default site
 	#a2dissite 000-default
 very_essential_ubuntu:
@@ -283,7 +283,7 @@ genome: genome-download genome-index
 genome-download:
 	#sudo mkdir -p $(ZIPPYVAR)/resources
 	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
-	sudo chmod -R 777 $(ZIPPYVAR)/resources
+	#sudo chmod -R 777 $(ZIPPYVAR)/resources
 	cd $(ZIPPYVAR)/resources
 	ls $(ZIPPYVAR)/resources/${genome}.fasta &>/dev/null && ( \
 		echo File ${genome}.fasta.gz exists, not downloading it again ) || ( \
