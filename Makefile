@@ -281,7 +281,7 @@ resources: genome annotation
 genome: genome-download genome-index
 
 genome-download:
-	sudo mkdir -p $(ZIPPYVAR)/resources
+	#sudo mkdir -p $(ZIPPYVAR)/resources
 	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
 	sudo chmod -R 777 $(ZIPPYVAR)/resources
 	cd $(ZIPPYVAR)/resources
@@ -299,7 +299,7 @@ genome-download:
 	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 genome-index:
-	sudo mkdir -p $(ZIPPYVAR)/resources
+	#sudo mkdir -p $(ZIPPYVAR)/resources
 	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
 	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 	#ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null && sudo chmod -R 777 $(ZIPPYVAR)/resources && ( \
