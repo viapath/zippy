@@ -1,8 +1,8 @@
 #!/bin/bash
 sudo yum -y upgrade
 sudo yum -y install less make wget curl vim git sudo tar gzip #gunzip
-zippy_parent_folder=/srv/qgen
-zippy_folder_title=/zippy-3.1
+zippy_parent_folder=/root
+zippy_folder_title=zippy-3.3
 zippy_folder=${zippy_parent_folder}/${zippy_folder_title}
 
 function install(){
@@ -38,7 +38,7 @@ else
         echo "Not in zippy folder, and the zippy folder does not exist."
         sudo mkdir -p ${zippy_parent_folder}
         sudo chmod -R 777 ${zippy_parent_folder}
-        cd "${zippy_parent_folder}" && tar -xvzf zippy-3.1.tar.gz
+        cd "${zippy_parent_folder}" && tar -xvzf ${zippy_folder_title}.tar.gz
         cd "${zippy_folder}" && install $@
     fi
 fi

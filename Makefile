@@ -79,7 +79,7 @@ essential_centos:
 	sudo usermod -s /bin/false $(WWWUSER)
 	sudo usermod -L $(WWWUSER)
 	# install apache/wsgi
-	#yum -y apache2 apache2.2-common apache2-mpm-prefork apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi
+	yum -y install apache2 apache2.2-common apache2-mpm-prefork apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi
 	# disable default site
 	#a2dissite 000-default
 very_essential_ubuntu:
@@ -90,16 +90,14 @@ very_essential_centos:
 	sudo yum install -y sudo wget less make curl vim
 
 bowtie:
-	#wget -c http://netix.dl.sourceforge.net/project/bowtie-bio/bowtie2/2.2.6/bowtie2-2.2.6-linux-x86_64.zip && \
-	#unzip bowtie2-2.2.6-linux-x86_64.zip && \
-	#cd bowtie2-2.2.6 && sudo mv bowtie2* /usr/local/bin
-	#rm -rf bowtie2-2.2.6 bowtie2-2.2.6-linux-x86_64.zip
+	wget -c http://netix.dl.sourceforge.net/project/bowtie-bio/bowtie2/2.2.6/bowtie2-2.2.6-linux-x86_64.zip && \
+	unzip bowtie2-2.2.6-linux-x86_64.zip && \
+	cd bowtie2-2.2.6 && sudo mv bowtie2* /usr/local/bin
+	rm -rf bowtie2-2.2.6 bowtie2-2.2.6-linux-x86_64.zip
 
 # zippy setup (will move to distutils in future release)
 zippy-install_ubuntu:
 	# virtualenv
-	#echo "Updating the code from GitHub..."
-	#git pull origin master
 	sudo mkdir -p $(ZIPPYPATH)
 	cd $(ZIPPYPATH) && sudo /usr/bin/virtualenv venv
 	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
@@ -123,8 +121,6 @@ zippy-install_ubuntu:
 	#sudo chmod -R 777 $(ZIPPYVAR)
 zippy-install_centos:
 	# virtualenv
-	#echo "Updating the code from GitHub..."
-	#git pull origin master
 	sudo mkdir -p $(ZIPPYPATH)
 	cd $(ZIPPYPATH) && sudo /usr/bin/virtualenv venv
 	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
@@ -285,10 +281,10 @@ resources: genome annotation
 genome: genome-download genome-index
 
 genome-download:
-	#sudo mkdir -p $(ZIPPYVAR)/resources
+	sudo mkdir -p $(ZIPPYVAR)/resources
 	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
-	#sudo chmod -R 777 $(ZIPPYVAR)/resources
-	#cd $(ZIPPYVAR)/resources
+	sudo chmod -R 777 $(ZIPPYVAR)/resources
+	cd $(ZIPPYVAR)/resources
 	ls $(ZIPPYVAR)/resources/${genome}.fasta &>/dev/null && ( \
 		echo File ${genome}.fasta.gz exists, not downloading it again ) || ( \
 		cd $(ZIPPYVAR)/resources; \
@@ -303,7 +299,7 @@ genome-download:
 	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 genome-index:
-	#sudo mkdir -p $(ZIPPYVAR)/resources
+	sudo mkdir -p $(ZIPPYVAR)/resources
 	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
 	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 	#ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null && sudo chmod -R 777 $(ZIPPYVAR)/resources && ( \
