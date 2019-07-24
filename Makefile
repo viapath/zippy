@@ -41,7 +41,7 @@ essential_ubuntu:
 	echo Platform: ${platform}
 	apt-get update && apt-get -y upgrade
 	sudo apt-get install -y sudo less make wget curl vim apt-utils
-	sudo apt-get install -y sqlite3 unzip git htop libcurl3-dev
+	sudo apt-get install -y sqlite3 unzip htop libcurl3-dev #git
 	sudo apt-get install -y python-pip python2.7-dev ncurses-dev python-virtualenv
 	sudo apt-get install -y libxslt-dev libxml2-dev libffi-dev redis-server mysql-client
 	sudo apt-get install -y build-essential libjpeg-dev libfreetype6-dev python-dev python-imaging
@@ -61,7 +61,7 @@ essential_centos:
 	sudo yum -y install epel-release
 	sudo yum repolist
 	sudo yum -y update
-	sudo yum install -y sudo wget less make curl vim sqlite unzip git htop python2-pip python2-devel ncurses-devel
+	sudo yum install -y sudo wget less make curl vim sqlite unzip htop python2-pip python2-devel ncurses-devel #git
 	#apachectl restart graceful
 	#kill -USR1 `cat /usr/local/httpd/logs/httpd.pid`
 	#kill -USR1 `cat /usr/local/apache2/logs/httpd.pid`
@@ -98,8 +98,8 @@ bowtie:
 # zippy setup (will move to distutils in future release)
 zippy-install_ubuntu:
 	# virtualenv
-	echo "Updating the code from GitHub..."
-	git pull origin master
+	#echo "Updating the code from GitHub..."
+	#git pull origin master
 	sudo mkdir -p $(ZIPPYPATH)
 	cd $(ZIPPYPATH) && sudo /usr/bin/virtualenv venv
 	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
@@ -123,8 +123,8 @@ zippy-install_ubuntu:
 	#sudo chmod -R 777 $(ZIPPYVAR)
 zippy-install_centos:
 	# virtualenv
-	echo "Updating the code from GitHub..."
-	git pull origin master
+	#echo "Updating the code from GitHub..."
+	#git pull origin master
 	sudo mkdir -p $(ZIPPYPATH)
 	cd $(ZIPPYPATH) && sudo /usr/bin/virtualenv venv
 	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
