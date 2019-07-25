@@ -273,22 +273,36 @@ class Report(object):
         self.elements.append(PageBreak())
 
     def samplePrimerLists(self,s,p,counts=Counter()):
+        #!!!Orignial table format, DO NOT DELETE
+        # TABLE_STYLE = TableStyle([
+        #     ('FONTSIZE',(0,1),(-1,-1),8),  # body
+        #     ('FONTSIZE',(0,0),(-1,0),10),  # title line
+        #     ('VALIGN',(0,0),(-1,-1),'TOP'),
+        #     ('ALIGN',(0,0),(-1,-1),'LEFT'),
+        #     ('INNERGRID', (0,1), (1,len(s)), 0.25, colors.black),
+        #     ('LINEABOVE', (0,1),(1,1),1,colors.black),
+        #     ('BOX', (0,0), (1,len(s)), 1, colors.black),
+        #     ('INNERGRID', (3,1), (-1,len(p)), 0.25, colors.black),
+        #     ('LINEABOVE', (3,1),(-1,1),1,colors.black),
+        #     ('BOX', (3,0), (-1,len(p)), 1, colors.black),
+        #     ])
         TABLE_STYLE = TableStyle([
             ('FONTSIZE',(0,1),(-1,-1),8),  # body
             ('FONTSIZE',(0,0),(-1,0),10),  # title line
             ('VALIGN',(0,0),(-1,-1),'TOP'),
             ('ALIGN',(0,0),(-1,-1),'LEFT'),
-            ('INNERGRID', (0,1), (1,len(s)), 0.25, colors.black),
-            ('LINEABOVE', (0,1),(1,1),1,colors.black),
-            ('BOX', (0,0), (1,len(s)), 1, colors.black),
-            ('INNERGRID', (3,1), (-1,len(p)), 0.25, colors.black),
-            ('LINEABOVE', (3,1),(-1,1),1,colors.black),
-            ('BOX', (3,0), (-1,len(p)), 1, colors.black),
+            ('INNERGRID', (0,0), (3,len(s)), 0.25, colors.black),
+            ('LINEABOVE', (0,1),(4,1),1,colors.black),
+            ('LINEBEFORE', (3,0), (3,len(s)),1,colors.black),
+            ('BOX', (0,0), (4,len(s)), 1, colors.black),
+            ('INNERGRID', (6,1), (-1,len(p)), 0.25, colors.black),
+            ('LINEABOVE', (6,1),(-1,1),1,colors.black),
+            ('BOX', (6,0), (-1,len(p)), 1, colors.black),
             ])
         doubleLine = ParagraphStyle('suffixes', fontSize=5, leading=5)  # suffix column
         centered = ParagraphStyle('locations', fontSize=8, leading=5, alignment=1)  # Location column
         centeredsmall = ParagraphStyle('locations', fontSize=6, leading=6, alignment=1)  # Location column
-        data = [[str(len(s)),'Samples','',str(len(p)),'Primer Pairs', 'Suffixes', 'Locations']]
+        data = [['W','D','B',str(len(s)),'Samples','',str(len(p)),'Primer Pairs', 'Suffixes', 'Locations','ND']]
         for i in range(max(len(s),len(p))):
             if i<len(p):
                 if any(p[i][2]):
@@ -296,10 +310,10 @@ class Report(object):
                     locationParagraph = Paragraph(locationString, centered if len(locationString) < 10 else centeredsmall)
                 else:
                     locationParagraph = Paragraph(' ',centered)
-            data.append(([ counts[s[i]] if counts else '', s[i] ] if i<len(s) else ['','']) + [''] + \
+            data.append(['','',''] + ([ counts[s[i]] if counts else '', s[i] ] if i<len(s) else ['','']) + [''] + \
                 ([ counts[p[i][0]] if counts else '', p[i][0], Paragraph('<br/>'.join(p[i][1]),doubleLine), locationParagraph ] if i<len(p) else ['','','','']))
         self.elements.append(Spacer(1, 2))
-        t = Table(data, colWidths=[0.6*cm,5*cm,0.3*cm,0.6*cm,5.3*cm,1.6*cm,2.1*cm], rowHeights=0.6*cm)
+        t = Table(data, colWidths=[0.6*cm,0.6*cm,0.6*cm,0.6*cm,5*cm,0.3*cm,0.6*cm,5.3*cm,1.6*cm,2.1*cm,0.8*cm], rowHeights=0.6*cm)
         t.setStyle(TABLE_STYLE)
         self.elements.append(t)
         self.elements.append(Spacer(1, 12))
