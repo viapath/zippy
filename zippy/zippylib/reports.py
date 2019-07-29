@@ -291,9 +291,9 @@ class Report(object):
             ('FONTSIZE',(0,0),(-1,0),10),  # title line
             ('VALIGN',(0,0),(-1,-1),'TOP'),
             ('ALIGN',(0,0),(-1,-1),'LEFT'),
-            ('INNERGRID', (0,0), (3,len(s)), 0.25, colors.black),
+            ('INNERGRID', (0,0),(4,len(s)), 0.25, colors.black),
             ('LINEABOVE', (0,1),(4,1),1,colors.black),
-            ('LINEBEFORE', (3,0), (3,len(s)),1,colors.black),
+            ('LINEBEFORE', (3,0),(3,len(s)),1,colors.black),
             ('BOX', (0,0), (4,len(s)), 1, colors.black),
             ('INNERGRID', (6,1), (-1,len(p)), 0.25, colors.black),
             ('LINEABOVE', (6,1),(-1,1),1,colors.black),
@@ -454,7 +454,7 @@ class Report(object):
 
     #def pcrProgram(self,title='Program',table=[],tableHeafer=['Stage','Temp','Time','No. of Cycles'],)
 
-    def checkBoxes(self,title='Checks',table=[],tableHeader=['Check','SampleID','Date','Operator','Checker'],tickbox=[],tickboxNames=['YES','NO'],textLines={}):
+    def checkBoxes(self,title='Checks',checktable=[],table=[],tableHeader=['Check','SampleID','Date','Operator','Checker'],tickbox=[],tickboxNames=['YES','NO'],textLines={}):
         # title
         if title:
             self.elements.append(Paragraph(title, self.styles["Heading4"]))
@@ -469,13 +469,32 @@ class Report(object):
                 ('BOX', (0,0), (-1,-1), 1, colors.black),
                 ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
                 ('LINEABOVE', (0,1), (-1,1), 1, colors.black),
-                ('BACKGROUND', (1,1), (1,1), colors.lightgrey),
-                ('BACKGROUND', (1,2), (-1,2), colors.lightgrey),
                 ('BACKGROUND', (0,0), (-1,0), colors.bisque)
                 ])
             data = [tableHeader]
             for i in range(len(table)):
                 data.append([ table[i], '', '' ])
+            t = Table(data, colWidths=[5.5*cm,3.5*cm,3.5*cm,2*cm,2*cm], rowHeights=0.6*cm)
+            t.setStyle(TABLE_STYLE)
+            self.elements.append(KeepTogether(t))
+            self.elements.append(Spacer(1, 6))
+
+        if checktable:
+            # right justified checkboxes with appropriate names
+            TABLE_STYLE = TableStyle([
+                ('ALIGN',(0,0),(-1,-1),'RIGHT'),
+                ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
+                ('FONTSIZE',(0,1),(-1,-1),8),
+                ('BOX', (0,0), (-1,-1), 1, colors.black),
+                ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
+                ('LINEABOVE', (0,1), (-1,1), 1, colors.black),
+                ('BACKGROUND', (0,0), (-1,0), colors.bisque),
+                ('BACKGROUND', (1,1), (1,1), colors.lightgrey),
+                ('BACKGROUND', (1,2), (-1,2), colors.lightgrey)
+                ])
+            data = [tableHeader]
+            for i in range(len(checktable)):
+                data.append([ checktable[i], '', '', '', '' ])
             t = Table(data, colWidths=[5.5*cm,3.5*cm,3.5*cm,2*cm,2*cm], rowHeights=0.6*cm)
             t.setStyle(TABLE_STYLE)
             self.elements.append(KeepTogether(t))
@@ -682,7 +701,7 @@ class Worksheet(list):
         # add checkboxes
         checkTasks = ['New primers ordered', 'Plate orientation checked', 'Primer checked and storage assigned'] if primertest \
     else ['Plate orientation checked', 'DNA label checked:','1.Failing Barcode','2.Dilution Tube','3.Barcode Override','4.External Tube']
-        r.checkBoxes(title='',table=checkTasks)
+        r.checkBoxes(title='',checktable=checkTasks)
         r.pcrProgram(kwargs['volumes']['program'])
         # plate layout
         r.plateLayouts(plates)
