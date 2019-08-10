@@ -12,10 +12,12 @@ ifneq (,$(findstring ubuntu,${platform}))
 	distro=ubuntu
 	WWWGROUP=www-data
 	WWWUSER=flask
+	PKGINSTALL=apt-get
 else
 	distro=centos
 	WWWGROUP=apache
 	WWWUSER=apache
+	PKGINSTALL=yum
 endif
 # production install
 release: install_${distro} resources webservice
@@ -130,14 +132,14 @@ zippy-install_centos:
 	# create empty database
 	sudo mkdir -p $(ZIPPYVAR)
 	#sudo chown -R root:root $(ZIPPYVAR)
-	#sudo touch $(ZIPPYVAR)/zippy.sqlite
-	#sudo touch $(ZIPPYVAR)/zippy.log
-	#sudo touch $(ZIPPYVAR)/.blacklist.cache
-	#sudo touch $(ZIPPYVAR)/zippy.bed
-	#sudo chmod 666 $(ZIPPYVAR)/zippy.sqlite
-	#sudo chmod 666 $(ZIPPYVAR)/zippy.log
-	#sudo chmod 666 $(ZIPPYVAR)/.blacklist.cache
-	#sudo chmod 666 $(ZIPPYVAR)/zippy.bed
+	sudo touch $(ZIPPYVAR)/zippy.sqlite
+	sudo touch $(ZIPPYVAR)/zippy.log
+	sudo touch $(ZIPPYVAR)/.blacklist.cache
+	sudo touch $(ZIPPYVAR)/zippy.bed
+	sudo chmod 666 $(ZIPPYVAR)/zippy.sqlite
+	sudo chmod 666 $(ZIPPYVAR)/zippy.log
+	sudo chmod 666 $(ZIPPYVAR)/.blacklist.cache
+	sudo chmod 666 $(ZIPPYVAR)/zippy.bed
 	sudo mkdir -p $(ZIPPYVAR)/uploads
 	sudo mkdir -p $(ZIPPYVAR)/results
 	sudo mkdir -p $(ZIPPYVAR)/resources
@@ -162,10 +164,15 @@ cleandb:
 
 # gunicorn/nginx webserver
 unicorn:
-	apt-get install nginx
+	$(PKG_INSTALL) install nginx
 	# start gunicorn with
 	# gunicorn --bind 0.0.0.0:8000 wsgi:app
 
+# gunicorn/nginx webserver
+unicorn_centos:
+	apt-get install nginx
+	# start gunicorn with
+	# gunicorn --bind 0.0.0.0:8000 wsgi:app
 # webservice install (for the interior of a docker container)
 webservice-docker_ubuntu:
 	rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)

@@ -527,7 +527,7 @@ class Primer3(object):
         try:
             fndref=fasta.references.index(strselftarget0)
         except ValueError as verr:
-            pass#assert 0,(verr,fasta.references)
+            assert 0,(verr,fasta.references)
         else:
             lowerlimit=min(lowerlimit,fasta.lengths[fndref])
             upperlimit=min(upperlimit,fasta.lengths[fndref])
@@ -546,6 +546,7 @@ class Primer3(object):
             self.designregion=(self.designregion[0][3:],lowerlimit,upperlimit,self.target)
             #self.designregion=(self.designregion[0][3:],lowerlimit+self.flank,upperlimit+self.flank,self.target)
             self.sequence=fasta.fetch(*self.designregion)
+            print("seq", self.sequence, fasta.references, self.flank)
         except ValueError as vlerr:
             #print("dr",self.designregion)
             #raise vlerr
@@ -586,10 +587,11 @@ class Primer3(object):
             'SEQUENCE_PRIMER_PAIR_OK_REGION_LIST': self.clip([0, self.flank, len(self.sequence)-self.flank, self.flank],len(self.sequence))
             #'SEQUENCE_PRIMER_PAIR_OK_REGION_LIST': [0, self.flank, len(self.sequence)-self.flank, self.flank]
         }
-         #parscopy=pars.copy()
-        #parscopy["PRIMER_PRODUCT_SIZE_RANGE"]=self.clip2(parscopy["PRIMER_PRODUCT_SIZE_RANGE"],len(seq["SEQUENCE_TEMPLATE"]))
+        parscopy=pars.copy()
+        parscopy["PRIMER_PRODUCT_SIZE_RANGE"]=self.clip2(parscopy["PRIMER_PRODUCT_SIZE_RANGE"],len(seq["SEQUENCE_TEMPLATE"]))
         # design primers
-        primers = primer3.bindings.designPrimers(seq,pars)
+        print("sq", seq, pars, self.flank)
+        primers = primer3.bindings.designPrimers(seq,parscopy)
         # parse primer
         primerdata, explain = defaultdict(dict), []
         for k,v in primers.items():
@@ -618,6 +620,7 @@ class Primer3(object):
                 designedPrimers[v['SEQUENCE']].meta = v
         # store
         self.pairs = OrderedDict(sorted(designedPairs.items())).values()
+        print("lsp", len(self.pairs))
         return len(self.pairs)
 
 

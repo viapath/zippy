@@ -305,12 +305,13 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                     p3.design(iv.name, config['design']['primer3'][tier])
                 except IOError as ioerr:
                     if ioerr.args==('SEQUENCE_INCLUDED_REGION length < min PRIMER_PRODUCT_SIZE_RANGE',):
+                        assert 0, ioerr
                         pass
                     elif ioerr.args==('PRIMER_PAIR_OK_REGION_LIST beyond end of sequence',):
                         assert 0,ioerr
                     else:
                         assert 0,ioerr
-
+                print("after")
                 if p3.pairs:
                     designedPairs[iv] = p3.pairs
                 #else: print >> sys.stderr, '\n' +'\n'.join(p3.explain)
