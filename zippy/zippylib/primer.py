@@ -546,7 +546,7 @@ class Primer3(object):
             self.designregion=(self.designregion[0][3:],lowerlimit,upperlimit,self.target)
             #self.designregion=(self.designregion[0][3:],lowerlimit+self.flank,upperlimit+self.flank,self.target)
             self.sequence=fasta.fetch(*self.designregion)
-            print("seq", self.sequence, fasta.references, self.flank)
+            #print("seq", self.sequence, fasta.references, self.flank)
         except ValueError as vlerr:
             #print("dr",self.designregion)
             #raise vlerr

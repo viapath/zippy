@@ -31,7 +31,7 @@ class Interval(object):
 
     def locus(self):
         '''returns interval of variant'''
-        return ( self.chrom, self.chromStart, self.chromEnd )
+        return (self.chrom, self.chromStart, self.chromEnd )
 
     def __hash__(self):
         return hash(str(self))
