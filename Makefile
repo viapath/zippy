@@ -259,7 +259,7 @@ resources: genome annotation
 genome: genome-download genome-index
 
 genome-download:
-	sudo mkdir -p $(ZIPPYVAR)/resources
+	mkdir -p $(ZIPPYVAR)/resources
 	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
 	cd $(ZIPPYVAR)/resources
 	source /usr/local/zippy/venv/bin/activate; python -m download_resources $(ZIPPYVAR)/resources/${genome}.fasta http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz
