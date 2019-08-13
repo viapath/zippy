@@ -2,7 +2,7 @@
 sudo yum -y upgrade
 sudo yum -y install less make wget curl vim git sudo tar gzip #gunzip
 zippy_parent_folder=/root
-zippy_folder_title=zippy-3.6
+zippy_folder_title=zippy-3.7
 zippy_folder=${zippy_parent_folder}/${zippy_folder_title}
 
 function install(){
