@@ -19,9 +19,6 @@ else
 	WWWUSER=apache
 	PKGINSTALL=yum
 endif
-# production install
-release: install_${distro} resources webservice
-
 # development installs (with mounted volume)
 all: install resources webservice
 
@@ -105,6 +102,7 @@ zippy-install_ubuntu:
 	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
 	sudo $(ZIPPYPATH)/venv/bin/pip install Cython==0.24
 	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
+	cd $(ZIPPYPATH) && sudo $(ZIPPYPATH)/venv/bin/python setup.py install
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	# create empty database
 	sudo mkdir -p $(ZIPPYVAR)
@@ -118,7 +116,6 @@ zippy-install_ubuntu:
 	sudo chmod 666 $(ZIPPYVAR)/zippy.bed
 	mkdir -p $(ZIPPYVAR)/uploads
 	mkdir -p $(ZIPPYVAR)/results
-	#sudo chown -R flask:www-data /var/local/zippy
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 	#sudo chmod -R 777 $(ZIPPYVAR)
 zippy-install_centos:
@@ -128,10 +125,10 @@ zippy-install_centos:
 	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
 	sudo $(ZIPPYPATH)/venv/bin/pip install Cython==0.24
 	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
+	cd $(ZIPPYPATH) && sudo $(ZIPPYPATH)/venv/bin/python setup.py install
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	# create empty database
 	sudo mkdir -p $(ZIPPYVAR)
-	#sudo chown -R root:root $(ZIPPYVAR)
 	sudo touch $(ZIPPYVAR)/zippy.sqlite
 	sudo touch $(ZIPPYVAR)/zippy.log
 	sudo touch $(ZIPPYVAR)/.blacklist.cache
@@ -148,7 +145,8 @@ zippy-install_centos:
 
 
 #Cleans
-cleanall: cleansoftware cleandata cleandb
+distclean: cleansoftware cleandata cleandb #Deep clean, rarely needed
+clean: cleandb cleansoftware
 cleansoftware:
 	sudo rm -rf $(ZIPPYPATH)
 	sudo rm -rf $(ZIPPYWWW)
@@ -288,16 +286,17 @@ resources: genome annotation
 genome: genome-download genome-index
 
 genome-download:
-	#sudo mkdir -p $(ZIPPYVAR)/resources
+	sudo mkdir -p $(ZIPPYVAR)/resources
 	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
 	#sudo chmod -R 777 $(ZIPPYVAR)/resources
 	cd $(ZIPPYVAR)/resources
-	ls $(ZIPPYVAR)/resources/${genome}.fasta &>/dev/null && ( \
-		echo File ${genome}.fasta.gz exists, not downloading it again ) || ( \
-		cd $(ZIPPYVAR)/resources; \
-		echo Downloading genome to $(ZIPPYVAR)/resources/${genome} ; \
-		wget -qO- ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz | \
-		gzip -dcq | cat >${genome}.fasta && rm -f ${genome}.fasta.gz )
+	source /usr/local/zippy/venv/bin/activate; python -m download_resources $(ZIPPYVAR)/resources/${genome}.fasta ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz
+	#ls $(ZIPPYVAR)/resources/${genome}.fasta &>/dev/null && ( \
+	#	echo File ${genome}.fasta.gz exists, not downloading it again ) || ( \
+	#	cd $(ZIPPYVAR)/resources; \
+	#	echo Downloading genome to $(ZIPPYVAR)/resources/${genome} ; \
+	#	wget -qO- ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz | \
+	#	gzip -dcq | cat >${genome}.fasta && rm -f ${genome}.fasta.gz )
 	ls $(ZIPPYVAR)/resources/${genome}.fasta.fai &>/dev/null && \
 		echo File $(ZIPPYVAR)/resources/${genome}.fasta.fai exists, not downloading it again || \
 		( cd $(ZIPPYVAR)/resources; wget -c ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai )
@@ -306,7 +305,6 @@ genome-download:
 	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 genome-index:
-	#sudo mkdir -p $(ZIPPYVAR)/resources
 	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
 	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 	#ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null && sudo chmod -R 777 $(ZIPPYVAR)/resources && ( \
