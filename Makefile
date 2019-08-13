@@ -22,7 +22,6 @@ endif
 # development installs (with mounted volume)
 all: install resources webservice
 
-zippy-install: zippy-install_${distro}
 essential: essential_${distro}
 very_essential: very_essential_${distro}
 install: essential bowtie zippy-install
@@ -60,7 +59,7 @@ essential_centos:
 	sudo yum -y install epel-release
 	sudo yum repolist
 	sudo yum -y update
-	sudo yum install -y sudo wget less make curl vim sqlite unzip htop python2-pip python2-devel ncurses-devel #git
+	sudo yum install -y sudo wget less make curl vim sqlite unzip htop python2-pip python2-devel ncurses-devel gzip #git
 	#apachectl restart graceful
 	#kill -USR1 `cat /usr/local/httpd/logs/httpd.pid`
 	#kill -USR1 `cat /usr/local/apache2/logs/httpd.pid`
@@ -95,38 +94,17 @@ bowtie:
 	rm -rf bowtie2-2.2.6 bowtie2-2.2.6-linux-x86_64.zip
 
 # zippy setup (will move to distutils in future release)
-zippy-install_ubuntu:
+zippy-install:
 	# virtualenv
 	sudo mkdir -p $(ZIPPYPATH)
 	cd $(ZIPPYPATH) && sudo /usr/bin/virtualenv venv
 	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
 	sudo $(ZIPPYPATH)/venv/bin/pip install Cython==0.24
 	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
-	cd $(ZIPPYPATH) && sudo $(ZIPPYPATH)/venv/bin/python setup.py install
+	sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
-	# create empty database
-	sudo mkdir -p $(ZIPPYVAR)
-	sudo touch $(ZIPPYVAR)/zippy.sqlite
-	sudo touch $(ZIPPYVAR)/zippy.log
-	sudo touch $(ZIPPYVAR)/.blacklist.cache
-	sudo touch $(ZIPPYVAR)/zippy.bed
-	sudo chmod 666 $(ZIPPYVAR)/zippy.sqlite
-	sudo chmod 666 $(ZIPPYVAR)/zippy.log
-	sudo chmod 666 $(ZIPPYVAR)/.blacklist.cache
-	sudo chmod 666 $(ZIPPYVAR)/zippy.bed
-	mkdir -p $(ZIPPYVAR)/uploads
-	mkdir -p $(ZIPPYVAR)/results
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
-	#sudo chmod -R 777 $(ZIPPYVAR)
-zippy-install_centos:
-	# virtualenv
-	sudo mkdir -p $(ZIPPYPATH)
-	cd $(ZIPPYPATH) && sudo /usr/bin/virtualenv venv
-	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
-	sudo $(ZIPPYPATH)/venv/bin/pip install Cython==0.24
-	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
+	cd $(ZIPPYPATH)/download && sudo $(ZIPPYPATH)/venv/bin/python setup.py install
 	cd $(ZIPPYPATH) && sudo $(ZIPPYPATH)/venv/bin/python setup.py install
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	# create empty database
 	sudo mkdir -p $(ZIPPYVAR)
 	sudo touch $(ZIPPYVAR)/zippy.sqlite
@@ -173,7 +151,6 @@ unicorn_centos:
 	# gunicorn --bind 0.0.0.0:8000 wsgi:app
 # webservice install (for the interior of a docker container)
 webservice-docker_ubuntu:
-	rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
 	# make WWW directories
 	mkdir -p $(ZIPPYWWW)
 	cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
@@ -186,7 +163,6 @@ webservice-docker_ubuntu:
 	#/etc/init.d/apache2 restart
 # webservice install (production)
 webservice_ubuntu:
-	rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
 	# make WWW directories
 	mkdir -p $(ZIPPYWWW)
 	cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
@@ -211,7 +187,6 @@ webservice-dev_ubuntu:
 
 # webservice install (production)
 webservice_centos:
-	sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	# make WWW directories
 	sudo mkdir -p $(ZIPPYWWW)
@@ -229,7 +204,6 @@ webservice_centos:
 	sudo setenforce 0||echo "Could not activate SELINUX properly"
 # webservice install (for the interior of a docker container)
 webservice-docker_centos:
-	sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	# make WWW directories
 	sudo mkdir -p $(ZIPPYWWW)
@@ -239,7 +213,6 @@ webservice-docker_centos:
 	sudo cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
 # same for development environment (not maintained)
 webservice-dev_centos:
-	sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	# make WWW directories
 	sudo mkdir -p $(ZIPPYWWW)
@@ -288,18 +261,9 @@ genome: genome-download genome-index
 genome-download:
 	sudo mkdir -p $(ZIPPYVAR)/resources
 	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
-	#sudo chmod -R 777 $(ZIPPYVAR)/resources
 	cd $(ZIPPYVAR)/resources
-	source /usr/local/zippy/venv/bin/activate; python -m download_resources $(ZIPPYVAR)/resources/${genome}.fasta ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz
-	#ls $(ZIPPYVAR)/resources/${genome}.fasta &>/dev/null && ( \
-	#	echo File ${genome}.fasta.gz exists, not downloading it again ) || ( \
-	#	cd $(ZIPPYVAR)/resources; \
-	#	echo Downloading genome to $(ZIPPYVAR)/resources/${genome} ; \
-	#	wget -qO- ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz | \
-	#	gzip -dcq | cat >${genome}.fasta && rm -f ${genome}.fasta.gz )
-	ls $(ZIPPYVAR)/resources/${genome}.fasta.fai &>/dev/null && \
-		echo File $(ZIPPYVAR)/resources/${genome}.fasta.fai exists, not downloading it again || \
-		( cd $(ZIPPYVAR)/resources; wget -c ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai )
+	source /usr/local/zippy/venv/bin/activate; python -m download_resources $(ZIPPYVAR)/resources/${genome}.fasta http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz
+	source /usr/local/zippy/venv/bin/activate; python -m download_resources $(ZIPPYVAR)/resources/${genome}.fasta.fai http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai
 	#sudo chmod 644 $(ZIPPYVAR)/resources/*
 	#sudo chmod 755 $(ZIPPYVAR)/resources
 	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
