@@ -3,6 +3,9 @@
 ZIPPYPATH=/usr/local/zippy
 ZIPPYVAR=/var/local/zippy
 ZIPPYWWW=/var/www/zippy
+VERSION=3.7
+SOURCE=zippy
+INSTALLER=zippy_install_v6.2.bash
 
 genome=human_g1k_v37
 
@@ -117,7 +120,9 @@ zippy-install:
 	sudo chmod 666 $(ZIPPYVAR)/zippy.bed
 	sudo mkdir -p $(ZIPPYVAR)/uploads
 	sudo mkdir -p $(ZIPPYVAR)/results
+	echo es este
 	sudo mkdir -p $(ZIPPYVAR)/resources
+	echo ve
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 	sudo chmod -R 777 $(ZIPPYVAR)
 
@@ -226,13 +231,13 @@ webservice-dev_centos:
 	#Opens the port 5000 in the firewall in the system
 	sudo firewall-cmd --zone=public --add-port=5000/tcp --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
 run:
-	source /usr/local/zippy/venv/bin/activate; python run.py
+	source /usr/local/zippy/venv/bin/activate && python run.py
 
 
 #### genome resources
 import-resources:
 	# Copy resource files
-	sudo mkdir -p $(ZIPPYVAR)/resources
+	#sudo mkdir -p $(ZIPPYVAR)/resources
 	rsync -avPp resources $(ZIPPYVAR)
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 stash-resources:
@@ -259,11 +264,13 @@ resources: genome annotation
 genome: genome-download genome-index
 
 genome-download:
-	mkdir -p $(ZIPPYVAR)/resources
+	#echo users are...
+	#users
+	#sudo mkdir -p $(ZIPPYVAR)/resources
 	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
-	cd $(ZIPPYVAR)/resources
-	source /usr/local/zippy/venv/bin/activate; python -m download_resources $(ZIPPYVAR)/resources/${genome}.fasta http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz
-	source /usr/local/zippy/venv/bin/activate; python -m download_resources $(ZIPPYVAR)/resources/${genome}.fasta.fai http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai
+	#cd $(ZIPPYVAR)/resources
+	source /usr/local/zippy/venv/bin/activate && cd $(ZIPPYPATH) && python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz
+	source /usr/local/zippy/venv/bin/activate && cd $(ZIPPYPATH) && python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta.fai http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai
 	#sudo chmod 644 $(ZIPPYVAR)/resources/*
 	#sudo chmod 755 $(ZIPPYVAR)/resources
 	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
@@ -286,12 +293,32 @@ variation-download:
 	cd $(ZIPPYVAR)/resources && \
 	( ls 00-common_all.vcf.gz &>/dev/null && echo 00-common_all.vcf.gz already found || wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz )
 	cd $(ZIPPYVAR)/resources && wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
+	
 
 refgene-download:
 	cd $(ZIPPYVAR)/resources && \
 	mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -N -D hg19 -P 3306 \
 	 -e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" > refGene
 
+archive:
+	@echo Running git archive...
+	@#use HEAD if tag doesn't exist yet, so that development is easier...
+	git archive  --prefix=$(SOURCE)-$(VERSION)/ -o $(SOURCE)-$(VERSION).tar $(VERSION) 2> /dev/null || (echo 'Warning: $(VERSION) does not exist.' && git archive --prefix=$(SOURCE)-$(VERSION)/ -o $(SOURCE).tar HEAD)
+	@#TODO: if git archive had a --submodules flag this would easier!
+	@echo Running git archive submodules...
+	@#I thought i would need --ignore-zeros, but it doesn't seem necessary!
+	p=`pwd` && (echo .; git submodule foreach) | while read entering path; do \
+		temp="$${path%\'}"; \
+		temp="$${temp#\'}"; \
+		path=$$temp; \
+		[ "$$path" = "" ] && continue; \
+		(cd $$path && git archive --prefix=$(SOURCE)-$(VERSION)/ HEAD > $$p/tmp.tar && tar --concatenate --file=$$p/$(SOURCE)-$(VERSION).tar $$p/tmp.tar && rm $$p/tmp.tar); \
+	done && gzip -f $$p/$(SOURCE)-$(VERSION).tar
+
+toroot:
+	sudo cp -f $(SOURCE)-$(VERSION).tar.gz /root
+	sudo cp -f $(INSTALLER) /root
+	sudo chmod +x /root/$(INSTALLER)
 #sudo firewall-cmd --zone=public --list-all
 #sudo firewall-cmd --zone=public --add-port=5000/tcp
 #sudo firewall-cmd --zone=public --add-service=http

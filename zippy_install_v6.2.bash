@@ -14,8 +14,10 @@ function install(){
     #make unstash-resources
     make webservice
     #make webservice-dev
-    sudo -u apache -g apache make annotation
-    sudo -u apache -g apache make genome
+    #sudo -u apache -g apache make annotation
+    #sudo -u apache -g apache make genome
+    make annotation
+    make genome
 
 }
 qseqdnamatch=`expr match "$(pwd)" '.*\(${zippy_folder_title}\)'`
@@ -37,6 +39,7 @@ else
         echo "Not in zippy folder, and the zippy folder does not exist."
         sudo mkdir -p ${zippy_parent_folder}
         sudo chmod -R 777 ${zippy_parent_folder}
+        rm -rf "${zippy_folder_title}"
         cd "${zippy_parent_folder}" && tar -xvzf ${zippy_folder_title}.tar.gz
         cd "${zippy_folder}" && install $@
     fi
