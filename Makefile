@@ -128,7 +128,7 @@ zippy-install:
 
 
 #Cleans
-distclean: cleansoftware cleandata cleandb #Deep clean, rarely needed
+cleanall: cleansoftware cleandata cleandb #Deep clean, rarely needed
 clean: cleandb cleansoftware
 cleansoftware:
 	sudo rm -rf $(ZIPPYPATH)
@@ -303,6 +303,7 @@ refgene-download:
 archive:
 	@echo Running git archive...
 	@#use HEAD if tag doesn't exist yet, so that development is easier...
+	rm -f $$p/$(SOURCE)-$(VERSION).tar.gz
 	git archive  --prefix=$(SOURCE)-$(VERSION)/ -o $(SOURCE)-$(VERSION).tar $(VERSION) 2> /dev/null || (echo 'Warning: $(VERSION) does not exist.' && git archive --prefix=$(SOURCE)-$(VERSION)/ -o $(SOURCE).tar HEAD)
 	@#TODO: if git archive had a --submodules flag this would easier!
 	@echo Running git archive submodules...
@@ -316,8 +317,8 @@ archive:
 	done && gzip -f $$p/$(SOURCE)-$(VERSION).tar
 
 toroot:
-	sudo cp -f $(SOURCE)-$(VERSION).tar.gz /root
-	sudo cp -f $(INSTALLER) /root
+	sudo cp -f $(SOURCE)-$(VERSION).tar.gz /root/$(SOURCE)-$(VERSION).tar.gz
+	sudo cp -f $(INSTALLER) /root/$(INSTALLER)
 	sudo chmod +x /root/$(INSTALLER)
 #sudo firewall-cmd --zone=public --list-all
 #sudo firewall-cmd --zone=public --add-port=5000/tcp

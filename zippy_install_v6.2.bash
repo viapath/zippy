@@ -7,18 +7,20 @@ zippy_folder=${zippy_parent_folder}/${zippy_folder_title}
 
 function install(){
     sudo chmod -R 777 ${zippy_folder}
-    #make stash-resources
-    make clean
-    #make cleanall
-    make install
-    #make unstash-resources
-    make webservice
-    #make webservice-dev
-    #sudo -u apache -g apache make annotation
-    #sudo -u apache -g apache make genome
-    make annotation
-    make genome
-
+    if [[ $1 = "--reset" ]]
+    then
+        #echo "Writing installer output to zippy_install.log"
+        #echo "if you want to monitor the status of the installation, you can use tail -f zippy_install.log"
+        #echo ================================================================== &>> zippy_install.log &
+        #echo Running make cleanall install webservice annotation genome at $(date):&>> zippy_install.log &
+        make cleanall install webservice annotation genome # &>> zippy_install.log &
+    else
+        make clean
+        make install
+        make webservice
+        make annotation
+        make genome
+    fi
 }
 qseqdnamatch=`expr match "$(pwd)" '.*\(${zippy_folder_title}\)'`
 if [[ $qseqdnamatch = "${zippy_folder_title}" ]]
@@ -26,21 +28,12 @@ then
     echo "Already in zippy folder."
     install
 else
-    if [[ -d "${zippy_folder}" ]]
-    then
-        echo "Not in zippy folder, but this folder exists."
-        cd "${zippy_folder}"
-        install $@
-    elif [[ -e "${zippy_folder}" ]]
-    then
-        echo "File ${zippy_folder} exists but it is not a directory, thus we can not create a directory with that path tho hold the software reposotory. \
-        See if it is safe to delete or move it, and then execute again this script."
-    else
-        echo "Not in zippy folder, and the zippy folder does not exist."
-        sudo mkdir -p ${zippy_parent_folder}
-        sudo chmod -R 777 ${zippy_parent_folder}
-        rm -rf "${zippy_folder_title}"
-        cd "${zippy_parent_folder}" && tar -xvzf ${zippy_folder_title}.tar.gz
-        cd "${zippy_folder}" && install $@
-    fi
+    p=$(pwd);
+    echo "Not in zippy folder, but in $p."
+    sudo mkdir -p ${zippy_parent_folder}
+    sudo chmod -R 777 ${zippy_parent_folder}
+    rm -rf "${zippy_folder_title}"
+    cd "${zippy_parent_folder}" && tar -xvzf ${zippy_folder_title}.tar.gz
+    cd "${zippy_folder}" && install $@
+    cd $p;
 fi
