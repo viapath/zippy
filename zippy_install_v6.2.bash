@@ -9,11 +9,12 @@ function install(){
     sudo chmod -R 777 ${zippy_folder}
     if [[ $1 = "--reset" ]]
     then
-        #echo "Writing installer output to zippy_install.log"
-        #echo "if you want to monitor the status of the installation, you can use tail -f zippy_install.log"
-        #echo ================================================================== &>> zippy_install.log &
-        #echo Running make cleanall install webservice annotation genome at $(date):&>> zippy_install.log &
-        make cleanall install webservice annotation genome # &>> zippy_install.log &
+        echo "Writing installer output to ${zippy_parent_folder}/${zippy_folder_title}/zippy_install.log"
+        echo "Starting installer in detached mode"
+        echo "If you want to monitor the status of the installation, you can use the command tail -f ${zippy_parent_folder}/${zippy_folder_title}/zippy_install.log"
+        echo ================================================================== &>> zippy_install.log &
+        echo Running make cleanall install webservice annotation genome at $(date):&>> zippy_install.log &
+        make cleanall install webservice annotation genome &>> zippy_install.log &
     else
         make clean
         make install

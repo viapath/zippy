@@ -104,7 +104,8 @@ zippy-install:
 	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
 	sudo $(ZIPPYPATH)/venv/bin/pip install Cython==0.24
 	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
-	sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
+	@#sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
+	sudo rsync -a . $(ZIPPYPATH)
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	cd $(ZIPPYPATH)/download && sudo $(ZIPPYPATH)/venv/bin/python setup.py install
 	cd $(ZIPPYPATH) && sudo $(ZIPPYPATH)/venv/bin/python setup.py install
@@ -301,10 +302,13 @@ refgene-download:
 	 -e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" > refGene
 
 archive:
+	p=`pwd` && rm -f $$p/$(SOURCE)-$(VERSION).tar.gz && tar --transform="s@^@$(SOURCE)-$(VERSION)/@" -cvzf $$p/$(SOURCE)-$(VERSION).tar.gz *
+
+gitarchive:
 	@echo Running git archive...
-	@#use HEAD if tag doesn't exist yet, so that development is easier...
-	rm -f $$p/$(SOURCE)-$(VERSION).tar.gz
-	git archive  --prefix=$(SOURCE)-$(VERSION)/ -o $(SOURCE)-$(VERSION).tar $(VERSION) 2> /dev/null || (echo 'Warning: $(VERSION) does not exist.' && git archive --prefix=$(SOURCE)-$(VERSION)/ -o $(SOURCE).tar HEAD)
+	@use HEAD if tag doesn't exist yet, so that development is easier...
+	@rm -f $$p/$(SOURCE)-$(VERSION).tar.gz
+	@git archive  --prefix=$(SOURCE)-$(VERSION)/ -o $(SOURCE)-$(VERSION).tar $(VERSION) 2> /dev/null || (echo 'Warning: $(VERSION) does not exist.' && git archive --prefix=$(SOURCE)-$(VERSION)/ -o $(SOURCE).tar HEAD)
 	@#TODO: if git archive had a --submodules flag this would easier!
 	@echo Running git archive submodules...
 	@#I thought i would need --ignore-zeros, but it doesn't seem necessary!
