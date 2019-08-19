@@ -286,23 +286,24 @@ class Report(object):
         #     ('LINEABOVE', (3,1),(-1,1),1,colors.black),
         #     ('BOX', (3,0), (-1,len(p)), 1, colors.black),
         #     ])
+#Fomat for WDB circle list
         TABLE_STYLE = TableStyle([
             ('FONTSIZE',(0,1),(-1,-1),8),  # body
             ('FONTSIZE',(0,0),(-1,0),10),  # title line
             ('VALIGN',(0,0),(-1,-1),'TOP'),
             ('ALIGN',(0,0),(-1,-1),'LEFT'),
-            ('INNERGRID', (0,0),(4,len(s)), 0.25, colors.black),
-            ('LINEABOVE', (0,1),(4,1),1,colors.black),
+            ('INNERGRID', (0,1),(6,len(s)), 0.25, colors.black),
+            ('LINEABOVE', (0,1),(6,1),1,colors.black),
             ('LINEBEFORE', (3,0),(3,len(s)),1,colors.black),
-            ('BOX', (0,0), (4,len(s)), 1, colors.black),
-            ('INNERGRID', (6,1), (-1,len(p)), 0.25, colors.black),
-            ('LINEABOVE', (6,1),(-1,1),1,colors.black),
-            ('BOX', (6,0), (-1,len(p)), 1, colors.black),
+            ('BOX', (0,0), (6,len(s)), 1, colors.black),
+            ('INNERGRID', (8,1), (-1,len(p)), 0.25, colors.black),
+            ('LINEABOVE', (8,1),(-1,1),1,colors.black),
+            ('BOX', (8,0), (-1,len(p)), 1, colors.black),
             ])
         doubleLine = ParagraphStyle('suffixes', fontSize=5, leading=5)  # suffix column
         centered = ParagraphStyle('locations', fontSize=8, leading=5, alignment=1)  # Location column
         centeredsmall = ParagraphStyle('locations', fontSize=6, leading=6, alignment=1)  # Location column
-        data = [['W','D','B',str(len(s)),'Samples','',str(len(p)),'Primer Pairs', 'Suffixes', 'Locations','ND']]
+        data = [['','','',str(len(s)),'Samples','Locations','Empty','',str(len(p)),'Primer Pairs', 'Suffixes', 'Locations','ND']]
         for i in range(max(len(s),len(p))):
             if i<len(p):
                 if any(p[i][2]):
@@ -310,10 +311,10 @@ class Report(object):
                     locationParagraph = Paragraph(locationString, centered if len(locationString) < 10 else centeredsmall)
                 else:
                     locationParagraph = Paragraph(' ',centered)
-            data.append(['','',''] + ([ counts[s[i]] if counts else '', s[i] ] if i<len(s) else ['','']) + [''] + \
+            data.append(['W','D','B'] + ([ counts[s[i]] if counts else '', s[i] ] if i<len(s) else ['','']) + ['','',''] + \
                 ([ counts[p[i][0]] if counts else '', p[i][0], Paragraph('<br/>'.join(p[i][1]),doubleLine), locationParagraph ] if i<len(p) else ['','','','']))
         self.elements.append(Spacer(1, 2))
-        t = Table(data, colWidths=[0.6*cm,0.6*cm,0.6*cm,0.6*cm,5*cm,0.3*cm,0.6*cm,5.3*cm,1.6*cm,2.1*cm,0.8*cm], rowHeights=0.6*cm)
+        t = Table(data, colWidths=[0.6*cm,0.6*cm,0.6*cm,0.6*cm,2.3*cm,1.8*cm,1.3*cm,0.3*cm,0.6*cm,5.3*cm,1.6*cm,1.8*cm,0.8*cm], rowHeights=0.6*cm)
         t.setStyle(TABLE_STYLE)
         self.elements.append(t)
         self.elements.append(Spacer(1, 12))
@@ -347,7 +348,11 @@ class Report(object):
         self.elements.append(KeepTogether(t))
         self.elements.append(Spacer(1, 12))
 #If report config is l_report use def pcrLongProgram or if program is A1_TD use long program
-    def pcrProgram(self, program=''):
+    def pcrProgram(self, tableTitle=None,program=''):
+        if tableTitle:
+            self.elements.append(Paragraph(tableTitle, self.styles["Heading4"]))
+            self.elements.append(Spacer(1, 2))
+
         if program == 'ngsconfirm':
             data = [['','Temp','Time','No. of Cycles'],
             ['Stage 1', '95', '15m', '1'],
@@ -484,18 +489,22 @@ class Report(object):
             TABLE_STYLE = TableStyle([
                 ('ALIGN',(0,0),(-1,-1),'RIGHT'),
                 ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
-                ('FONTSIZE',(0,1),(-1,-1),8),
+                ('FONTSIZE',(0,1),(-1,-1),11),
                 ('BOX', (0,0), (-1,-1), 1, colors.black),
-                ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
+                ('INNERGRID', (0,0), (-1,1), 0.25, colors.black),
+                ('INNERGRID', (1,2),(-1,5),0.25, colors.black),
+                ('INNERGRID', (1,6),(-1,-1), 0.25, colors.black),
                 ('LINEABOVE', (0,1), (-1,1), 1, colors.black),
+                ('LINEABOVE', (0,2), (-1,2), 1, colors.black),
+                ('LINEABOVE', (0,6), (-1,6), 1, colors.black),
+                ('LINEBEFORE', (1,2), (1,-1), 0.25, colors.black),
                 ('BACKGROUND', (0,0), (-1,0), colors.bisque),
                 ('BACKGROUND', (1,1), (1,1), colors.lightgrey),
-                ('BACKGROUND', (1,2), (-1,2), colors.lightgrey)
                 ])
             data = [tableHeader]
             for i in range(len(checktable)):
                 data.append([ checktable[i], '', '', '', '' ])
-            t = Table(data, colWidths=[5.5*cm,3.5*cm,3.5*cm,2*cm,2*cm], rowHeights=0.6*cm)
+            t = Table(data, colWidths=[6.8*cm,4.0*cm,3.0*cm,1.8*cm,1.8*cm], rowHeights=0.6*cm)
             t.setStyle(TABLE_STYLE)
             self.elements.append(KeepTogether(t))
             self.elements.append(Spacer(1, 6))
@@ -700,9 +709,9 @@ class Worksheet(list):
         r.volumeLists(sum([len(p) for p in self.plates]),kwargs['volumes']['mastermix'],kwargs['volumes']['qsolution'],kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'])
         # add checkboxes
         checkTasks = ['New primers ordered', 'Plate orientation checked', 'Primer checked and storage assigned'] if primertest \
-    else ['Plate orientation checked', 'DNA label checked:','1.Failing Barcode','2.Dilution Tube','3.Barcode Override','4.External Tube']
+    else ['Plate orientation checked', 'Transfer Check:', 'Dilution / External tube', 'H20 Lot#: __________________','','Labelling Check:', 'Failing Barcode / Barcode Override','','']
         r.checkBoxes(title='',checktable=checkTasks)
-        r.pcrProgram(kwargs['volumes']['program'])
+        r.pcrProgram(tableTitle='PCR Cycling Conditions',program=kwargs['volumes']['program'])
         # plate layout
         r.plateLayouts(plates)
         # print result table
