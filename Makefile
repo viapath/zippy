@@ -3,9 +3,9 @@
 ZIPPYPATH=/usr/local/zippy
 ZIPPYVAR=/var/local/zippy
 ZIPPYWWW=/var/www/zippy
-VERSION=3.7
+VERSION=3.12
 SOURCE=zippy
-INSTALLER=zippy_install_v6.2.bash
+INSTALLER=zippy_install_v6.7.bash
 
 genome=human_g1k_v37
 
@@ -97,6 +97,9 @@ bowtie:
 	rm -rf bowtie2-2.2.6 bowtie2-2.2.6-linux-x86_64.zip
 
 # zippy setup (will move to distutils in future release)
+update-zippy-package:
+	sudo rsync -a . $(ZIPPYPATH)
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 zippy-install:
 	# virtualenv
 	sudo mkdir -p $(ZIPPYPATH)
@@ -121,9 +124,7 @@ zippy-install:
 	sudo chmod 666 $(ZIPPYVAR)/zippy.bed
 	sudo mkdir -p $(ZIPPYVAR)/uploads
 	sudo mkdir -p $(ZIPPYVAR)/results
-	echo es este
 	sudo mkdir -p $(ZIPPYVAR)/resources
-	echo ve
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 	sudo chmod -R 777 $(ZIPPYVAR)
 
@@ -233,32 +234,40 @@ webservice-dev_centos:
 	sudo firewall-cmd --zone=public --add-port=5000/tcp --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
 run:
 	source /usr/local/zippy/venv/bin/activate && python run.py
+zippy:
+	source /usr/local/zippy/venv/bin/activate && cd /usr/local/zippy/zippy && python zippy.py $@
 
 
 #### genome resources
-import-resources:
+import-shipped-resources:
 	# Copy resource files
 	#sudo mkdir -p $(ZIPPYVAR)/resources
 	rsync -avPp resources $(ZIPPYVAR)
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
+import-shipped-refgene:
+	# Copy resource files
+	#sudo mkdir -p $(ZIPPYVAR)/resources
+	rsync -avPp resources/refGene $(ZIPPYVAR)/resources/refGene
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 stash-resources:
 	# Copy resource files
 	echo Stashing resources
-	#sudo mkdir -p /srv/zippy_resources
-	#sudo mv $(ZIPPYVAR)/resources/* /srv/zippy_resources/
-	#sudo chown -R $(WWWUSER):$(WWWGROUP) /srv/zippy_resources
-unstash-resources:
+	sudo mkdir -p /srv/zippy_resources
+	sudo cp -i $(ZIPPYVAR)/resources/* /srv/zippy_resources/
+	sudo chown -R $(WWWUSER):$(WWWGROUP) /srv/zippy_resources
+recover-resources:
 	# Copy resource files
 	echo Unstashing resources
 	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
-	#sudo mkdir -p $(ZIPPYVAR)/resources
+	sudo mkdir -p $(ZIPPYVAR)/resources
+	sudo cp -i /srv/zippy_resources/* $(ZIPPYVAR)/resources/
 	#for file in $(ls /srv/zippy_resources);
 	#do
 	#	sudo rm $(ZIPPYVAR)/$file
 	#	sudo ln -s /srv/zippy_resources/$file $(ZIPPYVAR)/$file
 	#done
 	#sudo mv /srv/zippy_resources/* $(ZIPPYVAR)/resources/
-	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 resources: genome annotation
 
@@ -272,34 +281,34 @@ genome-download:
 	#cd $(ZIPPYVAR)/resources
 	source /usr/local/zippy/venv/bin/activate && cd $(ZIPPYPATH) && python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz
 	source /usr/local/zippy/venv/bin/activate && cd $(ZIPPYPATH) && python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta.fai http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai
-	#sudo chmod 644 $(ZIPPYVAR)/resources/*
-	#sudo chmod 755 $(ZIPPYVAR)/resources
-	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
+	sudo chmod 644 $(ZIPPYVAR)/resources/*
+	sudo chmod 755 $(ZIPPYVAR)/resources
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 genome-index:
 	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
 	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
-	#ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null && sudo chmod -R 777 $(ZIPPYVAR)/resources && ( \
 	ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null && ( \
 		echo bowtie file $(ZIPPYVAR)/resources/${genome}.bowtie exists, thus not running bowtie command ) || \
 		( cd $(ZIPPYVAR)/resources; /usr/local/bin/bowtie2-build ${genome}.fasta ${genome}.bowtie )
-	#sudo chmod 644 $(ZIPPYVAR)/resources/*
-	#sudo chmod 755 $(ZIPPYVAR)/resources
-	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
+	sudo chmod 644 $(ZIPPYVAR)/resources/*
+	sudo chmod 755 $(ZIPPYVAR)/resources
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 annotation: variation-download refgene-download
 
 variation-download:
-	#The files specified by the following commands did not exist as of 30 th, Jly, 2018, so that were updated by the later version present: b151_GRCh37p13
-	cd $(ZIPPYVAR)/resources && \
+	#The files specified by the following commands did not exist as of 30 th, July, 2018, so that were updated by the later version present: b151_GRCh37p13
+	sudo mkdir -p $(ZIPPYVAR)/resources && cd $(ZIPPYVAR)/resources && \
 	( ls 00-common_all.vcf.gz &>/dev/null && echo 00-common_all.vcf.gz already found || wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz )
 	cd $(ZIPPYVAR)/resources && wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
 	
 
 refgene-download:
-	cd $(ZIPPYVAR)/resources && \
+	sudo firewall-cmd --zone=public --add-port=3306/tcp &&sudo firewall-cmd --reload||echo "You didn't have the port 3306 blocked"
+	(cd $(ZIPPYVAR)/resources && ls refGene &>/dev/null) && echo refGene file exists || \
 	mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -N -D hg19 -P 3306 \
-	 -e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" > refGene
+	-e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" > refGene
 
 archive:
 	p=`pwd` && rm -f $$p/$(SOURCE)-$(VERSION).tar.gz && tar --transform="s@^@$(SOURCE)-$(VERSION)/@" -cvzf $$p/$(SOURCE)-$(VERSION).tar.gz *
@@ -324,6 +333,8 @@ toroot:
 	sudo cp -f $(SOURCE)-$(VERSION).tar.gz /root/$(SOURCE)-$(VERSION).tar.gz
 	sudo cp -f $(INSTALLER) /root/$(INSTALLER)
 	sudo chmod +x /root/$(INSTALLER)
+cleanrootinstallers:
+	sudo rm -rf /root/zippy*
 #sudo firewall-cmd --zone=public --list-all
 #sudo firewall-cmd --zone=public --add-port=5000/tcp
 #sudo firewall-cmd --zone=public --add-service=http

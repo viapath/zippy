@@ -299,13 +299,16 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                 except:
                     print >> sys.stderr, "WARNING: could not determine maximum amplicon size, default setting applied"
                     designIntervalOversize = 2000
-                #assert 0,(config['design']['genome'], iv.locus(), designIntervalOversize,config['design']['primer3'][tier]['PRIMER_PRODUCT_SIZE_RANGE'])
                 p3 = Primer3(config['design']['genome'], iv.locus(), designIntervalOversize)
+                print("pargs",config['design']['genome'], iv.locus(), "desovzise", designIntervalOversize,
+                        config['design']['primer3'][tier], "int", i, iv, "ivloc", iv.locus(), "of", len(insufficentAmpliconIntervals))
                 try:
                     p3.design(iv.name, config['design']['primer3'][tier])
                 except IOError as ioerr:
+                    assert 0, (ioerr, config['design']['genome'], iv.locus(), designIntervalOversize,
+                        config['design']['primer3'][tier])
                     if ioerr.args==('SEQUENCE_INCLUDED_REGION length < min PRIMER_PRODUCT_SIZE_RANGE',):
-                        assert 0, ioerr
+                        assert 0, ioerr 
                         pass
                     elif ioerr.args==('PRIMER_PAIR_OK_REGION_LIST beyond end of sequence',):
                         assert 0,ioerr
@@ -444,12 +447,13 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
 
 # query database / design primer for VCF,BED,GenePred or interval
 def zippyPrimerQuery(config, targets, design=True, outfile=None, db=None, store=False, tiers=[0], gap=None):
-    #assert 0,targets
+    print("tgets", targets)
     if isinstance(targets,tuple):
         intervalforlocus = readTargets(targets[1], config['tiling'])  # get intervals from file or commandline
+        intervalsforfile = readTargets(targets[0], config['tiling'])  # get intervals from file or commandline
+        print("intervals2", intervalforlocus, intervalsforfile)
         overlappings=[]
         for intervalforlocus in intervalforlocus:
-            intervalsforfile = readTargets(targets[0], config['tiling'])  # get intervals from file or commandline
             for intervalforfile in intervalsforfile:
                 if intervalforlocus.overlap(intervalforfile):
                     intervalforfile.union_with(intervalforlocus)
@@ -457,6 +461,7 @@ def zippyPrimerQuery(config, targets, design=True, outfile=None, db=None, store=
             intervals=overlappings
     else:
         intervals = readTargets(targets, config['tiling'])  # get intervals from file or commandline
+    print("intervalsi", intervals)
     if gap:  # gap PCR primers
         try:
             assert len(intervals)==1
@@ -466,6 +471,7 @@ def zippyPrimerQuery(config, targets, design=True, outfile=None, db=None, store=
             print >> sys.stderr, "ERROR: gap-PCR primers can only be designed for a single pair of breakpoint intervals on the same chromosome!"
         except:
             raise
+    print("intervaldir", intervals, db, design, tiers)
     primerTable, resultList, missedIntervals = getPrimers(intervals,db,design,config,tiers,compatible=True if gap else False)
     ## print primerTable
     if outfile:

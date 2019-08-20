@@ -1,5 +1,5 @@
 {
-    "password": "$2b$12$QmHmE2grqDPkoS.Z0uuSte7WS4M6KYlrT9qYh8gApXQVrV3fXszGi",
+    "password": "123456",
     "database": "/var/local/zippy/zippy.sqlite",
     "logfile": "/var/local/zippy/zippy.log",
     "ampliconbed": "/var/local/zippy/zippy.bed",

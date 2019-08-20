@@ -14,7 +14,7 @@ from werkzeug.utils import secure_filename
 from . import app
 from .zippy import zippyBatchQuery, zippyPrimerQuery, updateLocation, searchByName, updatePrimerName, updatePrimerPairName, blacklistPair, deletePair, readprimerlocations
 from .zippylib import ascii_encode_dict
-from .zippylib.primer import Location
+from .zippylib.primer import Location, ChromosomeNotFoundError
 from .zippylib.database import PrimerDB
 
 app.config['ALLOWED_EXTENSIONS'] = set(['txt', 'batch', 'vcf', 'bed', 'csv', 'tsv'])
@@ -33,30 +33,34 @@ def allowed_file(filename):
 def login_required(func):
     @wraps(func)
     def wrap(*args, **kwargs):
-        #Skip logins now
-        session["logged_in"]=True
-        return func(*args, **kwargs)
-        if 'logged_in' in session:
+        #session['logged_in'] = True #Activate this line to disable login requirement
+        if session.get('logged_in', False):
             return func(*args, **kwargs)
         else:
             flash('Authentication required!', 'warning')
             return redirect(url_for('login'))
     return wrap
 
+@app.errorhandler(ChromosomeNotFoundError)
+def handle_chromosome_not_found(err):
+    message=("<h1>Chromosome {0!r} not found</h1>.<p>The available chromosomes are {1}.</p>"+
+        "<p>Hit the back button and try again</p>").format(err.args[0], err.args[1])
+    return (message, 404)
+
 @app.route('/')
 @app.route('/index')
 @login_required
 def index():
+    #session["logged_in"]=False #activate this line do deactivate rubbish logins
     return render_template('index.html',designtiers=config['design']['tiers'])
 
 # simple access control (login)
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
-    session['logged_in'] = True
-    return redirect(url_for('index'))
     if request.method == 'POST':
-        if bcrypt.hashpw(request.form['password'].rstrip().encode('utf-8'), app.config['PASSWORD']) == app.config['PASSWORD']:
+        #it used bcrypt.hashpw(request.form['password'].rstrip().encode('utf-8'), app.config['PASSWORD']) in the original viapath/zippy package, but this didn't work
+        if request.form['password'].rstrip().encode('utf-8') == app.config['PASSWORD']:
             session['logged_in'] = True
             return redirect(url_for('index'))
         else:
@@ -150,14 +154,13 @@ def adhocdesign():
     tiers = map(int,request.form.getlist('tiers'))
     gap = request.form.get('gap')
     store = request.form.get('store')
-    #return str((uploadFile,design,tiers,gap,store))
 
     print >> sys.stderr, 'tiers', tiers
     print >> sys.stderr, 'locus', locus
     print >> sys.stderr, 'gap', gap
 
     # if locus:
-    rematch=re.match('\w{1,6}:\d+[-:]\d+',locus)
+    rematch = re.match('\w{1,6}:\d+[-:]\d+',locus)
     if rematch or (uploadFile and allowed_file(uploadFile.filename)):
         # get target
         if uploadFile:
@@ -169,7 +172,6 @@ def adhocdesign():
                 import traceback
                 return str(traceback.format_exc())
             uploadFile.save(target)
-            #return str((target,sys.stderr,sys.stdout))
             print >> sys.stderr, "file saved to %s" % target
             if len(locus)>0:
                 args=(target,locus)
@@ -177,7 +179,6 @@ def adhocdesign():
                 args=target
         else:
             args = locus
-        #return str((target,locus))
         # read config
         with open(app.config['CONFIG_FILE']) as conf:
             config = json.load(conf, object_hook=ascii_encode_dict)
@@ -185,7 +186,7 @@ def adhocdesign():
         # run Zippy
         primerTable, resultList, missedIntervals = zippyPrimerQuery(config, args, design, None, db, store, tiers, gap)
 
-        print >> sys.stderr, primerTable
+        #print >> sys.stderr, primerTable
 
         # get missed and render template
         missedIntervalNames = []

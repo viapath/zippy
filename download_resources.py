@@ -1,6 +1,5 @@
 from __future__ import print_function
 import os
-print("This is the fucking directory:", os.getcwd())
 import download
 import sys
 import argparse
