@@ -537,7 +537,7 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
         # Build Tests
         for primerpair in resultList:
             tests.append(Test(primerpair,sample))
-            print(resultList)
+            # print(resultList)
             if primerpair.cond == 'LB':
                 tests_long.append(Test(primerpair,sample))
             elif primerpair.cond == 'STD':

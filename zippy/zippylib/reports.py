@@ -311,10 +311,10 @@ class Report(object):
                     locationParagraph = Paragraph(locationString, centered if len(locationString) < 10 else centeredsmall)
                 else:
                     locationParagraph = Paragraph(' ',centered)
-            data.append(['W','LowV','B'] + ([ counts[s[i]] if counts else '', s[i] ] if i<len(s) else ['','']) + ['','',''] + \
+            data.append((['W','LowV','B'] if i<len(s) else ['','','']) + ([ counts[s[i]] if counts else '', s[i] ] if i<len(s) else ['','']) + ['','',''] + \
                 ([ counts[p[i][0]] if counts else '', p[i][0], Paragraph('<br/>'.join(p[i][1]),doubleLine), locationParagraph ] if i<len(p) else ['','','','']))
         self.elements.append(Spacer(1, 2))
-        t = Table(data, colWidths=[0.6*cm,0.9*cm,0.6*cm,0.6*cm,2.3*cm,1.8*cm,1.3*cm,0.3*cm,0.6*cm,5.3*cm,1.6*cm,1.8*cm,0.8*cm], rowHeights=0.6*cm)
+        t = Table(data, colWidths=[0.6*cm,1.0*cm,0.6*cm,0.6*cm,2.3*cm,2.0*cm,1.3*cm,0.3*cm,0.6*cm,5.3*cm,1.6*cm,1.8*cm,0.8*cm], rowHeights=0.6*cm)
         t.setStyle(TABLE_STYLE)
         self.elements.append(t)
         self.elements.append(Spacer(1, 12))
@@ -726,15 +726,14 @@ class Worksheet(list):
             checkTasks = ['Primer checked and storage assigned']
             r.checkBoxes(title='',table=checkTasks)
         else:
-            fields = [['DNA #', 'Patient Name', 'Primer Pair', 'Variant', 'Zygosity', 'Result', 'Check']]
+            fields = [['DNA #', 'Primer Pair', 'Variant', 'Zygosity', 'Result', 'Check']]
             for i,t in enumerate([ x for x in sorted(self,key=lambda x: (x.sample,x.primerpair)) if not x.control ]):
                 for v in t.primerpairobject.variants:
-                    fields += [[ t.sample, '', t.primerpair, ' '.join(unquote(v.name).split(',')[:-1]), unquote(v.name).split(',')[-1], '', '']]
-                    print(fields)
+                    fields += [[ t.sample, t.primerpair, ' '.join(unquote(v.name).split(',')[:-1]), unquote(v.name).split(',')[-1], '', '']]
             # create result table
             r.setNextPageTemplate('landscape')
             r.pageBreak()
-            r.genericTable(fields,tableTitle='Results',landscape=True, mergeColumnFields=[0,1],relativeColWidth=[0.8,0.8,0.8,2.6,0.5,2.2,0.4])
+            r.genericTable(fields,tableTitle='Results',landscape=True, mergeColumnFields=[0,1],relativeColWidth=[0.8,1.0,3.0,0.5,2.3,0.4])
             # add checkboxes
             r.checkBoxes(title='',table=['Primary Reporter', 'Secondary Reporter'],tableHeader=['Reporter','Date','Initial'],
                 tickbox=['Unmatched Sample Check', 'Control Check'], tickboxNames=['YES','NO'],
