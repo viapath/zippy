@@ -625,3 +625,20 @@ class PrimerDB(object):
             return pairname
         finally:
             self.db.close()
+
+    def updateconditionsstd(self, pairname):
+        '''updates the primer conditions from LB to STD'''
+        try:
+            self.db = sqlite3.connect(self.sqlite)
+        except:
+            raise
+        else:
+            #update
+            cursor = self.db.cursor()
+            rows = cursor.fetchall()
+            cursor.execute('''UPDATE OR ABORT pairs SET cond = 'STD'
+                WHERE pairid = ?''', (pairname,))
+            self.db.commit()
+            return pairname
+        finally:
+            self.db.close()

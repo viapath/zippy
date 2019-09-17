@@ -311,10 +311,10 @@ class Report(object):
                     locationParagraph = Paragraph(locationString, centered if len(locationString) < 10 else centeredsmall)
                 else:
                     locationParagraph = Paragraph(' ',centered)
-            data.append(['W','D','B'] + ([ counts[s[i]] if counts else '', s[i] ] if i<len(s) else ['','']) + ['','',''] + \
+            data.append(['W','LowV','B'] + ([ counts[s[i]] if counts else '', s[i] ] if i<len(s) else ['','']) + ['','',''] + \
                 ([ counts[p[i][0]] if counts else '', p[i][0], Paragraph('<br/>'.join(p[i][1]),doubleLine), locationParagraph ] if i<len(p) else ['','','','']))
         self.elements.append(Spacer(1, 2))
-        t = Table(data, colWidths=[0.6*cm,0.6*cm,0.6*cm,0.6*cm,2.3*cm,1.8*cm,1.3*cm,0.3*cm,0.6*cm,5.3*cm,1.6*cm,1.8*cm,0.8*cm], rowHeights=0.6*cm)
+        t = Table(data, colWidths=[0.6*cm,0.9*cm,0.6*cm,0.6*cm,2.3*cm,1.8*cm,1.3*cm,0.3*cm,0.6*cm,5.3*cm,1.6*cm,1.8*cm,0.8*cm], rowHeights=0.6*cm)
         t.setStyle(TABLE_STYLE)
         self.elements.append(t)
         self.elements.append(Spacer(1, 12))

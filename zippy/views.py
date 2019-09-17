@@ -12,7 +12,7 @@ from flask import Flask, render_template, request, redirect, send_from_directory
 from celery import Celery
 from werkzeug.utils import secure_filename
 from . import app
-from .zippy import zippyBatchQuery, zippyPrimerQuery, updateLocation, searchByName, updatePrimerName, updatePrimerPairName, updatePairCond, blacklistPair, deletePair, readprimerlocations
+from .zippy import zippyBatchQuery, zippyPrimerQuery, updateLocation, searchByName, updatePrimerName, updatePrimerPairName, updatePairCond, updatePairCondStd, blacklistPair, deletePair, readprimerlocations
 from .zippylib import ascii_encode_dict
 from .zippylib.primer import Location
 from .zippylib.database import PrimerDB
@@ -278,6 +278,16 @@ def update_pair_cond(pairname):
         db = PrimerDB(config['database'],dump=config['ampliconbed'])
         longbatch = updatePairCond(pairname, db)
         flash('%s added to longbatch program' % (longbatch,), 'success')
+    return redirect('/search_by_name/')
+
+@app.route('/update_pair_conditions_std/<pairname>', methods=['POST'])
+def update_pair_cond_std(pairname):
+    print >> sys.stderr, 'This is the pairname: ' + pairname
+    with open(app.config['CONFIG_FILE']) as conf:
+        config = json.load(conf, object_hook=ascii_encode_dict)
+        db = PrimerDB(config['database'],dump=config['ampliconbed'])
+        stdbatch = updatePairCondStd(pairname, db)
+        flash('%s added to standard program' % (stdbatch,), 'success')
     return redirect('/search_by_name/')
 
 @app.route('/specify_searchname/', methods=['POST'])

@@ -668,8 +668,13 @@ def updatePrimerPairName(pairName, newName, db):
 
 def updatePairCond(pairname, db):
     longbatched = db.updateconditions(pairname)
-    print >> sys.stderr, '%s should now be run on a long batch program' % (longbatched,)
+    print >> sys.stderr, '%s will now be run on the long batch program' % (longbatched,)
     return longbatched
+
+def updatePairCondStd(pairname, db):
+    stdbatched = db.updateconditionsstd(pairname)
+    print >> sys.stderr, '%s will now be run on the standard program' % (stdbatched,)
+    return stdbatched
 
 # blacklist primer pair in database
 def blacklistPair(pairname, db):
