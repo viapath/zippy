@@ -27,13 +27,14 @@ with open(app.config['CONFIG_FILE']) as conf:
     config = json.load(conf, object_hook=ascii_encode_dict)
     app.config['PASSWORD'] = config['password']
 
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
+
 
 def login_required(func):
     @wraps(func)
     def wrap(*args, **kwargs):
-        #session['logged_in'] = True #Activate this line to disable login requirement
         if session.get('logged_in', False):
             return func(*args, **kwargs)
         else:
@@ -41,18 +42,20 @@ def login_required(func):
             return redirect(url_for('login'))
     return wrap
 
+
 @app.errorhandler(ChromosomeNotFoundError)
 def handle_chromosome_not_found(err):
     message=("<h1>Chromosome {0!r} not found</h1>.<p>The available chromosomes are {1}.</p>"+
         "<p>Hit the back button and try again</p>").format(err.args[0], err.args[1])
     return (message, 404)
 
+
 @app.route('/')
 @app.route('/index')
 @login_required
 def index():
-    #session["logged_in"]=False #activate this line do deactivate rubbish logins
     return render_template('index.html',designtiers=config['design']['tiers'])
+
 
 # simple access control (login)
 @app.route('/login', methods=['GET', 'POST'])
@@ -67,6 +70,7 @@ def login():
             error = 'Wrong password. Please try again.'
     return render_template('login.html', error=error)
 
+
 @app.route('/logout')
 def logout():
     session.pop('logged_in', None)
@@ -77,17 +81,21 @@ def logout():
 def no_file():
     return render_template('no_file.html')
 
+
 @app.route('/file_uploaded')
 def file_uploaded():
     return render_template('file_uploaded.html')
+
 
 @app.route('/file_uploaded/<path:filename>')
 def download_file(filename):
     return send_from_directory(os.getcwd(), filename, as_attachment=True)
 
+
 @app.route('/adhoc_result')
 def adhoc_result(primerTable, resultList, missedIntervals):
     return render_template('file_uploaded.html', primerTable, resultList, missedIntervals)
+
 
 @app.route('/location_updated')
 def location_updated(status):
@@ -100,7 +108,7 @@ def upload():
     uploadFile = request.files['variantTable']
     uploadFile2 = request.files['missedRegions']
     uploadFile3 = request.files['singleGenes']
-    tiers = map(int,request.form.getlist('tiers'))
+    tiers = map(int, request.form.getlist('tiers'))
     predesign = request.form.get('predesign')
     design = request.form.get('design')
     outfile = request.form.get('outfile')
@@ -117,7 +125,7 @@ def upload():
         # open config file and database
         with open(app.config['CONFIG_FILE']) as conf:
             config = json.load(conf, object_hook=ascii_encode_dict)
-            db = PrimerDB(config['database'],dump=config['ampliconbed'])
+            db = PrimerDB(config['database'], dump=config['ampliconbed'])
 
         # create output folder
         filehash = hashlib.sha1(''.join([ open(uf).read() for uf in uploadedFiles ])).hexdigest()
@@ -127,12 +135,16 @@ def upload():
         # run Zippy to design primers
         shortName = os.path.splitext(os.path.basename(uploadedFiles[0]))[0]
         downloadFile = os.path.join(downloadFolder, outfile) if outfile else os.path.join(downloadFolder, shortName)
-        arrayOfFiles, missedIntervalNames = zippyBatchQuery(config, uploadedFiles, design, downloadFile, db, predesign, tiers)
+        arrayOfFiles, missedIntervalNames, flash_messages = zippyBatchQuery(config, uploadedFiles, design, downloadFile, db, predesign, tiers)
+        for flash_message in flash_messages:
+            flash(*flash_message)
         return render_template('file_uploaded.html', outputFiles=arrayOfFiles, missedIntervals=missedIntervalNames)
     else:
         print("file for upload not supplied or file-type not allowed")
         return redirect('/no_file')
-@app.route('/test/', methods=['POST','GET'])
+
+
+@app.route('/test/', methods=['POST', 'GET'])
 def testpage():
     # read form data
     #return "teste"
@@ -141,6 +153,19 @@ def testpage():
     except MemoryError as exc:
         import traceback
         return str(traceback.format_exc())
+
+
+@app.route('/save_comments/', methods=['POST'])
+def search_by_name_comments_save():
+    db = PrimerDB(config['database'], dump=config['ampliconbed'])
+    try:
+        db.updatePrimerPairsComments(request.form)
+    except:
+        flash("ERROR when saving the comments", "error")
+    else:
+        flash("The comments were saved", "success")
+    return redirect('/index')
+    #return "Comments saved SN"
 
 
 @app.route('/adhoc_design/', methods=['POST'])
@@ -184,9 +209,10 @@ def adhocdesign():
             config = json.load(conf, object_hook=ascii_encode_dict)
             db = PrimerDB(config['database'],dump=config['ampliconbed'])
         # run Zippy
-        primerTable, resultList, missedIntervals = zippyPrimerQuery(config, args, design, None, db, store, tiers, gap)
+        primerTable, resultList, missedIntervals, flash_messages = zippyPrimerQuery(config, args, design, None, db, store, tiers, gap)
 
-        #print >> sys.stderr, primerTable
+        for flash_message in flash_messages:
+            flash(*flash_message)
 
         # get missed and render template
         missedIntervalNames = []
@@ -196,6 +222,7 @@ def adhocdesign():
     else:
         print >> sys.stderr, "no locus or file given"
         return render_template('/adhoc_result.html', primerTable=[], resultList=[], missedIntervals=[])
+
 
 @app.route('/update_location/', methods=['POST'])
 def updatePrimerLocation():
@@ -217,9 +244,11 @@ def updatePrimerLocation():
     updateStatus = updateLocation(primername, loc, db, force)
     return render_template('location_updated.html', status=updateStatus)
 
+
 @app.route('/select_pair_to_update/<pairName>')
 def pair_to_update(pairName):
     return render_template('update_pair.html', pairName=pairName)
+
 
 @app.route('/update_pair_name/<pairName>', methods=['POST'])
 def update_pair_name(pairName):
@@ -236,10 +265,12 @@ def update_pair_name(pairName):
             flash('Pair renaming failed', 'warning')
     return render_template('update_pair.html', pairName=newName)
 
+
 @app.route('/select_primer_to_update/<primerName>/<primerLoc>')
 def primer_to_update(primerName, primerLoc):
     primerInfo = primerName + '|' + primerLoc
     return redirect('/update_location_from_table/%s' % (primerInfo))
+
 
 @app.route('/update_location_from_table/<primerInfo>', methods=['GET','POST'])
 def updateLocationFromTable(primerInfo):
@@ -256,7 +287,7 @@ def updateLocationFromTable(primerInfo):
             return render_template('location_updated.html', status=None)
         with open(app.config['CONFIG_FILE']) as conf:
             config = json.load(conf, object_hook=ascii_encode_dict)
-            db = PrimerDB(config['database'],dump=config['ampliconbed'])
+            db = PrimerDB(config['database'], dump=config['ampliconbed'])
         # run zippy and render
         updateStatus = updateLocation(primerName, loc, db, force)
         if updateStatus[0] == 'occupied':
@@ -272,6 +303,7 @@ def updateLocationFromTable(primerInfo):
         primerLoc = splitInfo[1]
         return render_template('update_location_from_table.html', primerName=primerName, primerLoc=primerLoc)
 
+
 @app.route('/select_primer_to_rename/<primerName>/<primerLoc>', methods=['POST'])
 def primer_to_rename(primerName, primerLoc):
     newName = request.form.get('name')
@@ -281,6 +313,7 @@ def primer_to_rename(primerName, primerLoc):
     primerInfo = primerName + '|' + primerLoc + '|' + newName
     print >> sys.stderr, primerInfo
     return redirect('/update_primer_name/%s' % (primerInfo))
+
 
 @app.route('/update_primer_name/<primerInfo>')
 def update_name_of_primer(primerInfo):
@@ -293,12 +326,13 @@ def update_name_of_primer(primerInfo):
         return render_template('update_location_from_table.html', primerName=newName, primerLoc=primerLoc)
     with open(app.config['CONFIG_FILE']) as conf:
         config = json.load(conf, object_hook=ascii_encode_dict)
-        db = PrimerDB(config['database'],dump=config['ampliconbed'])
+        db = PrimerDB(config['database'], dump=config['ampliconbed'])
         if updatePrimerName(currentName, newName, db):
             flash('Primer "%s" renamed "%s"' % (currentName, newName), 'success')
         else:
             flash('Primer renaming failed', 'warning')
     return render_template('update_location_from_table.html', primerName=newName, primerLoc=primerLoc)
+
 
 @app.route('/specify_searchname/', methods=['POST'])
 def searchName():
@@ -306,43 +340,47 @@ def searchName():
     session['searchName'] = searchName
     return redirect('/search_by_name/')
 
+
 @app.route('/search_by_name/')
 def search_by_name():
     searchName = session['searchName']
     with open(app.config['CONFIG_FILE']) as conf:
         config = json.load(conf, object_hook=ascii_encode_dict)
-        db = PrimerDB(config['database'],dump=config['ampliconbed'])
+        db = PrimerDB(config['database'], dump=config['ampliconbed'])
         searchResult = searchByName(searchName, db)
     return render_template('searchname_result.html', searchResult=searchResult, searchName=searchName)
+
 
 @app.route('/blacklist_pair/<pairname>', methods=['POST'])
 def blacklist_pair(pairname):
     print >> sys.stderr, 'This is the pairname: ' + pairname
     with open(app.config['CONFIG_FILE']) as conf:
         config = json.load(conf, object_hook=ascii_encode_dict)
-        db = PrimerDB(config['database'],dump=config['ampliconbed'])
+        db = PrimerDB(config['database'], dump=config['ampliconbed'])
         blacklisted = blacklistPair(pairname, db)
         for b in blacklisted:
             flash('%s added to blacklist' % (b,), 'success')
     return redirect('/search_by_name/')
+
 
 @app.route('/delete_pair/<pairname>', methods=['POST'])
 def delete_pair(pairname):
     print >> sys.stderr, 'This is the pairname: ' + pairname
     with open(app.config['CONFIG_FILE']) as conf:
         config = json.load(conf, object_hook=ascii_encode_dict)
-        db = PrimerDB(config['database'],dump=config['ampliconbed'])
+        db = PrimerDB(config['database'], dump=config['ampliconbed'])
         deleted = deletePair(pairname, db)
         for d in deleted:
             flash('%s deleted' % (d,), 'success')
     return redirect('/search_by_name/')
+
 
 @app.route('/upload_batch_locations/', methods=['POST'])
 def upload_samplesheet():
     if request.method == 'POST':
         locationsheet = request.files['locationsheet']
         if not locationsheet or not locationsheet.filename.endswith('.csv'):
-            flash('Not a CSV file. Please try again','warning')
+            flash('Not a CSV file. Please try again', 'warning')
         else:
             filename = secure_filename(locationsheet.filename)
             saveloc = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -350,9 +388,9 @@ def upload_samplesheet():
             updateList = readprimerlocations(saveloc)
             with open(app.config['CONFIG_FILE']) as conf:
                 config = json.load(conf, object_hook=ascii_encode_dict)
-                db = PrimerDB(config['database'],dump=config['ampliconbed'])
+                db = PrimerDB(config['database'], dump=config['ampliconbed'])
                 for item in updateList:
-                    updateStatus = updateLocation(item[0], item[1], db, True) # Force is set to True, will force primers into any occupied locations
+                    updateStatus = updateLocation(item[0], item[1], db, True)  # Force is set to True, will force primers into any occupied locations
                     if updateStatus[0] == 'occupied':
                         flash('Location already occupied by %s' % (' and '.join(updateStatus[1])), 'warning')
                     elif updateStatus[0] == 'success':

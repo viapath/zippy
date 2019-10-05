@@ -93,7 +93,7 @@ class MultiFasta(object):
                 # parse target locus from fasta file
                 try:
                     primername, targetposition = s.split('|')
-                    reTargetposition = re.match(r'(\w+):(\d+)-(\d+):([+-])',targetposition)
+                    reTargetposition = re.match(r'(\w+):(\d+)-(\d+):([+-])', targetposition)
                 except:
                     primername = s
                     targetLocus = None
@@ -104,7 +104,7 @@ class MultiFasta(object):
                     targetLocus = Locus(reTargetposition.group(1), int(reTargetposition.group(2)), int(reTargetposition.group(3))-int(reTargetposition.group(2)), reverse, tm)
                 # create primer (with target locus)
                 primertag = tags[primername] if primername in tags.keys() else None
-                primers[primername] = Primer(primername,fasta.fetch(s),targetLocus,tag=primertag)
+                primers[primername] = Primer(primername, fasta.fetch(s), targetLocus, tag=primertag)
 
         # read SAM OUTPUT and filter alignments
         mappings = pysam.Samfile(mapfile,'r')
@@ -119,7 +119,7 @@ class MultiFasta(object):
             qry = aln.query_sequence.upper()
             ref = aln.get_reference_sequence().upper()
             refrc = ref.translate(revcmp)[::-1]
-            aln_tm = primer3.calcHeterodimerTm(qry,refrc)
+            aln_tm = primer3.calcHeterodimerTm(qry, refrc)
             # TmThreshold and mimatches in 3'end check
             if aln_tm > tmThreshold:
                 if len(qry)>endMatch and len(ref)>endMatch:
@@ -162,12 +162,12 @@ class Location(object):
     def __str__(self):
         return '-'.join([str(self.vessel()),self.well()])
 
-    def __eq__(self,other):
+    def __eq__(self, other):
         if other is None:
             return False
         return self.vesselnumber == other.vesselnumber and len(self.wells.symmetric_difference(other.wells)) == 0
 
-    def merge(self,other):
+    def merge(self, other):
         try:
             assert self.vesselnumber == other.vesselnumber
         except:
@@ -183,12 +183,13 @@ class Location(object):
 
 '''primer pair (list)'''
 class PrimerPair(list):
-    def __init__(self, elements, length=2, name=None, reverse=False):
+    def __init__(self, elements, length=2, name=None, reverse=False, comments=""):
         list.__init__(self, elements)
         self.length = length  # pair of primers by default
         self.reversed = reverse
         self.name = name
         self.variants = []  # list of intervals with metadata from input table
+        self.comments = comments
         if not name and all(self):
             commonPrefix(self[0].name, self[1].name)
 
@@ -251,7 +252,7 @@ class PrimerPair(list):
         return "%s(%r)" % (self.__class__, self.__dict__)
 
     def __str__(self):
-        return '{}\t{}\t{}\t{}\t{:.1f}\t{:.1f}\t{}\t{:.1f}\t{:.1f}\t{}\t{}\t{}'.format(
+        return '{}\t{}\t{}\t{}\t{:.1f}\t{:.1f}\t{}\t{:.1f}\t{:.1f}\t{}\t{}\t{}\t{}'.format(
             self.name,
             str(self[0].location) if self[0] and self[0].location else '',
             str(self[1].location) if self[1] and self[1].location else '',
@@ -263,7 +264,8 @@ class PrimerPair(list):
             self[1].gc if self[1] else 0,
             self[0].targetposition.chrom if self[0] and self[1] and self[0].targetposition else '',
             self[0].targetposition.offset+self[0].targetposition.length if self[0] and self[1] and self[0].targetposition else '',
-            self[1].targetposition.offset if self[0] and self[1] and self[1].targetposition else '')
+            self[1].targetposition.offset if self[0] and self[1] and self[1].targetposition else '',
+            self.comments)
 
     def sequencingTarget(self):
         return (self[0].targetposition.chrom if self[0] and self[1] and self[0].targetposition else None, \
@@ -359,7 +361,6 @@ class PrimerPair(list):
         return int(self[0].rank)
 
     def check(self, limits):
-        #print("primcheck",self,"lims",limits)
         for k,v in limits.items():
             x = getattr(self,k)()
             try:
@@ -449,7 +450,7 @@ class Primer(object):
         if 'POSITION' in self.meta.keys():  # append locus
             strand = "-" if self.name.endswith('RIGHT') else '+'
             seqname += '|'+self.meta['POSITION'][0]+':'+"-".join(map(str,self.meta['POSITION'][1:]))+':'+strand
-        return "\n".join([ ">"+seqname, self.seq ])
+        return "\n".join([ ">" + seqname, self.seq ])
 
     def addTarget(self, chrom, pos, reverse, tm=None):
         self.loci.append(Locus(chrom,pos,len(self),reverse,tm))
@@ -551,8 +552,6 @@ class Primer3(object):
             #self.designregion=(self.designregion[0][3:],lowerlimit+self.flank,upperlimit+self.flank,self.target)
             self.sequence=fasta.fetch(*self.designregion)
             #self.sequence=fasta.fetch(self.designregion[0])
-            print("sedireg2", fasta, "xxx", self.designregion, "lenseq", len(self.sequence), "ortarg", target)
-            #print("seq", self.sequence, fasta.references, self.flank)
         except ValueError as vlerr:
             #print("dr",self.designregion)
             #raise vlerr
@@ -568,7 +567,6 @@ class Primer3(object):
         seq = {
             'SEQUENCE_ID': str(name),
             'SEQUENCE_TEMPLATE': str(self.sequence),
-            #'SEQUENCE_PRIMER_PAIR_OK_REGION_LIST': self.clip([0, self.flank, len(self.sequence)-self.flank, self.flank],len(self.sequence))
             'SEQUENCE_PRIMER_PAIR_OK_REGION_LIST': [0, self.flank, len(self.sequence)-self.flank, self.flank]
         }
         # design primers
@@ -601,11 +599,10 @@ class Primer3(object):
                 designedPrimers[v['SEQUENCE']].meta = v
         # store
         self.pairs = OrderedDict(sorted(designedPairs.items())).values()
-        # print("lsp", len(self.pairs))
         return len(self.pairs)
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     mf = MultiFasta(sys.argv[1])
     primers = mf.createPrimers('/Users/dbrawand/dev/snappy/WORK/genome/human_g1k_v37.bowtie')
     for primer in primers:

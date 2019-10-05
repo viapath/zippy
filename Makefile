@@ -233,6 +233,8 @@ webservice-dev_centos:
 	#Opens the port 5000 in the firewall in the system
 	sudo firewall-cmd --zone=public --add-port=5000/tcp --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
 run:
+	source /usr/local/zippy/venv/bin/activate && export FLASK_DEBUG=1 && export FLASK_ENV=development && export FLASK_APP=zippy && python run.py
+runp:
 	source /usr/local/zippy/venv/bin/activate && python run.py
 zippy:
 	source /usr/local/zippy/venv/bin/activate && cd /usr/local/zippy/zippy && python zippy.py $@
