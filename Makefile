@@ -8,6 +8,9 @@ SOURCE=zippy
 INSTALLER=zippy_install_v6.7.bash
 
 genome=human_g1k_v37
+server=nginx#Can be nginx or apache
+server_suffix=_privateserver
+env_suffix= #Can be an empty string, _dev or _docker
 
 #See which distro does the host have
 platform=$(python -mplatform)
@@ -16,19 +19,33 @@ ifneq (,$(findstring ubuntu,${platform}))
 	WWWGROUP=www-data
 	WWWUSER=flask
 	PKGINSTALL=apt-get
+	distro_suffix=
 else
 	distro=centos
-	WWWGROUP=apache
-	WWWUSER=apache
+	WWWGROUP=$(server)
+	WWWUSER=$(server)
 	PKGINSTALL=yum
+	distro_suffix=_centos
 endif
+ifeq ($(server),nginx)
+	serving_packages=nginx
+else
+	serving_packages=mod_wsgi httpd
+endif
+ifeq ($(server),_dev)
+	environment=_dev
+else
+	environment=
+endif
+
 # development installs (with mounted volume)
 all: install resources webservice
 
 essential: essential_${distro}
 very_essential: very_essential_${distro}
 install: essential bowtie zippy-install
-webservice: webservice_${distro}
+webservice: webservice${env_suffix}_${distro}
+stop: stop_${server}_service
 webservice-docker: webservice-docker_${distro}
 webservice-dev: webservice-dev_${distro}
 
@@ -66,7 +83,8 @@ essential_centos:
 	#apachectl restart graceful
 	#kill -USR1 `cat /usr/local/httpd/logs/httpd.pid`
 	#kill -USR1 `cat /usr/local/apache2/logs/httpd.pid`
-	sudo yum install -y libxslt-devel libxml2-devel libffi-devel redis mod_wsgi python-virtualenv httpd
+	sudo yum install -y libxslt-devel libxml2-devel libffi-devel redis python-virtualenv
+	sudo yum install -y $(serving_packages)
 	echo y|sudo yum groupinstall 'Development Tools'
 	sudo yum install -y libjpeg-devel freetype-devel python-imaging mysql postgresql postgresql-devel #-client llibcurl3-devel
 	#Python-dev(el) no se pone por que ya etá python2-devel y se supone que usamos Python 2
@@ -76,11 +94,8 @@ essential_centos:
 	#achieved because this instruction is taken as a boolean construct (as all in shell finally, that lines have a return code), with || as the operator (OR).
 	#If the first command (before the ||) gives a zero return value (if the user exists) there is no need to execute the second part of the statement to 
 	#calculate the return value of the line
-	#usermod -g $(WWWGROUP) $(WWWUSER)#Pero 1003 es el gid que le tocó por azar al grupo www-data
 	sudo usermod -s /bin/false $(WWWUSER)
 	sudo usermod -L $(WWWUSER)
-	# install apache/wsgi
-	#yum -y install apache2 apache2.2-common apache2-mpm-prefork apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi
 	# disable default site
 	#a2dissite 000-default
 very_essential_ubuntu:
@@ -107,24 +122,27 @@ zippy-install:
 	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
 	sudo $(ZIPPYPATH)/venv/bin/pip install Cython==0.24
 	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
-	@#sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
+	#sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
 	sudo rsync -a . $(ZIPPYPATH)
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	cd $(ZIPPYPATH)/download && sudo $(ZIPPYPATH)/venv/bin/python setup.py install
 	cd $(ZIPPYPATH) && sudo $(ZIPPYPATH)/venv/bin/python setup.py install
+	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	# create empty database
 	sudo mkdir -p $(ZIPPYVAR)
-	sudo touch $(ZIPPYVAR)/zippy.sqlite
-	sudo touch $(ZIPPYVAR)/zippy.log
-	sudo touch $(ZIPPYVAR)/.blacklist.cache
-	sudo touch $(ZIPPYVAR)/zippy.bed
-	sudo chmod 666 $(ZIPPYVAR)/zippy.sqlite
-	sudo chmod 666 $(ZIPPYVAR)/zippy.log
-	sudo chmod 666 $(ZIPPYVAR)/.blacklist.cache
-	sudo chmod 666 $(ZIPPYVAR)/zippy.bed
+	sudo mkdir -p $(ZIPPYVAR)/logs
 	sudo mkdir -p $(ZIPPYVAR)/uploads
 	sudo mkdir -p $(ZIPPYVAR)/results
 	sudo mkdir -p $(ZIPPYVAR)/resources
+	sudo touch $(ZIPPYVAR)/zippy.sqlite
+	sudo touch $(ZIPPYVAR)/zippy.log
+	sudo touch $(ZIPPYVAR)/logs/gunicorn_access.log
+	sudo touch $(ZIPPYVAR)/logs/gunicorn_error.log
+	sudo touch $(ZIPPYVAR)/zippy.log
+	sudo touch $(ZIPPYVAR)/logs
+	sudo touch $(ZIPPYVAR)/.blacklist.cache
+	sudo touch $(ZIPPYVAR)/zippy.bed
+	#sudo chmod 666 $(ZIPPYVAR)/zippy.sqlite $(ZIPPYVAR)/zippy.log $(ZIPPYVAR)/logs $(ZIPPYVAR)/.blacklist.cache $(ZIPPYVAR)/zippy.bed
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 	sudo chmod -R 777 $(ZIPPYVAR)
 
@@ -145,93 +163,70 @@ cleandb:
 	sudo rm -rf $(ZIPPYVAR)/uploads
 	sudo rm -rf $(ZIPPYVAR)/results
 
-# gunicorn/nginx webserver
-unicorn:
-	$(PKG_INSTALL) install nginx
-	# start gunicorn with
-	# gunicorn --bind 0.0.0.0:8000 wsgi:app
-
-# gunicorn/nginx webserver
-unicorn_centos:
-	apt-get install nginx
-	# start gunicorn with
-	# gunicorn --bind 0.0.0.0:8000 wsgi:app
-# webservice install (for the interior of a docker container)
-webservice-docker_ubuntu:
-	# make WWW directories
-	mkdir -p $(ZIPPYWWW)
-	cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
-	# apache WSGI config
-	cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
-	#echo "ServerName localhost" >> /etc/apache2/apache2.conf
-	# enable site and restart
-	a2ensite zippy
-	#/etc/init.d/apache2 restart
 # webservice install (production)
 webservice_ubuntu:
 	# make WWW directories
 	mkdir -p $(ZIPPYWWW)
-	cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
+	sudo cp install/zippy$(environment).wsgi $(ZIPPYWWW)/zippy$(environment).wsgi
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# apache WSGI config
-	cp install/zippy.hostconfig /etc/apache2/sites-available/zippy.conf
-	a2ensite zippy
-	/etc/init.d/apache2 start
-	/etc/init.d/apache2 restart
-# same for development environment (not maintained)
-webservice-dev_ubuntu:
-	# make WWW directories
-	mkdir -p $(ZIPPYWWW)
-	cp install/zippy_dev.wsgi $(ZIPPYWWW)/zippy_dev.wsgi
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
-	# apache WSGI config
-	cp install/zippy_dev.hostconfig /etc/apache2/sites-available/zippy.conf
+	cp install/zippy$(environment).hostconfig$(server_suffix) /etc/apache2/sites-available/zippy.conf
 	# enable site and restart
-	a2ensite zippy
-	/etc/init.d/apache2 start
-	/etc/init.d/apache2 restart
+	make start_$(server)_service
+	#Opens the port 80 in the firewall in the system, for public access
+	#Disable SELINUX, this disabling is full while we don't know how to open only the sippy directories to SELINUX.
+	sudo firewall-cmd --zone=public --add-service=http --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
+	sudo firewall-cmd --zone=public --add-port=5000/tcp --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
+	sudo setenforce 0||echo "Could not activate SELINUX properly"
 
 # webservice install (production)
 webservice_centos:
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	# make WWW directories
 	sudo mkdir -p $(ZIPPYWWW)
-	sudo cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
+	sudo cp install/zippy$(environment).wsgi $(ZIPPYWWW)/zippy$(environment).wsgi
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
-	# apache WSGI config
-	sudo cp install/zippy.hostconfig_centos /etc/httpd/conf.d/zippy.conf
 	# enable site and restart
-	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
-	sudo systemctl start httpd
-	sudo systemctl restart httpd
+	make start_$(server)_service
 	#Opens the port 80 in the firewall in the system, for public access
 	#Disable SELINUX, this disabling is full while we don't know how to open only the sippy directories to SELINUX.
-	sudo firewall-cmd --zone=public --add-service=http --permanent && sudo firewall-cmd --reload||echo "You don't have a firewall running"
-	sudo setenforce 0||echo "Could not activate SELINUX properly"
-# webservice install (for the interior of a docker container)
-webservice-docker_centos:
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
-	# make WWW directories
-	sudo mkdir -p $(ZIPPYWWW)
-	sudo cp install/zippy.wsgi $(ZIPPYWWW)/zippy.wsgi
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
-	# apache WSGI config
-	sudo cp install/zippy.hostconfig /etc/httpd/conf.d/zippy.conf
-# same for development environment (not maintained)
-webservice-dev_centos:
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
-	# make WWW directories
-	sudo mkdir -p $(ZIPPYWWW)
-	sudo cp install/zippy_dev.wsgi $(ZIPPYWWW)/zippy_dev.wsgi
-	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
-	# apache WSGI config
-	sudo cp install/zippy_dev.hostconfig_centos /etc/httpd/conf.d/zippy.conf
-	# enable site and restart
-	sudo systemctl start httpd.service
-	sudo systemctl restart httpd.service
-	#Opens the port 5000 in the firewall in the system
+	sudo firewall-cmd --zone=public --add-service=http --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
 	sudo firewall-cmd --zone=public --add-port=5000/tcp --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
+	sudo setenforce 0||echo "Could not activate SELINUX properly"
+
+start_apache_service:
+	# enable site and restart
+	#a2ensite zippy
+	# apache WSGI config
+	sudo cp install/zippy$(environment).hostconfig$(distro_suffix)$(server_suffix) /etc/httpd/conf.d/zippy.conf
+	sudo ln -sf /etc/apache2/sites-available/zippy.conf /etc/apache2/sites-enabled/zippy.conf
+	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
+	#/etc/init.d/apache2 start
+	/etc/init.d/apache2 restart
+
+start_nginx_service:
+	# enable site and restart
+	sudo cp install/zippy /etc/nginx/sites-available/zippy
+	sudo cp install/zippy.service /etc/systemd/system/zippy.service
+	sudo cp install/zippy.socket /etc/systemd/system/zippy.socket
+	sudo ln -sf /etc/nginx/sites-available/zippy /etc/nginx/sites-enabled/zippy
+	sudo systemctl daemon-reload
+	sudo systemctl restart nginx
+	sudo systemctl restart zippy
+
+stop_apache_service:
+	/etc/init.d/apache2 stop
+
+stop_nginx_service:
+	# enable site and restart
+	sudo ln -sf /etc/nginx/sites-available/zippy /etc/nginx/sites-enabled/zippy
+	#/etc/init.d/apache2 start
+	sudo systemctl stop nginx
+	sudo systemctl stop zippy
+	sudo systemctl stop zippy.socket
+
+# Webservers
+gunicorn:
+	source /usr/local/zippy/venv/bin/activate && gunicorn --bind 0.0.0.0:8000 wsgi:app
 run:
 	source /usr/local/zippy/venv/bin/activate && export FLASK_DEBUG=1 && export FLASK_ENV=development && export FLASK_APP=zippy && python run.py
 runp:
@@ -276,11 +271,6 @@ resources: genome annotation
 genome: genome-download genome-index
 
 genome-download:
-	#echo users are...
-	#users
-	#sudo mkdir -p $(ZIPPYVAR)/resources
-	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
-	#cd $(ZIPPYVAR)/resources
 	source /usr/local/zippy/venv/bin/activate && cd $(ZIPPYPATH) && python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz
 	source /usr/local/zippy/venv/bin/activate && cd $(ZIPPYPATH) && python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta.fai http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai
 	sudo chmod 644 $(ZIPPYVAR)/resources/*
@@ -288,8 +278,6 @@ genome-download:
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 genome-index:
-	#sudo ln -s /srv/zippy_resources $(ZIPPYVAR)/resources
-	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 	ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null && ( \
 		echo bowtie file $(ZIPPYVAR)/resources/${genome}.bowtie exists, thus not running bowtie command ) || \
 		( cd $(ZIPPYVAR)/resources; /usr/local/bin/bowtie2-build ${genome}.fasta ${genome}.bowtie )

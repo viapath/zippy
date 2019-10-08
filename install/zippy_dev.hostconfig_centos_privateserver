@@ -1,0 +1,31 @@
+<VirtualHost 173.212.225.155:801>
+    ServerAdmin dbrawand@nhs.net
+    ServerName bioinfojdp.freelancecuernavaca.com
+    #SetEnv FLASK_ENV development
+    SetEnv FLASK_DEBUG 1
+    WSGIDaemonProcess zippy_developer user=apache group=apache threads=5 home=/srv/qgen/zippy/
+    WSGIScriptAlias / /var/www/zippy/zippy_dev.wsgi
+
+    <Directory /var/www/zippy>
+        WSGIProcessGroup zippy_developer
+        WSGIApplicationGroup %{GLOBAL}
+        WSGIScriptReloading On
+        Order deny,allow
+        Allow from all
+    </Directory>
+    <Directory /srv/qgen/zippy>
+        WSGIProcessGroup zippy_developer
+        WSGIApplicationGroup %{GLOBAL}
+        WSGIScriptReloading On
+        Order deny,allow
+        Allow from all
+    </Directory>
+</VirtualHost>
+
+<VirtualHost 173.212.225.155:80>
+    ServerAdmin dbrawand@nhs.net
+    ServerName bioinfojdp.freelancecuernavaca.com
+    <Location "/">
+        ProxyPass http://localhost:5000/
+    </Location>
+</VirtualHost>

@@ -1,0 +1,8 @@
+[Unit]
+Description=gunicorn socket for Zippy web server
+
+[Socket]
+ListenStream=/run/zippy.sock
+
+[Install]
+WantedBy=sockets.target
