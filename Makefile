@@ -10,7 +10,7 @@ INSTALLER=zippy_install_v6.7.bash
 genome=human_g1k_v37
 server=nginx#Can be nginx or apache
 server_suffix=_privateserver
-env_suffix= #Can be an empty string, _dev or _docker
+env_suffix=#Can be an empty string, _dev or _docker
 
 #See which distro does the host have
 platform=$(python -mplatform)
@@ -44,7 +44,7 @@ all: install resources webservice
 essential: essential_${distro}
 very_essential: very_essential_${distro}
 install: essential bowtie zippy-install
-webservice: webservice${env_suffix}_${distro}
+webservice: webservice_${distro}
 stop: stop_${server}_service
 webservice-docker: webservice-docker_${distro}
 webservice-dev: webservice-dev_${distro}
@@ -121,7 +121,7 @@ zippy-install:
 	cd $(ZIPPYPATH) && sudo /usr/bin/virtualenv venv
 	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
 	sudo $(ZIPPYPATH)/venv/bin/pip install Cython==0.24
-	sudo $(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
+	sudo $(ZIPPYPATH)/venv/bin/pip install -r requirements.txt
 	#sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
 	sudo rsync -a . $(ZIPPYPATH)
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
