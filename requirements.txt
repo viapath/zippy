@@ -70,4 +70,4 @@ cython
 numpy
 tqdm
 requests
-download
+#download

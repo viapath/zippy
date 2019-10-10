@@ -1,26 +1,30 @@
 FROM debian:jessie
 MAINTAINER dbrawand@nhs.net
 
-#Initial packages install
-#RUN apt-get update && apt-get -y upgrade
-# add some convenience utils
-#RUN apt-get -y install curl less make wget vim apt-utils
-
 ADD . /zippy
-RUN cd zippy && make install
+
+RUN apt-get -y update
+RUN apt-get -y upgrade
+RUN apt-get install -y sudo
+RUN sudo apt-get install -y less make wget curl vim apt-utils
+
+RUN cd /zippy && make print_flags env_suffix=_docker distro=ubuntu
+RUN cd /zippy && make very_essential env_suffix=_docker distro=ubuntu
+RUN cd /zippy && make cleansoftware env_suffix=_docker distro=ubuntu
+RUN cd /zippy && make cleandb env_suffix=_docker distro=ubuntu
+
+RUN cd /zippy && make install env_suffix=_docker distro=ubuntu
+RUN cd /zippy && make webservice env_suffix=_docker distro=ubuntu
 # prepare genome
-RUN cd zippy && make genome-download
-RUN cd zippy && make genome-index
+RUN cd /zippy && make genome-download env_suffix=_docker distro=ubuntu
+RUN cd /zippy && make genome-index env_suffix=_docker distro=ubuntu
 
 # get annotation
-RUN cd zippy && make variation-download
-RUN cd zippy && make refgene-download
-
-# install zippy
-RUN cd /zippy && make webservice
+RUN cd /zippy && make variation-download env_suffix=_docker distro=ubuntu
+RUN cd /zippy && make refgene-download env_suffix=_docker distro=ubuntu
 
 EXPOSE 80
 
 CMD /bin/bash /zippy/zippyd.sh
-#The path of zippy.py is
+#The command for executing zippy.py is
 # sudo docker run -it lucioric/zippy usr/local/zippy/venv/bin/python /zippy/zippy/zippy.py

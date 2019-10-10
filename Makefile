@@ -13,26 +13,31 @@ server_suffix=_privateserver
 env_suffix=#Can be an empty string, _dev or _docker
 
 #See which distro does the host have
-platform=$(python -mplatform)
+platform=${python -mplatform}
 ifneq (,$(findstring ubuntu,${platform}))
 	distro=ubuntu
 	WWWGROUP=www-data
 	WWWUSER=flask
 	PKGINSTALL=apt-get
 	distro_suffix=
+	ifeq ($(server),nginx)
+		serving_packages=nginx
+	else
+		serving_packages=apache2 apache2.2-common apache2-mpm-prefork apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi
+	endif
 else
 	distro=centos
 	WWWGROUP=$(server)
 	WWWUSER=$(server)
 	PKGINSTALL=yum
 	distro_suffix=_centos
+	ifeq ($(server),nginx)
+		serving_packages=nginx
+	else
+		serving_packages=mod_wsgi httpd
+	endif
 endif
-ifeq ($(server),nginx)
-	serving_packages=nginx
-else
-	serving_packages=mod_wsgi httpd
-endif
-ifeq ($(server),_dev)
+ifeq ($(env_suffix),_dev)
 	environment=_dev
 else
 	environment=
@@ -46,7 +51,7 @@ very_essential: very_essential_${distro}
 install: essential bowtie zippy-install
 webservice: webservice_${distro}
 stop: stop_${server}_service
-webservice-docker: webservice-docker_${distro}
+#webservice-docker: webservice-docker_${distro}
 webservice-dev: webservice-dev_${distro}
 
 deploy: cleansoftware cleandb zippy-install webservice
@@ -70,8 +75,7 @@ essential_ubuntu:
 	sudo usermod -L $(WWWUSER)
 	sudo adduser $(WWWUSER) $(WWWGROUP)
 	# install apache/wsgi
-	sudo apt-get install -y apache2 apache2.2-common apache2-mpm-prefork apache2-utils libexpat1 ssl-cert
-	sudo apt-get install -y libapache2-mod-wsgi
+	sudo apt-get install -y $(serving_packages)
 	# disable default site
 	sudo a2dissite 000-default
 essential_centos:
@@ -98,12 +102,21 @@ essential_centos:
 	sudo usermod -L $(WWWUSER)
 	# disable default site
 	#a2dissite 000-default
+print_flags:
+	echo "Installing for platform $(platform), expressed as distro $(distro)"
+	echo "Installing for server $(server), location ${server_suffix} and enviromnent ${env_suffix}"
+
+
 very_essential_ubuntu:
+	apt-get -y update
+	apt-get -y upgrade
 	apt-get install -y sudo
-	sudo apt-get install -y sudo less make wget curl vim apt-utils
+	sudo apt-get install -y sudo less make wget curl vim apt-utils rsync
 very_essential_centos:
+	yum -y update
+	yum -y upgrade
 	yum install -y sudo
-	sudo yum install -y sudo wget less make curl vim
+	sudo yum install -y sudo wget less make curl vim rsync
 
 bowtie:
 	wget -c http://netix.dl.sourceforge.net/project/bowtie-bio/bowtie2/2.2.6/bowtie2-2.2.6-linux-x86_64.zip && \
@@ -172,7 +185,7 @@ webservice_ubuntu:
 	# apache WSGI config
 	cp install/zippy$(environment).hostconfig$(server_suffix) /etc/apache2/sites-available/zippy.conf
 	# enable site and restart
-	make start_$(server)_service
+	make start_$(server)_service$(env_suffix)
 	#Opens the port 80 in the firewall in the system, for public access
 	#Disable SELINUX, this disabling is full while we don't know how to open only the sippy directories to SELINUX.
 	sudo firewall-cmd --zone=public --add-service=http --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
@@ -186,12 +199,7 @@ webservice_centos:
 	sudo cp install/zippy$(environment).wsgi $(ZIPPYWWW)/zippy$(environment).wsgi
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 	# enable site and restart
-	make start_$(server)_service
-	#Opens the port 80 in the firewall in the system, for public access
-	#Disable SELINUX, this disabling is full while we don't know how to open only the sippy directories to SELINUX.
-	sudo firewall-cmd --zone=public --add-service=http --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
-	sudo firewall-cmd --zone=public --add-port=5000/tcp --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
-	sudo setenforce 0||echo "Could not activate SELINUX properly"
+	make start_$(server)_service$(env_suffix)
 
 start_apache_service:
 	# enable site and restart
@@ -202,16 +210,48 @@ start_apache_service:
 	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
 	#/etc/init.d/apache2 start
 	/etc/init.d/apache2 restart
+	#Opens the port 80 in the firewall in the system, for public access
+	#Disable SELINUX, this disabling is full while we don't know how to open only the sippy directories to SELINUX.
+	sudo firewall-cmd --zone=public --add-service=http --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
+	sudo firewall-cmd --zone=public --add-port=5000/tcp --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
+	sudo setenforce 0||echo "Could not activate SELINUX properly"
 
+start_apache_service_docker:
+	# enable site and restart
+	#a2ensite zippy
+	# apache WSGI config
+	sudo cp install/zippy$(environment).hostconfig$(distro_suffix)$(server_suffix) /etc/httpd/conf.d/zippy.conf
+	sudo ln -sf /etc/apache2/sites-available/zippy.conf /etc/apache2/sites-enabled/zippy.conf
+
+enable_nginx_service:
+	sudo systemctl enable zippy
+disable_nginx_service:
+	sudo systemctl disable zippy
 start_nginx_service:
 	# enable site and restart
-	sudo cp install/zippy /etc/nginx/sites-available/zippy
+	#sudo cp install/zippy /etc/nginx/sites-available/zippy
+	#sudo ln -sf /etc/nginx/sites-available/zippy /etc/nginx/sites-enabled/zippy
+	#ls -lRt /etc/nginx
+	sudo cp install/zippy /etc/nginx/conf.d/zippy
 	sudo cp install/zippy.service /etc/systemd/system/zippy.service
 	sudo cp install/zippy.socket /etc/systemd/system/zippy.socket
-	sudo ln -sf /etc/nginx/sites-available/zippy /etc/nginx/sites-enabled/zippy
 	sudo systemctl daemon-reload
 	sudo systemctl restart nginx
 	sudo systemctl restart zippy
+	#Opens the port 80 in the firewall in the system, for public access
+	#Disable SELINUX, this disabling is full while we don't know how to open only the sippy directories to SELINUX.
+	sudo firewall-cmd --zone=public --add-service=http --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
+	sudo firewall-cmd --zone=public --add-port=5000/tcp --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
+	sudo setenforce 0||echo "Could not activate SELINUX properly"
+
+start_nginx_service_docker:
+	# enable site and restart
+	#sudo cp install/zippy /etc/nginx/sites-available/zippy
+	#sudo ln -sf /etc/nginx/sites-available/zippy /etc/nginx/sites-enabled/zippy
+	ls -lRt /etc/nginx
+	sudo cp install/zippy /etc/nginx/conf.d/zippy
+	sudo cp install/zippy.service /etc/systemd/system/zippy.service
+	sudo cp install/zippy.socket /etc/systemd/system/zippy.socket
 
 stop_apache_service:
 	/etc/init.d/apache2 stop
