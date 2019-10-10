@@ -1,0 +1,31 @@
+FROM centos:centos7.3.1611
+MAINTAINER lucioric2000@hotmail.com
+
+ADD . /zippy
+
+RUN yum -y update
+RUN yum -y upgrade
+RUN yum install -y sudo
+RUN sudo yum install -y sudo wget less make curl vim rsync
+
+
+RUN cd /zippy && make print_flags env_suffix=_docker distro=centos
+RUN cd /zippy && make very_essential env_suffix=_docker distro=centos
+RUN cd /zippy && make cleansoftware env_suffix=_docker distro=centos
+RUN cd /zippy && make cleandb env_suffix=_docker distro=centos
+
+RUN cd /zippy && make install env_suffix=_docker distro=centos
+RUN cd /zippy && make webservice env_suffix=_docker distro=centos
+# prepare genome
+RUN cd /zippy && make genome-download env_suffix=_docker distro=centos
+RUN cd /zippy && make genome-index env_suffix=_docker distro=centos
+
+# get annotation
+RUN cd /zippy && make variation-download env_suffix=_docker distro=centos
+RUN cd /zippy && make refgene-download env_suffix=_docker distro=centos
+
+EXPOSE 80
+
+CMD /bin/bash /zippy/zippyd.sh
+#The command for executing zippy.py is
+# sudo docker run -it lucioric/zippy usr/local/zippy/venv/bin/python /zippy/zippy/zippy.py

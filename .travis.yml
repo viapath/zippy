@@ -1,0 +1,5 @@
+language: python
+install: make all
+os: linux
+dist: 7
+group: stable

@@ -9,7 +9,7 @@ __maintainer__ = "David Brawand"
 __email__ = "dbrawand@nhs.net"
 __status__ = "Production"
 
-import sys, os, re, datetime
+import sys, os, re, datetime, pwd
 from hashlib import md5, sha1
 import primer3
 import pysam
@@ -19,7 +19,11 @@ from .interval import Interval
 from string import maketrans
 from urllib import unquote
 revcmp = maketrans('ACGTNacgtn','TGCANtgcan')
+class ChromosomeNotFoundError(KeyError):
+    pass
 
+def username():
+    return pwd.getpwuid(os.getuid()).pw_name
 '''returns common prefix (substring)'''
 def commonPrefix(left,right,stripchars='-_ ',commonlength=3):
     if left and right:
@@ -89,7 +93,7 @@ class MultiFasta(object):
                 # parse target locus from fasta file
                 try:
                     primername, targetposition = s.split('|')
-                    reTargetposition = re.match(r'(\w+):(\d+)-(\d+):([+-])',targetposition)
+                    reTargetposition = re.match(r'(\w+):(\d+)-(\d+):([+-])', targetposition)
                 except:
                     primername = s
                     targetLocus = None
@@ -100,7 +104,7 @@ class MultiFasta(object):
                     targetLocus = Locus(reTargetposition.group(1), int(reTargetposition.group(2)), int(reTargetposition.group(3))-int(reTargetposition.group(2)), reverse, tm)
                 # create primer (with target locus)
                 primertag = tags[primername] if primername in tags.keys() else None
-                primers[primername] = Primer(primername,fasta.fetch(s),targetLocus,tag=primertag)
+                primers[primername] = Primer(primername, fasta.fetch(s), targetLocus, tag=primertag)
 
         # read SAM OUTPUT and filter alignments
         mappings = pysam.Samfile(mapfile,'r')
@@ -115,7 +119,7 @@ class MultiFasta(object):
             qry = aln.query_sequence.upper()
             ref = aln.get_reference_sequence().upper()
             refrc = ref.translate(revcmp)[::-1]
-            aln_tm = primer3.calcHeterodimerTm(qry,refrc)
+            aln_tm = primer3.calcHeterodimerTm(qry, refrc)
             # TmThreshold and mimatches in 3'end check
             if aln_tm > tmThreshold:
                 if len(qry)>endMatch and len(ref)>endMatch:
@@ -158,12 +162,12 @@ class Location(object):
     def __str__(self):
         return '-'.join([str(self.vessel()),self.well()])
 
-    def __eq__(self,other):
+    def __eq__(self, other):
         if other is None:
             return False
         return self.vesselnumber == other.vesselnumber and len(self.wells.symmetric_difference(other.wells)) == 0
 
-    def merge(self,other):
+    def merge(self, other):
         try:
             assert self.vesselnumber == other.vesselnumber
         except:
@@ -179,12 +183,13 @@ class Location(object):
 
 '''primer pair (list)'''
 class PrimerPair(list):
-    def __init__(self, elements, length=2, name=None, reverse=False):
+    def __init__(self, elements, length=2, name=None, reverse=False, comments=""):
         list.__init__(self, elements)
         self.length = length  # pair of primers by default
         self.reversed = reverse
         self.name = name
         self.variants = []  # list of intervals with metadata from input table
+        self.comments = comments
         if not name and all(self):
             commonPrefix(self[0].name, self[1].name)
 
@@ -247,7 +252,7 @@ class PrimerPair(list):
         return "%s(%r)" % (self.__class__, self.__dict__)
 
     def __str__(self):
-        return '{}\t{}\t{}\t{}\t{:.1f}\t{:.1f}\t{}\t{:.1f}\t{:.1f}\t{}\t{}\t{}'.format(
+        return '{}\t{}\t{}\t{}\t{:.1f}\t{:.1f}\t{}\t{:.1f}\t{:.1f}\t{}\t{}\t{}\t{}'.format(
             self.name,
             str(self[0].location) if self[0] and self[0].location else '',
             str(self[1].location) if self[1] and self[1].location else '',
@@ -259,7 +264,8 @@ class PrimerPair(list):
             self[1].gc if self[1] else 0,
             self[0].targetposition.chrom if self[0] and self[1] and self[0].targetposition else '',
             self[0].targetposition.offset+self[0].targetposition.length if self[0] and self[1] and self[0].targetposition else '',
-            self[1].targetposition.offset if self[0] and self[1] and self[1].targetposition else '')
+            self[1].targetposition.offset if self[0] and self[1] and self[1].targetposition else '',
+            self.comments)
 
     def sequencingTarget(self):
         return (self[0].targetposition.chrom if self[0] and self[1] and self[0].targetposition else None, \
@@ -413,6 +419,9 @@ class Primer(object):
         self.snp = []  # same order as loci attribute
         self.meta = {}  # metadata
         self.targetposition = targetposition
+        #if isinstance(self.targetposition,str):
+        #    if self.targetposition.lower().startswith("chr"):
+        #        self.targetposition=self.targetposition[3:]
         self.location = location  # storage location
         if loci:
             pass
@@ -422,7 +431,6 @@ class Primer(object):
 
     def __repr__(self):
         return '<Primer ('+self.name+'):'+str(self.tag)+'-'+self.seq+' Mappings:'+str(len(self.loci))+' Target:'+str(self.targetposition)+'>'
-        #return "%s(%r)" % (self.__class__, self.__dict__)
 
     def __str__(self):
         return '{:<20}\t{:>}-{:<}\t{:>}\t{:.2f}\t{:.1f}\t{:<}'.format(\
@@ -442,7 +450,7 @@ class Primer(object):
         if 'POSITION' in self.meta.keys():  # append locus
             strand = "-" if self.name.endswith('RIGHT') else '+'
             seqname += '|'+self.meta['POSITION'][0]+':'+"-".join(map(str,self.meta['POSITION'][1:]))+':'+strand
-        return "\n".join([ ">"+seqname, self.seq ])
+        return "\n".join([ ">" + seqname, self.seq ])
 
     def addTarget(self, chrom, pos, reverse, tm=None):
         self.loci.append(Locus(chrom,pos,len(self),reverse,tm))
@@ -455,7 +463,10 @@ class Primer(object):
     def checkTarget(self):
         if self.targetposition is not None:
             for locus in self.loci:
-                if locus.chrom == self.targetposition.chrom:
+                tichrom=self.targetposition.chrom
+                if tichrom.lower().startswith("chr"):
+                    tichrom=tichrom[3:]
+                if locus.chrom == tichrom:
                     if int(locus.offset) == int(self.targetposition.offset):
                         return True
         return False
@@ -504,13 +515,47 @@ class Locus(object):
 
 '''primer3 wrapper class'''
 class Primer3(object):
+    def __repr__(self):
+        return "<Primer 3 {0} {1} {2}>".format(self.genome,self.target,self.flank)
     def __init__(self,genome,target,flank=200):
         self.genome = genome
         self.target = target
         self.flank = flank
         fasta = pysam.FastaFile(self.genome)
-        self.designregion = ( str(self.target[0]), self.target[1]-self.flank, self.target[2]+self.flank )
-        self.sequence = fasta.fetch(*self.designregion)
+        lowerlimit=max(0,target[1]-self.flank)
+        upperlimit=max(0,target[2]+self.flank)
+        strselftarget0=str(target[0])
+        if strselftarget0[0:3].lower()=="chr":
+            strselftarget0=strselftarget0[3:]
+        try:
+            fndref=fasta.references.index(strselftarget0)
+        except ValueError as verr:
+            assert 0
+            raise ChromosomeNotFoundError(strselftarget0, fasta.references)
+        else:
+            lowerlimit=min(lowerlimit,fasta.lengths[fndref])
+            upperlimit=min(upperlimit,fasta.lengths[fndref])
+        #self.target=(target[0],lowerlimit-self.flank,upperlimit+self.flank)#Assign the target after clipping to valid positions
+        self.target=(target[0],lowerlimit,upperlimit)#Assign the target after clipping to valid positions
+        self.designregion = ( str(self.target[0]), lowerlimit, upperlimit )
+        #self.designregion = ( str(self.target[0]), lowerlimit+self.flank, upperlimit+self.flank )
+        try:
+            #self.sequence = fasta.fetch(*self.designregion)
+            self.sequence = fasta.fetch(self.designregion[0])
+        except KeyError as kerr:
+            #print("Literal sequence not found: {0}".format(self.designregion))
+            assert kerr.args[0]=="sequence '{0}' not present".format(self.designregion[0])
+            assert self.designregion[0][0:3].lower()=="chr"
+            #self.target=(self.designregion[0][3:],lowerlimit+self.flank,upperlimit+self.flank)
+            self.target=(self.designregion[0][3:],lowerlimit,upperlimit)
+            self.designregion=(self.designregion[0][3:],lowerlimit,upperlimit,self.target)
+            #self.designregion=(self.designregion[0][3:],lowerlimit+self.flank,upperlimit+self.flank,self.target)
+            self.sequence=fasta.fetch(*self.designregion)
+            #self.sequence=fasta.fetch(self.designregion[0])
+        except ValueError as vlerr:
+            #print("dr",self.designregion)
+            #raise vlerr
+            assert 0,(vlerr,fasta.references,self.designregion,fasta.lengths,len(fasta),fndref)
         self.pairs = []
         self.explain = []
 
@@ -557,7 +602,7 @@ class Primer3(object):
         return len(self.pairs)
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     mf = MultiFasta(sys.argv[1])
     primers = mf.createPrimers('/Users/dbrawand/dev/snappy/WORK/genome/human_g1k_v37.bowtie')
     for primer in primers:

@@ -26,36 +26,49 @@ class GenePred(IntervalList):
         intervalindex = defaultdict(list)
         # read exons per gene
         genes = defaultdict(list)
-        for line in fh:
+        for (iline,line) in enumerate(fh):
+            if iline==0 and line.startswith("track"):
+                continue
             if line.startswith("#"):
                 continue
             else:
                 # create gene and add exons
                 f = line.split()
-                assert f[3] in ['+','-']
-                if getgenes and (f[12] not in getgenes or int(f[6])==int(f[7])) and not noncoding:  # ignore non-coding transcripts
-                    continue
-                # coding / noncoding
-                geneStart = int(f[4]) if noncoding else int(f[6])
-                geneEnd = int(f[5]) if noncoding else int(f[7])
-                reverse = f[3].startswith('-')
-                gene = Interval(f[2],geneStart,geneEnd,f[12],reverse)
-                # parse exons
-                for e in zip(f[9].split(','),f[10].split(',')):
-                    try:
-                        map(int,e)
-                    except:
+                sys.stderr.write("err")
+                if len(f)<5:
+                    chrom=f[0]
+                    geneStart=int(f[1])
+                    geneEnd=int(f[2])
+                    geneName=f[3]
+                    reverse=geneEnd<geneStart
+                    assert not reverse
+                    gene = Interval(chrom,geneStart,geneEnd,geneName,reverse)
+                    #Consider all the gene as exon. TODO: is it good?
+                    gene.addSubintervals([Interval(chrom,geneStart,geneEnd,geneName,reverse)])
+                else:
+                    if getgenes and (f[12] not in getgenes or int(f[6])==int(f[7])) and not noncoding:  # ignore non-coding transcripts
                         continue
-                    if int(e[1]) < geneStart or geneEnd < int(e[0]):
-                        continue  # noncoding
-                    try:
-                        exonStart = int(e[0]) if noncoding else max(geneStart,int(e[0]))
-                        exonEnd = int(e[1]) if noncoding else min(geneEnd,int(e[1]))
-                        gene.addSubintervals([Interval(f[2],exonStart,exonEnd,f[12],reverse)])
-                    except ValueError:
-                        pass
-                    except:
-                        raise
+                    # coding / noncoding
+                    geneStart = int(f[4]) if noncoding else int(f[6])
+                    geneEnd = int(f[5]) if noncoding else int(f[7])
+                    reverse = f[3].startswith('-')
+                    gene = Interval(f[2],geneStart,geneEnd,f[12],reverse)
+                    # parse exons
+                    for e in zip(f[9].split(','),f[10].split(',')):
+                        try:
+                            map(int,e)
+                        except:
+                            continue
+                        if int(e[1]) < geneStart or geneEnd < int(e[0]):
+                            continue  # noncoding
+                        try:
+                            exonStart = int(e[0]) if noncoding else max(geneStart,int(e[0]))
+                            exonEnd = int(e[1]) if noncoding else min(geneEnd,int(e[1]))
+                            gene.addSubintervals([Interval(f[2],exonStart,exonEnd,f[12],reverse)])
+                        except ValueError:
+                            pass
+                        except:
+                            raise
                 # find appropriate gene (same name, and overlapping)
                 ovpgenes = [ g for g in genes[gene.name] if gene.overlap(g) ]
                 if ovpgenes:
@@ -135,7 +148,7 @@ class BED(IntervalList):
         counter = Counter()
         intervalindex = defaultdict(list)
         for line in fh:
-            if line.startswith("#"):
+            if line.startswith("#") or line.startswith("track"):
                 continue
             else:
                 # create interval
@@ -289,9 +302,9 @@ class Data(object):
                 fh.close()
         else: # write as is
             fh = sys.stdout if fi == '-' else open(fi,'w')
-            print >> fi, self.header
+            print >> fh, self.header
             for d in self.data:
-                print >> fi, '\t'.join(map(str,[ d[f] for f in self.header]))
+                print >> fh, '\t'.join(map(str,[ d[f] for f in self.header]))
             if fi != '-':
                 fh.close()
 
@@ -313,7 +326,7 @@ def readTargets(targets,tiling):
         rev = None if m.group(4) is None else True if m.group(4) == '-' else False
         intervals = [ Interval(m.group(1),m.group(2),m.group(3),reverse=rev) ]
     else:
-        raise Exception('FileNotFound')
+        raise Exception("FileNotFound: {0}".format(targets))
     return intervals
 
 

@@ -2,8 +2,9 @@
 <VirtualHost *:801>
 	ServerAdmin dbrawand@nhs.net
     SetEnv FLASK_ENV development
-    WSGIDaemonProcess zippy user=flask group=www-data threads=5 home=/srv/qgen/zippy/
+    WSGIDaemonProcess zippy user=apache group=apache threads=5 home=/srv/qgen/zippy/
     WSGIScriptAlias / /var/www/zippy/zippy_dev.wsgi
+
     <Directory /var/www/zippy>
         WSGIProcessGroup zippy
         WSGIApplicationGroup %{GLOBAL}
@@ -20,9 +21,11 @@
     </Directory>
 </VirtualHost>
 
+
 <VirtualHost *:80>
     ServerAdmin dbrawand@nhs.net
     <Location "/">
         ProxyPass http://localhost:5000/
     </Location>
 </VirtualHost>
+

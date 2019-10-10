@@ -8,7 +8,7 @@ __maintainer__ = "David Brawand"
 __email__ = "dbrawand@nhs.net"
 __status__ = "Production"
 
-import sys, os, re, ast
+import sys, os, re, ast, pwd
 import datetime
 import json
 import hashlib
@@ -20,6 +20,8 @@ from collections import defaultdict
 from . import flatten
 from .primer import Primer, Locus, PrimerPair, Location, parsePrimerName
 
+def username():
+    return pwd.getpwuid(os.getuid()).pw_name
 # changes conflicting name
 def changeConflictingName(n):
     f = n.split('_')
@@ -40,8 +42,13 @@ class PrimerDB(object):
     def __init__(self, database, dump=None):
         # open database and get a cursor
         self.sqlite = database
-        self.db = sqlite3.connect(self.sqlite)
-        self.dump = dump  # Primer BED file created by destructor
+        import pwd, os
+        try:
+            self.db = sqlite3.connect(self.sqlite)
+        except Exception as exc:
+            raise exc.__class__("{0} at file {1}, attempted to open under user {2}".format(exc.args, self.sqlite, username()))
+        #if dump is not None:
+        self.dumpl = dump  # Primer BED file created by destructor
         # create file table if not exists
         cursor = self.db.cursor()
         try:
@@ -57,10 +64,17 @@ class PrimerDB(object):
                 UNIQUE (vessel, well));''')
             cursor.execute('''CREATE TABLE IF NOT EXISTS pairs(
                 pairid TEXT PRIMARY KEY, uniqueid TEXT, left TEXT, right TEXT,
-                chrom TEXT, start INT, end INT, dateadded TEXT,
+                chrom TEXT, start INT, end INT, dateadded TEXT, comments TEXT,
                 FOREIGN KEY(left) REFERENCES primer(name) ON UPDATE CASCADE,
                 FOREIGN KEY(right) REFERENCES primer(name) ON UPDATE CASCADE,
                 UNIQUE (pairid, uniqueid) ON CONFLICT IGNORE);''')
+            try:
+                # Update the pairs table to add the comments field, for
+                # if the table was installed without that field and the
+                # updated to add it to the table has not been run already
+                cursor.execute('''ALTER TABLE pairs ADD comments TEXT;''')
+            except sqlite3.OperationalError:
+                pass  # Table have already been updated to contain the comments field
             cursor.execute('''CREATE TABLE IF NOT EXISTS target(
                 seq TEXT, chrom TEXT, position INT, reverse BOOLEAN, tm REAL,
                 UNIQUE (seq,chrom,position,reverse),
@@ -88,18 +102,18 @@ class PrimerDB(object):
         else:
             cursor = self.db.cursor()
             cursor.execute('''SELECT DISTINCT
-                p.pairid, p.uniqueid, p.left, l.seq, p.right, r.seq, p.chrom, p.start, p.end, p.dateadded
+                p.pairid, p.uniqueid, p.left, l.seq, p.right, r.seq, p.chrom, p.start, p.end, p.dateadded, p.comments
                 FROM pairs as p
                 LEFT JOIN primer as l ON l.name = p.left
                 LEFT JOIN primer as r ON r.name = p.right;''')
             rows = cursor.fetchall()
         finally:
             self.db.close()
-        return "\n".join([ '{:<20} {:40} {:>20} {:<25} {:>20} {:<25} {:>8} {:>9d} {:>9d} {}'.format(*row) for row in rows ])
+        return "\n".join([ '{:<20} {:40} {:>20} {:<25} {:>20} {:<25} {:>8} {:>9d} {:>9d} {} {}'.format(*row) for row in rows ])
 
     def writeAmpliconDump(self):
         ## dump amplicons to bed file
-        if self.dump:
+        if self.dumpl:
             try:
                 self.db = sqlite3.connect(self.sqlite)
             except:
@@ -113,11 +127,12 @@ class PrimerDB(object):
                 rows = cursor.fetchall()
                 # write bed file
                 try:
-                    with open(self.dump,'w') as fh:
+                    with open(self.dumpl,'w') as fh:
+                    #with sys.stdout as fh:
                         for row in rows:
                             print >> fh, '\t'.join(map(str,row))
                 except IOError:
-                    print >> sys.stderr, "cannot write to %s" % self.dump
+                    print >> sys.stderr, "cannot write to %s" % self.dumpl
                     pass  # fail silently (eg if data cannot be written)
                 except:
                     raise
@@ -270,7 +285,7 @@ class PrimerDB(object):
             if datematch.match(str(query)): # query date
                 subSearchName = '%'+query+'%'
                 cursor.execute('''SELECT DISTINCT p.pairid, l.tag, r.tag, l.seq, r.seq, p.left, p.right,
-                    p.chrom, p.start, p.end, l.vessel, l.well, r.vessel, r.well, 0
+                    p.chrom, p.start, p.end, l.vessel, l.well, r.vessel, r.well, 0, p.comments
                     FROM pairs AS p
                     LEFT JOIN primer as l ON p.left = l.name
                     LEFT JOIN primer as r ON p.right = r.name
@@ -280,7 +295,7 @@ class PrimerDB(object):
             elif type(query) in [str,unicode]:  # use primerpair name
                 subSearchName = '%'+query+'%'
                 cursor.execute('''SELECT DISTINCT p.pairid, l.tag, r.tag, l.seq, r.seq, p.left, p.right,
-                    p.chrom, p.start, p.end, l.vessel, l.well, r.vessel, r.well, 0
+                    p.chrom, p.start, p.end, l.vessel, l.well, r.vessel, r.well, 0, p.comments
                     FROM pairs AS p
                     LEFT JOIN primer as l ON p.left = l.name
                     LEFT JOIN primer as r ON p.right = r.name
@@ -290,7 +305,7 @@ class PrimerDB(object):
             else:  # is interval
                 cursor.execute('''SELECT DISTINCT p.pairid, l.tag, r.tag, l.seq, r.seq, p.left, p.right,
                     p.chrom, p.start, p.end, l.vessel, l.well, r.vessel, r.well,
-                    abs(p.start+((p.end-p.start)/2) - ?) as midpointdistance
+                    abs(p.start+((p.end-p.start)/2) - ?) as midpointdistance, p.comments
                     FROM pairs AS p
                     LEFT JOIN primer as l ON p.left = l.name
                     LEFT JOIN primer as r ON p.right = r.name
@@ -317,6 +332,7 @@ class PrimerDB(object):
             rightPrimer = Primer(row[6], row[4], targetposition=rightTargetposition, tag=row[2], location=rightLocation)
             # get reverse status (from name)
             orientations = [ x[1] for x in map(parsePrimerName,row[5:7]) ]
+            comments = row[15]
             if not any(orientations) or len(set(orientations))==1:
                 print >> sys.stderr, '\rWARNING: {} orientation is ambiguous ({},{}){}\r'.format(row[0],\
                     '???' if orientations[0]==0 else 'rev' if orientations[0]<0 else 'fwd', \
@@ -329,10 +345,11 @@ class PrimerDB(object):
             else:
                 raise Exception('PrimerPairStrandError')
             # Build pair
-            primerPairs.append(PrimerPair([leftPrimer, rightPrimer],name=row[0],reverse=reverse))
+            primerPairs.append(PrimerPair([leftPrimer, rightPrimer], name=row[0], reverse=reverse,
+                                          comments=comments))
         return primerPairs  # ordered by midpoint distance
 
-    def getLocation(self,loc):
+    def getLocation(self, loc):
         '''returns whats stored at location'''
         try:
             self.db = sqlite3.connect(self.sqlite)
@@ -385,6 +402,23 @@ class PrimerDB(object):
             self.db.close()
         return
 
+    def updatePrimerPairsComments(self, comments_multidict):
+        try:
+            self.db = sqlite3.connect(self.sqlite)
+        except:
+            raise
+        else:
+            cursor = self.db.cursor()
+            #print >>sys.stderr, "adaba", [(comments, primerid[9:]) for primerid, comments in comments_multidict.items() if primerid.startswith("comments_")]
+            cursor.executemany('''UPDATE OR IGNORE pairs
+                SET comments = ? WHERE pairid = ?''', \
+                ((comments, primerid[9:]) for primerid, comments in comments_multidict.items() if primerid.startswith("comments_")))
+            self.db.commit()
+        finally:
+            self.db.close()
+        return
+
+
     def storePrimer(self,primerid,loc,force=False):
         '''updates the location in which primers are stored'''
         try:
@@ -416,7 +450,7 @@ class PrimerDB(object):
                 cursor.execute('''SELECT DISTINCT vessel, well
                     FROM primer WHERE name = ?;''', (primerid,) )
                 rows = cursor.fetchall()
-                assert len(rows)==1 and Location(str(rows[0][0]),str(rows[0][1])) == loc
+                assert len(rows) == 1 and Location(str(rows[0][0]), str(rows[0][1])) == loc
             except AssertionError:
                 return False
             except:
@@ -425,7 +459,7 @@ class PrimerDB(object):
             self.db.close()
         return True
 
-    def updateName(self,primerName,newName):
+    def updateName(self, primerName, newName):
         '''changes the name of a primer stored in the database'''
         try:
             self.db = sqlite3.connect(self.sqlite)
@@ -494,7 +528,7 @@ class PrimerDB(object):
             self.writeAmpliconDump()
 
     def dump(self,what,**kwargs):
-        if what=='amplicons':
+        if what == 'amplicons':
             # dump amplicons (all possible)
             try:
                 self.db = sqlite3.connect(self.sqlite)
@@ -516,7 +550,7 @@ class PrimerDB(object):
                 self.db.close()
             return rows, ('chrom','chromStart','chromEnd','name')  # rows and colnames
             # return [ '{}\t{}\t{}\t{}'.format(*row) for row in rows ]
-        elif what=='ordersheet':
+        elif what == 'ordersheet':
             try:
                 self.db = sqlite3.connect(self.sqlite)
             except:
@@ -540,7 +574,7 @@ class PrimerDB(object):
             finally:
                 self.db.close()
             # define columns
-            columns = ['pairname','primername','sequence','seqtag','direction']
+            columns = ['pairname', 'primername', 'sequence', 'seqtag', 'direction']
             # add tags and extra columns
             if 'extracolumns' in kwargs.keys() and kwargs['extracolumns']:
                 columns += [ c[0] for c in kwargs['extracolumns'] ]
@@ -586,7 +620,7 @@ class PrimerDB(object):
                 rows = cursor.fetchall()
             finally:
                 self.db.close()
-            return rows, ['pair','primer','vessel','well']
+            return rows, ['pair', 'primer', 'vessel', 'well']
         elif what=='table':
             # dump table with pairs primers and locations (which can be reimported)
             try:

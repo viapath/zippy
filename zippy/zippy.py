@@ -1,6 +1,7 @@
-#!/usr/bin/env python
+#!/usr/local/zippy/venv/bin/python
 
-__doc__=="""
+
+__doc__ == """
 ################################################################
 # Zippy - Primer database and automated design                 #
 # -- Organisation: Viapath Analytics / King's College Hospital #
@@ -8,7 +9,7 @@ __doc__=="""
 ################################################################
 """
 __author__ = "David Brawand"
-__credits__ = ['David Brawand','Christopher Wall']
+__credits__ = ['David Brawand', 'Christopher Wall']
 __license__ = "MIT"
 __version__ = "2.3.4"
 __maintainer__ = "David Brawand"
@@ -34,6 +35,7 @@ from copy import deepcopy
 from collections import defaultdict, Counter
 from urllib import unquote
 import cPickle as pickle
+sys.stderr=sys.stdout
 
 '''file MD5'''
 def fileMD5(fi, block_size=2**20):
@@ -73,7 +75,7 @@ def shortHumanReadable(x):
     return '_'.join([ fields[0], hashlib.sha1(','.join(fields[:-1])).hexdigest()[:6].upper() ])
 
 '''reads fasta/tab inputfile, searches genome for targets, decides if valid pairs'''
-def importPrimerPairs(inputfile,config,primer3=True):
+def importPrimerPairs(inputfile, config, primer3=True):
     # read table/fasta
     primersets = defaultdict(list)  # pair primersets
     primertags = {}  # primer tags from table
@@ -93,7 +95,7 @@ def importPrimerPairs(inputfile,config,primer3=True):
                             raise Exception('FileHeaderError')
                     else:
                         f = map(lambda x: x.strip('"'), line.rstrip().split('\t'))
-                        l = dict(zip(header,f))
+                        l = dict(zip(header, f))
                         # remove tag from sequence
                         if l['tag']:
                             try:
@@ -131,7 +133,7 @@ def importPrimerPairs(inputfile,config,primer3=True):
     print >> sys.stderr, "Placing primers on genome..."
     # Align primers to genome
     primers = primerfile.createPrimers(config['design']['bowtieindex'], \
-        delete=False,tags=primertags, \
+        delete=False, tags=primertags, \
         tmThreshold=config['design']['mispriming']['minimaltm'], \
         endMatch=config['design']['mispriming']['identity3prime'])  # places in genome
     # pair primers (by name or by primerset) MAKE COPIES!!!!
@@ -147,7 +149,7 @@ def importPrimerPairs(inputfile,config,primer3=True):
                 try:
                     pairs[setname] = PrimerPair([None,None],name=setname)
                 except:
-                    print >> sys.stderr, '>>',primersets[p.name], '|', p.name, '|', setnames, '<'
+                    print >> sys.stderr, '>>', primersets[p.name], '|', p.name, '|', setnames, '<'
                     raise
             except:
                 raise
@@ -231,6 +233,7 @@ def importPrimerPairs(inputfile,config,primer3=True):
 '''get primers from intervals'''
 def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible=False):
     ivpairs = defaultdict(list)  # found/designed primer pairs (from database or design)
+    flash_messages = []
     blacklist = db.blacklist() if db else []
     try:
         blacklist += pickle.load(open(config['blacklistcache'],'rb'))
@@ -273,12 +276,17 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
             primerpairs = db.query(iv)
             if primerpairs:
                 for pair in primerpairs:
+                    #assert 0, (pair, type(pair))
                     ivpairs[iv].append(pair)
                 # remove excess primers (ordered by midpointdistance)
                 ivpairs[iv] = ivpairs[iv][:config['report']['pairs']]
         sys.stderr.write('\r'+progress.show(len(intervals))+'\n')
         # print query count
-        print >> sys.stderr, 'Found primers for {:d} out of {:d} intervals in database'.format(len([ iv for iv in intervals if ivpairs[iv]]), len(intervals))
+        intervals_in_database = [iv for iv in intervals if ivpairs[iv]]
+        primers_found_in_DB_string = 'Found primers for {:d} out of {:d} intervals in database'.format(len(intervals_in_database), len(intervals))
+        print >> sys.stderr, primers_found_in_DB_string
+        if len(intervals_in_database)>0:
+            flash_messages.append((primers_found_in_DB_string, 'info'))
 
     # designing
     if design:
@@ -297,6 +305,7 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                     designIntervalOversize = max([ max(x) for x in config['design']['primer3'][tier]['PRIMER_PRODUCT_SIZE_RANGE'] ])
                 except:
                     print >> sys.stderr, "WARNING: could not determine maximum amplicon size, default setting applied"
+                    flash_messages.append(("WARNING: could not determine maximum amplicon size, default setting applied", "warning"))
                     designIntervalOversize = 2000
                 p3 = Primer3(config['design']['genome'], iv.locus(), designIntervalOversize)
                 p3.design(iv.name, config['design']['primer3'][tier])
@@ -317,6 +326,7 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                 specificPrimerPairs = []
                 blacklisted = 0
                 for i, pair in enumerate(pairs):
+                    #print("ipr",i,pair)
                     if pair.uniqueid() in blacklist:
                         blacklisted += 1
                     elif all([pair[0].checkTarget(), pair[1].checkTarget()]):
@@ -358,10 +368,12 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                             failCount += 1
                 if failCount:
                     print >> sys.stderr, 'INFO: {:2d} pairs violated design limits and were blacklisted ({} total)'.format(failCount,str(len(blacklist)))
+                    flash_messages.append(('{:2d} pairs violated design limits and were blacklisted ({} total)'.format(failCount,str(len(blacklist)), 'info')))
                 # print failed primer designs
-                for k,v in intervalprimers.items():
+                for k, v in intervalprimers.items():
                     if len(v)==0:
                         print >> sys.stderr, 'WARNING: Target {} failed on designlimits'.format(k)
+                        flash_messages.append(('WARNING: Target {} failed on designlimits'.format(k), 'warning'))
 
     # save blacklist cache
     try:
@@ -369,6 +381,7 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
     except:
         print >> sys.stderr, 'Could not write to blacklist cache, check permissions'
         print >> sys.stderr, os.getcwd(), config['blacklistcache']
+        flash_messages.append(('Could not write to blacklist cache, check permissions', 'error'))
 
     # print primer pair count and build database table
     failure = [ iv.name for iv,p in ivpairs.items() if config['report']['pairs']>len(p) ]
@@ -405,7 +418,7 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
     else:
         # select by best pairs independently (always print database primers)
         for iv in sorted(ivpairs.keys()):
-            print "IV", unquote(iv.name)
+            print >> sys.stderr,"IV", unquote(iv.name)
             if not ivpairs[iv]:
                 missedIntervals.append(iv)
             for i, p in enumerate(sorted(ivpairs[iv])):
@@ -421,7 +434,7 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
     # update primer pairs with covered variants
     for pp, v in primerVariants.items():
         pp.variants = v
-    return primerTable, primerVariants.keys(), missedIntervals
+    return primerTable, primerVariants.keys(), missedIntervals, flash_messages
 
 # ==============================================================================
 # === convenience functions for webservice =====================================
@@ -429,7 +442,21 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
 
 # query database / design primer for VCF,BED,GenePred or interval
 def zippyPrimerQuery(config, targets, design=True, outfile=None, db=None, store=False, tiers=[0], gap=None):
-    intervals = readTargets(targets, config['tiling'])  # get intervals from file or commandline
+    flash_messages = []
+    if isinstance(targets,tuple):
+        intervalforlocus = readTargets(targets[1], config['tiling'])  # get intervals from file or commandline
+        intervalsforfile = readTargets(targets[0], config['tiling'])  # get intervals from file or commandline
+        #print("intervals2", intervalforlocus, intervalsforfile)
+        overlappings=[]
+        for intervalforlocus in intervalforlocus:
+            for intervalforfile in intervalsforfile:
+                if intervalforlocus.overlap(intervalforfile):
+                    intervalforfile.union_with(intervalforlocus)
+                    overlappings.append(intervalforfile)
+            intervals=overlappings
+    else:
+        intervals = readTargets(targets, config['tiling'])  # get intervals from file or commandline
+    #print("intervalsi", intervals)
     if gap:  # gap PCR primers
         try:
             assert len(intervals)==1
@@ -437,9 +464,12 @@ def zippyPrimerQuery(config, targets, design=True, outfile=None, db=None, store=
             assert len(set([i.chrom for i in intervals] ))
         except AssertionError:
             print >> sys.stderr, "ERROR: gap-PCR primers can only be designed for a single pair of breakpoint intervals on the same chromosome!"
+            flash_messages.append(("ERROR: gap-PCR primers can only be designed for a single pair of breakpoint intervals on the same chromosome!", "error"))
         except:
             raise
-    primerTable, resultList, missedIntervals = getPrimers(intervals,db,design,config,tiers,compatible=True if gap else False)
+    #print("intervaldir", intervals, db, design, tiers)
+    primerTable, resultList, missedIntervals, more_flash_messages = getPrimers(intervals,db,design,config,tiers,compatible=True if gap else False)
+    flash_messages.extend(more_flash_messages)
     ## print primerTable
     if outfile:
         with open(outfile,'w') as fh:
@@ -451,10 +481,11 @@ def zippyPrimerQuery(config, targets, design=True, outfile=None, db=None, store=
     if store and db and design:
         db.addPair(*resultList)  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
         print >> sys.stderr, "Primer designs stored in database"
-    return primerTable, resultList, missedIntervals
+    return primerTable, resultList, missedIntervals, flash_messages
 
 # batch query primer database and create confirmation worksheet
 def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesign=False, tiers=[0]):
+    flash_messages = []
     # read targets from first file and additional files
     if not isinstance(targets,list):
         targets = [ targets ]
@@ -499,7 +530,8 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
                 intervals += GenePred(fh,getgenes=fullgenes,**config['tiling'])
         # predesign and store
         if intervals:
-            primerTable, resultList, missedIntervals = getPrimers(intervals,db,predesign,config,tiers)
+            primerTable, resultList, missedIntervals, more_flash_messages = getPrimers(intervals,db,predesign,config,tiers)
+            flash_messages.extend(more_flash_messages)
             if db:
                 db.addPair(*resultList)  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
         # reload query files ()
@@ -523,7 +555,8 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
         print >> sys.stderr, "Getting primers for {} variants in sample {}".format(len(intervals),sample)
         # get/design primers
         #print >> sys.stderr, intervals
-        primerTable, resultList, missedIntervals = getPrimers(intervals,db,design,config,tiers,rename=shortHumanReadable)
+        primerTable, resultList, missedIntervals, more_flash_messages = getPrimers(intervals,db,design,config,tiers,rename=shortHumanReadable)
+        flash_messages.extend(more_flash_messages)
         if missedIntervals:
             allMissedIntervals[sample] = missedIntervals
             missedIntervalNames += [ i.name for i in missedIntervals ]
@@ -534,7 +567,7 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             db.addPair(*resultList)  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
         # Build Tests
         for primerpair in resultList:
-            tests.append(Test(primerpair,sample))
+            tests.append(Test(primerpair, sample))
     ## print primerTable
     writtenFiles = []
     if not outfile:
@@ -610,6 +643,8 @@ def updateLocation(primername, location, database, force=False):
 def searchByName(searchName, db):
     primersInDB = db.query(searchName)
     print >> sys.stderr, 'Found {} primer pairs with string "{}"'.format(len(primersInDB),searchName)
+    for primerpair in primersInDB:
+        print >> sys.stderr, primerpair
     return primersInDB
 
 # update name of primer in database
@@ -678,8 +713,10 @@ def main():
 
     #   configuration files
     global_group = parser.add_argument_group('Global options')
-    global_group.add_argument("-c", dest="config", default='zippy.json',metavar="JSON_FILE", \
-        help="configuration file [zippy.json]")
+    zippy_json_path=os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),"zippy.json")
+    global_group.add_argument("-c", dest="config", default=zippy_json_path,metavar="JSON_FILE", \
+        help="configuration file [{0}]".format(zippy_json_path))
+
     global_group.add_argument("--tiers", dest="tiers", default='0,1,2', \
         help="Allowed design tiers (0,1,...,n)")
 
@@ -708,7 +745,7 @@ def main():
 
     ## query database for primers by name
     parser_query = subparsers.add_parser('query', help='Query database for primers with specified sub-string in name')
-    parser_query.add_argument("subString", default=None, metavar="Sub-string within name", \
+    parser_query.add_argument("subString", default='', nargs='?', metavar="Sub-string within name", \
         help="String found within primer name")
     parser_query.set_defaults(which='query')
 
@@ -759,8 +796,10 @@ def main():
     # read config and open database
     with open(options.config) as conf:
         config = json.load(conf, object_hook=ascii_encode_dict)
-    here = config['primerbed'] if 'primerbed' in config.keys() and config['primerbed'] else None
-    db = PrimerDB(config['database'],dump=here)
+    #here = config['primerbed'] if 'primerbed' in config.keys() and config['primerbed'] else None
+    #here = config['ampliconbed'] if 'ampliconbed' in config.keys() and config['ampliconbed'] else None
+    here=getattr(options,'outfile','')
+    db = PrimerDB(config['database'], dump=here)
 
     if options.which=='add':  # read primers and add to database
         # import primer pairs
@@ -797,17 +836,18 @@ def main():
         elif options.redundancies:
             data,colnames = db.getRedundantPrimers()
         else:
-            print >> sys.stderr, "What to dump stranger?"
+            print >> sys.stderr, "What to dump?. Options are --amplicons, --ordersheet, --locations, --redundancies, --table, --outfile <outfile>, "+\
+                "written as one or more of these options after dhe dump word (if more than one option these should be separated by spaces)"
             sys.exit(1)
         # format data output
         if options.outfile:
-            dump = Data(data,colnames)
+            dump = Data(data, colnames)
             dump.writefile(options.outfile)  # sets format by file extension
         else:
             print '\t'.join(colnames)
             for row in data:
-                print '\t'.join(map(str,row))
-    elif options.which=='update':  #update location primer pairs are stored
+                print '\t'.join(map(str, row))
+    elif options.which == 'update':  #update location primer pairs are stored
         if options.location:
             primer, vessel, well = options.location
             updateLocation(primer, Location(vessel, well), db, options.force)

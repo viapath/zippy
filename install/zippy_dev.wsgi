@@ -4,5 +4,5 @@ import sys
 import logging
 logging.basicConfig(stream=sys.stderr)
 sys.path.insert(0, '~')
-sys.path.append('/home/vagrant/zippy')
+sys.path.append('/srv/qgen/zippy')
 from zippy import app as application

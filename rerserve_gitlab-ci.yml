@@ -1,0 +1,4 @@
+debian:
+  script: docker build - < Dockerfile
+centos:
+  script: docker build - < Dockerfile_centos7
