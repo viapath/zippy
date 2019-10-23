@@ -160,7 +160,7 @@ class Report(object):
         self.elements.append(Spacer(1, 2))
         data = [[ 'Date','','','Operator','','','Worklist',self.worklist]]
         t = Table(data, \
-            colWidths=[2.3*cm, 2.3*cm, 0.7*cm, 2.3*cm, 2.3*cm, 0.7*cm, 2.3*cm, 2.6*cm], rowHeights=0.6*cm)
+            colWidths=[2.3*cm, 2.3*cm, 0.7*cm, 2.3*cm, 2.3*cm, 0.7*cm, 2.3*cm, 3.0*cm], rowHeights=0.6*cm)
         t.setStyle(TABLE_STYLE)
         self.elements.append(t)
         self.elements.append(Spacer(1, 12))
@@ -321,11 +321,12 @@ class Report(object):
 
     def volumeLists(self,reactions,mastermix,qsolution,water,excess,program):
         # batch mix
+        #add format here
         data = [['Reagent','Quantity','LOT','Expiry','','Reactions', str(reactions) ],
-            ['MasterMix', str((1.+excess)*reactions*mastermix)+' µl', '', '', '', 'Excess', str((excess)*100)+' %' ],
-            ['Q-Solution', str((1.+excess)*reactions*qsolution)+' µl', '', '', '', 'PCR Program', program ],
-            ['H2O', str((1.+excess)*reactions*water)+' µl', '', '', '', 'PCR Block', '' ],
-            ['TOTAL', str((1.+excess)*reactions*(mastermix+qsolution+water))+' µl', '', '', '', '','']]
+            ['MasterMix', str("{0:.0f}".format((1.+excess)*reactions*mastermix))+' µl', '', '', '', 'Excess', str((excess)*100)+' %' ],
+            ['Q-Solution', str("{0:.0f}".format((1.+excess)*reactions*qsolution))+' µl', '', '', '', 'PCR Program', program ],
+            ['H2O', str("{0:.0f}".format((1.+excess)*reactions*water))+' µl', '', '', '', 'PCR Block', '' ],
+            ['TOTAL', str("{0:.0f}".format((1.+excess)*reactions*(mastermix+qsolution+water)))+' µl', '', '', '', '','']]
         t = Table(data, colWidths=[2.5*cm,2.5*cm,2.5*cm,2.5*cm,0.3*cm,2.7*cm,2.5*cm], rowHeights=0.6*cm)
         t.setStyle(TableStyle([
             ('FONTSIZE',(0,1),(0,-1),10),
