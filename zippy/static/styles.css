@@ -250,7 +250,7 @@ input[type=submit]:focus {
   padding: 20px;
   text-decoration: none;
   cursor: pointer;
-  width: 130px;
+  width: 200px;
 }
 
 #revWideButton:hover {

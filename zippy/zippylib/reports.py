@@ -22,6 +22,7 @@ from collections import Counter
 from . import PlateError, char_range, imageDir, githash
 from .primer import parsePrimerName, PrimerPair, Primer
 from urllib import unquote
+#import XlsxWriter
 
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
@@ -92,12 +93,13 @@ class MolPathTemplate(canvas.Canvas):
 
 # Report
 class Report(object):
-    def __init__(self,fi,title='This is the title',logo=None,site='',auth='',docid='',worklist=''):
+    def __init__(self,fi,program,title='This is the title',logo=None,site='',auth='',docid='',worklist=''):
         # site and auth
         self.site = site
         self.auth = auth
         self.docid = docid
         self.worklist = worklist
+        self.program = program
         # get document
         self.doc = BaseDocTemplate(fi,
                       rightMargin=rightMargin,
@@ -158,7 +160,7 @@ class Report(object):
         self.elements.append(Spacer(1, 2))
         data = [[ 'Date','','','Operator','','','Worklist',self.worklist]]
         t = Table(data, \
-            colWidths=[2.3*cm, 2.3*cm, 0.85*cm, 2.3*cm, 2.3*cm, 0.85*cm, 2.3*cm, 2.3*cm], rowHeights=0.6*cm)
+            colWidths=[2.3*cm, 2.3*cm, 0.7*cm, 2.3*cm, 2.3*cm, 0.7*cm, 2.3*cm, 3.0*cm], rowHeights=0.6*cm)
         t.setStyle(TABLE_STYLE)
         self.elements.append(t)
         self.elements.append(Spacer(1, 12))
@@ -271,22 +273,37 @@ class Report(object):
         self.elements.append(PageBreak())
 
     def samplePrimerLists(self,s,p,counts=Counter()):
+        #!!!Orignial table format, DO NOT DELETE
+        # TABLE_STYLE = TableStyle([
+        #     ('FONTSIZE',(0,1),(-1,-1),8),  # body
+        #     ('FONTSIZE',(0,0),(-1,0),10),  # title line
+        #     ('VALIGN',(0,0),(-1,-1),'TOP'),
+        #     ('ALIGN',(0,0),(-1,-1),'LEFT'),
+        #     ('INNERGRID', (0,1), (1,len(s)), 0.25, colors.black),
+        #     ('LINEABOVE', (0,1),(1,1),1,colors.black),
+        #     ('BOX', (0,0), (1,len(s)), 1, colors.black),
+        #     ('INNERGRID', (3,1), (-1,len(p)), 0.25, colors.black),
+        #     ('LINEABOVE', (3,1),(-1,1),1,colors.black),
+        #     ('BOX', (3,0), (-1,len(p)), 1, colors.black),
+        #     ])
+#Fomat for WDB circle list
         TABLE_STYLE = TableStyle([
             ('FONTSIZE',(0,1),(-1,-1),8),  # body
             ('FONTSIZE',(0,0),(-1,0),10),  # title line
             ('VALIGN',(0,0),(-1,-1),'TOP'),
             ('ALIGN',(0,0),(-1,-1),'LEFT'),
-            ('INNERGRID', (0,1), (1,len(s)), 0.25, colors.black),
-            ('LINEABOVE', (0,1),(1,1),1,colors.black),
-            ('BOX', (0,0), (1,len(s)), 1, colors.black),
-            ('INNERGRID', (3,1), (-1,len(p)), 0.25, colors.black),
-            ('LINEABOVE', (3,1),(-1,1),1,colors.black),
-            ('BOX', (3,0), (-1,len(p)), 1, colors.black),
+            ('INNERGRID', (0,1),(6,len(s)), 0.25, colors.black),
+            ('LINEABOVE', (0,1),(6,1),1,colors.black),
+            ('LINEBEFORE', (3,0),(3,len(s)),1,colors.black),
+            ('BOX', (0,0), (6,len(s)), 1, colors.black),
+            ('INNERGRID', (8,1), (-1,len(p)), 0.25, colors.black),
+            ('LINEABOVE', (8,1),(-1,1),1,colors.black),
+            ('BOX', (8,0), (-1,len(p)), 1, colors.black),
             ])
         doubleLine = ParagraphStyle('suffixes', fontSize=5, leading=5)  # suffix column
         centered = ParagraphStyle('locations', fontSize=8, leading=5, alignment=1)  # Location column
         centeredsmall = ParagraphStyle('locations', fontSize=6, leading=6, alignment=1)  # Location column
-        data = [[str(len(s)),'Samples','',str(len(p)),'Primer Pairs', 'Suffixes', 'Locations']]
+        data = [['','','',str(len(s)),'Samples','Locations','Empty','',str(len(p)),'Primer Pairs', 'Suffixes', 'Locations','ND']]
         for i in range(max(len(s),len(p))):
             if i<len(p):
                 if any(p[i][2]):
@@ -294,20 +311,22 @@ class Report(object):
                     locationParagraph = Paragraph(locationString, centered if len(locationString) < 10 else centeredsmall)
                 else:
                     locationParagraph = Paragraph(' ',centered)
-            data.append(([ counts[s[i]] if counts else '', s[i] ] if i<len(s) else ['','']) + [''] + \
+            data.append((['W','LowV','B'] if i<len(s) else ['','','']) + ([ counts[s[i]] if counts else '', s[i] ] if i<len(s) else ['','']) + ['','',''] + \
                 ([ counts[p[i][0]] if counts else '', p[i][0], Paragraph('<br/>'.join(p[i][1]),doubleLine), locationParagraph ] if i<len(p) else ['','','','']))
         self.elements.append(Spacer(1, 2))
-        t = Table(data, colWidths=[0.6*cm,5*cm,0.3*cm,0.6*cm,5.3*cm,1.6*cm,2.1*cm], rowHeights=0.6*cm)
+        t = Table(data, colWidths=[0.6*cm,1.0*cm,0.6*cm,0.6*cm,2.3*cm,2.0*cm,1.3*cm,0.3*cm,0.6*cm,5.3*cm,1.6*cm,1.8*cm,0.8*cm], rowHeights=0.6*cm)
         t.setStyle(TABLE_STYLE)
         self.elements.append(t)
         self.elements.append(Spacer(1, 12))
 
-    def volumeLists(self,reactions,mastermix,qsolution,excess,program):
+    def volumeLists(self,reactions,mastermix,qsolution,water,excess,program):
         # batch mix
+        #add format here
         data = [['Reagent','Quantity','LOT','Expiry','','Reactions', str(reactions) ],
-            ['MasterMix', str((1.+excess)*reactions*mastermix)+' µl', '', '', '', 'Excess', str((excess)*100)+' %' ],
-            ['Q-Solution', str((1.+excess)*reactions*qsolution)+' µl', '', '', '', 'PCR Program', program ],
-            ['TOTAL', str((1.+excess)*reactions*(mastermix+qsolution))+' µl', '', '', '', 'PCR Block','']]
+            ['MasterMix', str("{0:.0f}".format((1.+excess)*reactions*mastermix))+' µl', '', '', '', 'Excess', str((excess)*100)+' %' ],
+            ['Q-Solution', str("{0:.0f}".format((1.+excess)*reactions*qsolution))+' µl', '', '', '', 'PCR Program', program ],
+            ['H2O', str("{0:.0f}".format((1.+excess)*reactions*water))+' µl', '', '', '', 'PCR Block', '' ],
+            ['TOTAL', str("{0:.0f}".format((1.+excess)*reactions*(mastermix+qsolution+water)))+' µl', '', '', '', '','']]
         t = Table(data, colWidths=[2.5*cm,2.5*cm,2.5*cm,2.5*cm,0.3*cm,2.7*cm,2.5*cm], rowHeights=0.6*cm)
         t.setStyle(TableStyle([
             ('FONTSIZE',(0,1),(0,-1),10),
@@ -320,6 +339,7 @@ class Report(object):
             ('LINEABOVE', (0,1),(3,1), 1, colors.black),
             ('BACKGROUND',(2,-1),(3,-1),colors.lightgrey),
             ('BACKGROUND', (0,0), (3,0), colors.bisque),
+            ('BACKGROUND',(5,-1),(6,-1),colors.lightgrey),
             ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
             ('ALIGN',(0,0),(-1,-1),'RIGHT'),
             ('BOX', (0,0), (3,-1), 1, colors.black),
@@ -328,8 +348,119 @@ class Report(object):
         self.elements.append(Spacer(1, 12))
         self.elements.append(KeepTogether(t))
         self.elements.append(Spacer(1, 12))
+#If report config is l_report use def pcrLongProgram or if program is A1_TD use long program
+    def pcrProgram(self, tableTitle=None,program=''):
+        if tableTitle:
+            self.elements.append(Paragraph(tableTitle, self.styles["Heading4"]))
+            self.elements.append(Spacer(1, 2))
 
-    def checkBoxes(self,title='Checks',table=[],tableHeader=['Task','Date','Checker'],tickbox=[],tickboxNames=['YES','NO'],textLines={}):
+        if program == 'ngsconfirm':
+            data = [['','Temp','Time','No. of Cycles'],
+            ['Stage 1', '95', '15m', '1'],
+            ['Stage 2', '94', '30s', '35'],
+            ['', '60', '1m30s', ''],
+            ['', '72', '1m', ''],
+            ['Stage 3', '72', '10m', '1'],
+            ['Stage 4', '10', '10m', '1']]
+            t = Table(data, colWidths=[2.5*cm,2.0*cm,2.0*cm,3.0*cm], rowHeights=0.6*cm)
+            t.setStyle(TableStyle([
+                ('BOX', (0,0), (3,-1), 1, colors.black),
+                ('FONTSIZE', (0,0), (3,0), 10),
+                ('FONTSIZE', (0,1), (0,4), 10),
+                ('FONTSIZE', (1,1), (3,-1), 8),
+                ('INNERGRID', (0,0), (3,1), 0.25, colors.black),
+                ('LINEABOVE', (0,2), (3,2), 0.25, colors.black),
+                ('LINEBEFORE', (1,2), (1,-1), 0.25, colors.black),
+                ('LINEBEFORE', (3,0), (3,-1), 0.25, colors.black),
+                ('INNERGRID', (1,2), (2,-1), 0.25, colors.black),
+                ('LINEABOVE', (0,-2), (3,-2), 0.25, colors.black),
+                ('LINEABOVE', (0,-1), (3,-1), 0.25, colors.black),
+                ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
+                ('ALIGN',(0,0),(2,-1),'LEFT'),
+                ('ALIGN',(-1,1),(-1,-1),'CENTER'),
+                ]))
+            self.elements.append(Spacer(1, 12))
+            self.elements.append(KeepTogether(t))
+            self.elements.append(Spacer(1, 12))
+
+        if program == 'A1_TD':
+            data = [['','Temp','Time','No. of Cycles'],
+            ['Stage 1', '94', '14m', '1'],
+            ['Stage 2', '95', '30s', '5'],
+            ['', '62', '30s', ''],
+            ['', '72', '1m 30s', ''],
+            ['Stage 3', '95', '30s', '5'],
+            ['', '60', '30s', ''],
+            ['', '72', '1m 30s', ''],
+            ['Stage 4', '95', '30s', '35'],
+            ['', '58', '30s', ''],
+            ['', '72', '1m 30s', ''],
+            ['Stage 5', '10', '10m', '1']]
+            t = Table(data, colWidths=[2.5*cm,2.0*cm,2.0*cm,3.0*cm], rowHeights=0.6*cm)
+            t.setStyle(TableStyle([
+                ('BOX', (0,0), (3,-1), 1, colors.black),
+                ('FONTSIZE', (0,0), (3,0), 10),
+                ('FONTSIZE', (0,1), (0,5), 10),
+                ('FONTSIZE', (1,1), (-1,-1), 8),
+                ('INNERGRID', (0,0), (3,1), 0.25, colors.black),
+                ('LINEABOVE', (0,2), (3,2), 0.25, colors.black),
+                ('LINEBEFORE', (1,2), (1,-1), 0.25, colors.black),
+                ('LINEBEFORE', (3,0), (3,-1), 0.25, colors.black),
+                ('INNERGRID', (1,2), (2,-1), 0.25, colors.black),
+                ('LINEABOVE', (0,5), (3,5), 0.25, colors.black),
+                ('LINEABOVE', (0,-4), (3,-4), 0.25, colors.black),
+                ('LINEABOVE', (0,-1), (3,-1), 0.25, colors.black),
+                ]))
+            self.elements.append(Spacer(1, 12))
+            self.elements.append(KeepTogether(t))
+            self.elements.append(Spacer(1, 12))
+
+
+# #!!!!!!!!!!THIS WORKS DO NOT DELETE
+#     def pcrLongProgram(self):
+#         data = [['','Temp','Time','No. of Cycles'],
+#             ['Stage1', '94', '14m', '1'],
+#             ['Stage2', '95', '30s', '5'],
+#             ['', '62', '30s', ''],
+#             ['', '72', '1m 30s', ''],
+#             ['Stage3', '95', '30s', '5'],
+#             ['', '60', '30s', ''],
+#             ['', '72', '1m 30s', ''],
+#             ['Stage4', '95', '30s', ''],
+#             ['', '58', '30s', ''],
+#             ['', '72', '1m 30s', ''],
+#             ['Stage5', '10', '10m', '1']]
+# #     #def pcrStdProgram(self):
+# #     #     data_std = [['Stage','Temp','Time','No. of Cycles']
+# #     #         ['Stage1', '95', '15m', '1'],
+# #     #         ['Stage2', '94', '30s', '35'],
+# #     #         ['', '60', '1m30s', ''],
+# #     #         ['', '72', '1m', ''],
+# #     #         ['Stage3', '72', '10m', '1'],
+# #     #         ['Stage4', '10', '10m', '1']
+# #     #         ['', '', '', '']]
+#         t = Table(data, colWidths=[2.5*cm,2.0*cm,2.0*cm,3.0*cm], rowHeights=0.6*cm)
+#         t.setStyle(TableStyle([
+#             ('BOX', (0,0), (3,-1), 1, colors.black),
+#             ('FONTSIZE', (0,0), (3,0), 12),
+#             ('FONTSIZE', (0,1), (0,5), 12),
+#             ('FONTSIZE', (1,1), (-1,-1), 8),
+#             ('INNERGRID', (0,0), (3,1), 0.25, colors.black),
+#             ('LINEABOVE', (0,2), (3,2), 0.25, colors.black),
+#             ('LINEBEFORE', (1,2), (1,-1), 0.25, colors.black),
+#             ('LINEBEFORE', (3,0), (3,-1), 0.25, colors.black),
+#             ('INNERGRID', (1,2), (2,-1), 0.25, colors.black),
+#             ('LINEABOVE', (0,5), (3,5), 0.25, colors.black),
+#             ('LINEABOVE', (0,-4), (3,-4), 0.25, colors.black),
+#             ('LINEABOVE', (0,-1), (3,-1), 0.25, colors.black),
+#             ]))
+#         self.elements.append(Spacer(1, 12))
+#         self.elements.append(KeepTogether(t))
+#         self.elements.append(Spacer(1, 12))
+
+    #def pcrProgram(self,title='Program',table=[],tableHeafer=['Stage','Temp','Time','No. of Cycles'],)
+
+    def checkBoxes(self,title='Checks',checktable=[],table=[],tableHeader=['Check','SampleID','Date','Operator','Checker'],tickbox=[],tickboxNames=['YES','NO'],textLines={}):
         # title
         if title:
             self.elements.append(Paragraph(title, self.styles["Heading4"]))
@@ -349,7 +480,32 @@ class Report(object):
             data = [tableHeader]
             for i in range(len(table)):
                 data.append([ table[i], '', '' ])
-            t = Table(data, colWidths=[7.5*cm,4*cm,4*cm], rowHeights=0.6*cm)
+            t = Table(data, colWidths=[5.5*cm,3.5*cm,3.5*cm,2*cm,2*cm], rowHeights=0.6*cm)
+            t.setStyle(TABLE_STYLE)
+            self.elements.append(KeepTogether(t))
+            self.elements.append(Spacer(1, 6))
+
+        if checktable:
+            # right justified checkboxes with appropriate names
+            TABLE_STYLE = TableStyle([
+                ('ALIGN',(0,0),(-1,-1),'RIGHT'),
+                ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
+                ('FONTSIZE',(0,1),(-1,-1),11),
+                ('BOX', (0,0), (-1,-1), 1, colors.black),
+                ('INNERGRID', (0,0), (-1,1), 0.25, colors.black),
+                ('INNERGRID', (1,2),(-1,5),0.25, colors.black),
+                ('INNERGRID', (1,6),(-1,-1), 0.25, colors.black),
+                ('LINEABOVE', (0,1), (-1,1), 1, colors.black),
+                ('LINEABOVE', (0,2), (-1,2), 1, colors.black),
+                ('LINEABOVE', (0,6), (-1,6), 1, colors.black),
+                ('LINEBEFORE', (1,2), (1,-1), 0.25, colors.black),
+                ('BACKGROUND', (0,0), (-1,0), colors.bisque),
+                ('BACKGROUND', (1,1), (1,1), colors.lightgrey),
+                ])
+            data = [tableHeader]
+            for i in range(len(checktable)):
+                data.append([ checktable[i], '', '', '', '' ])
+            t = Table(data, colWidths=[6.8*cm,4.0*cm,3.0*cm,1.8*cm,1.8*cm], rowHeights=0.6*cm)
             t.setStyle(TABLE_STYLE)
             self.elements.append(KeepTogether(t))
             self.elements.append(Spacer(1, 6))
@@ -531,7 +687,8 @@ class Worksheet(list):
         site = kwargs['site'] if 'site' in kwargs.keys() and kwargs['site'] else None
         auth = kwargs['auth'] if 'auth' in kwargs.keys() and kwargs['auth'] else None
         docid = kwargs['docid'] if 'docid' in kwargs.keys() and kwargs['docid'] else None
-        r = Report(fi,title=self.name,logo=logo,site=site,auth=auth,docid=docid,worklist=worklist)
+        program = kwargs['volumes']['program'] if 'volumes' in kwargs.keys() and kwargs['volumes']['program'] else None
+        r = Report(fi,title=self.name,logo=logo,site=site,auth=auth,docid=docid,worklist=worklist,program=program)
         # add plates
         samples, primers, plates = [], [], []
         for plate in self.plates:
@@ -550,11 +707,12 @@ class Worksheet(list):
         # store ordered list of sample (str) and primers (primername, primersuffixes, locations)
         r.samplePrimerLists(orderedSamples,orderedPrimers,counts=self.reactionCount())
         # reaction volume list
-        r.volumeLists(sum([len(p) for p in self.plates]),kwargs['volumes']['mastermix'],kwargs['volumes']['qsolution'],kwargs['volumes']['excess'],kwargs['volumes']['program'])
+        r.volumeLists(sum([len(p) for p in self.plates]),kwargs['volumes']['mastermix'],kwargs['volumes']['qsolution'],kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'])
         # add checkboxes
         checkTasks = ['New primers ordered', 'Plate orientation checked', 'Primer checked and storage assigned'] if primertest \
-            else ['Plate orientation checked', 'DNA barcodes relabeled']
-        r.checkBoxes(title='',table=checkTasks)
+    else ['Plate orientation checked', 'Transfer Check:', 'Dilution / External tube', 'H20 Lot#: __________________','','Labelling Check:', 'Failing Barcode / Barcode Override','','']
+        r.checkBoxes(title='',checktable=checkTasks)
+        r.pcrProgram(tableTitle='PCR Cycling Conditions',program=kwargs['volumes']['program'])
         # plate layout
         r.plateLayouts(plates)
         # print result table
@@ -569,14 +727,14 @@ class Worksheet(list):
             checkTasks = ['Primer checked and storage assigned']
             r.checkBoxes(title='',table=checkTasks)
         else:
-            fields = [['DNA #', 'Patient Name', 'Primer Pair', 'Variant', 'Zygosity', 'Result', 'Check']]
+            fields = [['DNA #', 'Primer Pair', 'Variant', 'Zygosity', 'Result', 'Check']]
             for i,t in enumerate([ x for x in sorted(self,key=lambda x: (x.sample,x.primerpair)) if not x.control ]):
                 for v in t.primerpairobject.variants:
-                    fields += [[ t.sample, '', t.primerpair, ' '.join(unquote(v.name).split(',')[:-1]), unquote(v.name).split(',')[-1], '', '']]
+                    fields += [[ t.sample, t.primerpair, ' '.join(unquote(v.name).split(',')[:-1]), unquote(v.name).split(',')[-1], '', '']]
             # create result table
             r.setNextPageTemplate('landscape')
             r.pageBreak()
-            r.genericTable(fields,tableTitle='Results',landscape=True, mergeColumnFields=[0,1],relativeColWidth=[0.8,0.8,0.8,2.6,0.5,2.2,0.4])
+            r.genericTable(fields,tableTitle='Results',landscape=True, mergeColumnFields=[0,1],relativeColWidth=[0.8,1.0,3.0,0.5,2.3,0.4])
             # add checkboxes
             r.checkBoxes(title='',table=['Primary Reporter', 'Secondary Reporter'],tableHeader=['Reporter','Date','Initial'],
                 tickbox=['Unmatched Sample Check', 'Control Check'], tickboxNames=['YES','NO'],

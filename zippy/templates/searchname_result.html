@@ -13,6 +13,7 @@
 				<th>Right Primer</th>
 				<th>Right Sequence</th>
 				<th>Right Location</th>
+				<th>Conditions</th>
 			</tr>
 			{% for pair in searchResult %}
 				<tr>
@@ -25,6 +26,7 @@
 					<td><i><a class="pop-link" href="/select_primer_to_update/{{pair[1].name}}/{{pair[1].location}}">{{pair[1].name}}</a></i></td>
 					<td>{{pair[1].tag}}-{{pair[1].seq}}</td>
 					<td>{{pair[1].location}}</td>
+					<td><i><a class="pop-link" href="/select_pair_to_update/{{pair.name}}">{{pair.cond}}</a></i></td>
 				</tr>
 			{% endfor %}
 		</table>

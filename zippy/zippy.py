@@ -518,7 +518,9 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
     primerTableConcat = []
     allMissedIntervals = {}
     missedIntervalNames = []
-    tests = []  # tests to run
+    tests = [] # all tests
+    tests_long = []
+    tests_std = []
     for sample, intervals in sorted(sampleVariants.items(),key=lambda x: x[0]):
         print >> sys.stderr, "Getting primers for {} variants in sample {}".format(len(intervals),sample)
         # get/design primers
@@ -535,6 +537,14 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
         # Build Tests
         for primerpair in resultList:
             tests.append(Test(primerpair,sample))
+            # print(resultList)
+            if primerpair.cond == 'LB':
+                tests_long.append(Test(primerpair,sample))
+            elif primerpair.cond == 'STD':
+                tests_std.append(Test(primerpair,sample))
+            else:
+                print('failed to add {} to a batch'.format(primerpair))
+
     ## print primerTable
     writtenFiles = []
     if not outfile:
@@ -564,23 +574,47 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             writtenFiles.append(outfile+'.ordersheet.csv')
             print >> sys.stderr, "Writing primer order list to {}...".format(writtenFiles[-1])
             ws.orderCsv(writtenFiles[-1], config=config['ordersheet'])
-        # Batch PCR worksheet
-        writtenFiles.append(outfile+'.pdf')
-        print >> sys.stderr, "Writing worksheet to {}...".format(writtenFiles[-1])
-        ws = Worksheet(tests,name='Variant Confirmations')  # load worksheet
-        ws.addControls()  # add controls
-        ws.fillPlates(size=config['report']['platesize'],randomize=True)
-        ws.createWorkSheet(writtenFiles[-1], worklist=worksheetName, **config['report'])
-        # validate primer tube labels (checks for hash substring collisions)
-        ws.tubeLabels()
+        # Batch PCR worksheets long
+        if tests_long:
+            writtenFiles.append(outfile+'.long.pdf')
+            print >> sys.stderr, "Writing long batch worksheet to {}...".format(writtenFiles[-1])
+            ws_long = Worksheet(tests_long,name='Variant Confirmations')  # load worksheet
+            ws_long.addControls()  # add controls
+            ws_long.fillPlates(size=config['report']['platesize'],randomize=True)
+            ws_long.createWorkSheet(writtenFiles[-1], worklist=worksheetName+'_LONG', **config['l_report'])
+            ws_long.tubeLabels()
         # robot csv
-        writtenFiles.append(outfile+'.csv')
-        print >> sys.stderr, "Writing robot CSV to {}...".format(writtenFiles[-1])
-        ws.robotCsv(writtenFiles[-1], sep=',')
+            writtenFiles.append(outfile+'.long.csv')
+            print >> sys.stderr, "Writing long batch robot CSV to {}...".format(writtenFiles[-1])
+            ws_long.robotCsv(writtenFiles[-1], sep=',')
+        #tube Labels
+            writtenFiles.append(outfile+'.long.tubelabels.txt')
+            print >> sys.stderr, "Writing long batch tube labels to {}...".format(writtenFiles[-1])
+            ws_long.tubeLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
+        # Batch PCR worksheet std
+        if tests_std:
+            writtenFiles.append(outfile+'.pdf')
+            print >> sys.stderr, "Writing worksheet to {}...".format(writtenFiles[-1])
+            ws_std = Worksheet(tests_std,name='Variant Confirmations')
+            ws_std.addControls()
+            ws_std.fillPlates(size=config['report']['platesize'],randomize=True)
+            ws_std.createWorkSheet(writtenFiles[-1], worklist=worksheetName, **config['report'])
+        # validate primer tube labels (checks for hash substring collisions)
+            ws_std.tubeLabels()
+        # robot csv
+            writtenFiles.append(outfile+'.csv')
+            print >> sys.stderr, "Writing robot CSV to {}...".format(writtenFiles[-1])
+            ws_std.robotCsv(writtenFiles[-1], sep=',')
+        # writtenFiles.append(outfile+'.long.csv')
+        # print >> sys.stderr, "Writing long batch robot CSV to {}...".format(writtenFiles[-1])
+        # ws_long.robotCsv(writtenFiles[-1], sep=',')
         # tube labels
-        writtenFiles.append(outfile+'.tubelabels.txt')
-        print >> sys.stderr, "Writing tube labels to {}...".format(writtenFiles[-1])
-        ws.tubeLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
+            writtenFiles.append(outfile+'.tubelabels.txt')
+            print >> sys.stderr, "Writing tube labels to {}...".format(writtenFiles[-1])
+            ws_std.tubeLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
+        #writtenFiles.append(outfile+'.long.tubelabels.txt')
+        #print >> sys.stderr, "Writing long batch tube labels to {}...".format(writtenFiles[-1])
+        #ws_long.tubeLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
         # write missed intervals
         missedIntervalNames = []
         if allMissedIntervals:
@@ -631,6 +665,16 @@ def updatePrimerPairName(pairName, newName, db):
     else:
         print >> sys.stderr, 'Pair renaming failed'
         return nameUpdate
+
+def updatePairCond(pairname, db):
+    longbatched = db.updateconditions(pairname)
+    print >> sys.stderr, '%s will now be run on the long batch program' % (longbatched,)
+    return longbatched
+
+def updatePairCondStd(pairname, db):
+    stdbatched = db.updateconditionsstd(pairname)
+    print >> sys.stderr, '%s will now be run on the standard program' % (stdbatched,)
+    return stdbatched
 
 # blacklist primer pair in database
 def blacklistPair(pairname, db):
