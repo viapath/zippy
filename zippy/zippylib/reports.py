@@ -734,7 +734,7 @@ class Worksheet(list):
             # create result table
             r.setNextPageTemplate('landscape')
             r.pageBreak()
-            r.genericTable(fields,tableTitle='Results',landscape=True, mergeColumnFields=[0,1],relativeColWidth=[0.8,1.0,3.0,0.5,2.3,0.4])
+            r.genericTable(fields,tableTitle='Results',landscape=True, mergeColumnFields=[0,-1],relativeColWidth=[0.8,1.0,3.0,0.5,2.3,0.4])
             # add checkboxes
             r.checkBoxes(title='',table=['Primary Reporter', 'Secondary Reporter'],tableHeader=['Reporter','Date','Initial'],
                 tickbox=['Unmatched Sample Check', 'Control Check'], tickboxNames=['YES','NO'],
