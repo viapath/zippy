@@ -576,7 +576,7 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             ws.orderCsv(writtenFiles[-1], config=config['ordersheet'])
         # Batch PCR worksheets long
         if tests_long:
-            writtenFiles.append(outfile+'.long.pdf')
+            writtenFiles.append(outfile+'_long.pdf')
             print >> sys.stderr, "Writing long batch worksheet to {}...".format(writtenFiles[-1])
             ws_long = Worksheet(tests_long,name='Variant Confirmations')  # load worksheet
             ws_long.addControls()  # add controls
@@ -584,11 +584,11 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             ws_long.createWorkSheet(writtenFiles[-1], worklist=worksheetName+'_LONG', **config['l_report'])
             ws_long.tubeLabels()
         # robot csv
-            writtenFiles.append(outfile+'.long.csv')
+            writtenFiles.append(outfile+'_long.csv')
             print >> sys.stderr, "Writing long batch robot CSV to {}...".format(writtenFiles[-1])
             ws_long.robotCsv(writtenFiles[-1], sep=',')
         #tube Labels
-            writtenFiles.append(outfile+'.long.tubelabels.txt')
+            writtenFiles.append(outfile+'_long.tubelabels.txt')
             print >> sys.stderr, "Writing long batch tube labels to {}...".format(writtenFiles[-1])
             ws_long.tubeLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
         # Batch PCR worksheet std
