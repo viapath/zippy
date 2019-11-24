@@ -18,6 +18,9 @@ from collections import defaultdict, OrderedDict, Counter
 from .interval import Interval
 from string import maketrans
 from urllib import unquote
+from Bio import Entrez
+import xmltodict
+
 revcmp = maketrans('ACGTNacgtn','TGCANtgcan')
 class ChromosomeNotFoundError(KeyError):
     pass
@@ -188,6 +191,7 @@ class PrimerPair(list):
         self.length = length  # pair of primers by default
         self.reversed = reverse
         self.name = name
+        self.original_name = name
         self.variants = []  # list of intervals with metadata from input table
         self.comments = comments
         if not name and all(self):
@@ -454,6 +458,7 @@ class Primer(object):
 
     def addTarget(self, chrom, pos, reverse, tm=None):
         self.loci.append(Locus(chrom,pos,len(self),reverse,tm))
+        #assert 0, (self.loci, str(self.loci[0]))
         return
 
     def snpCheckPrimer(self,vcf):

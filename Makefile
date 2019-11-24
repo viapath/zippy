@@ -3,9 +3,8 @@
 ZIPPYPATH=/usr/local/zippy
 ZIPPYVAR=/var/local/zippy
 ZIPPYWWW=/var/www/zippy
-VERSION=3.12
 SOURCE=zippy
-INSTALLER=zippy_install_v6.7.bash
+VERSION=6.15
 
 genome=human_g1k_v37
 server=nginx#Can be nginx or apache
@@ -13,9 +12,9 @@ server_suffix=_privateserver
 env_suffix=#Can be an empty string, _dev or _docker
 
 #See which distro does the host have
-platform=${python -mplatform}
-ifneq (,$(findstring ubuntu,${platform}))
-	distro=ubuntu
+distro=centos#Can be centos or ubuntu
+ifneq (,$(findstring ubuntu,${distro}))
+	#distro=ubuntu
 	WWWGROUP=www-data
 	WWWUSER=flask
 	PKGINSTALL=apt-get
@@ -24,9 +23,10 @@ ifneq (,$(findstring ubuntu,${platform}))
 		serving_packages=nginx
 	else
 		serving_packages=apache2 apache2.2-common apache2-mpm-prefork apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi
+		apachedirtitle=apache2
 	endif
 else
-	distro=centos
+	#distro=centos
 	WWWGROUP=$(server)
 	WWWUSER=$(server)
 	PKGINSTALL=yum
@@ -35,6 +35,9 @@ else
 		serving_packages=nginx
 	else
 		serving_packages=mod_wsgi httpd
+		#serving_packages=apache2 apache2.2-common apache2-mpm-prefork apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi
+		#apachedirtitle=apache2
+		apachedirtitle=httpd
 	endif
 endif
 ifeq ($(env_suffix),_dev)
@@ -62,7 +65,8 @@ deploy-dev: cleansoftware cleandb zippy-install webservice-dev
 # requirements
 essential_ubuntu:
 	echo Platform: ${platform}
-	apt-get update && apt-get -y upgrade
+	echo Zippy version: ${VERSION}
+	apt-get -y update && apt-get -y upgrade
 	sudo apt-get install -y sudo less make wget curl vim apt-utils
 	sudo apt-get install -y sqlite3 unzip htop libcurl3-dev #git
 	sudo apt-get install -y python-pip python2.7-dev ncurses-dev python-virtualenv
@@ -76,13 +80,12 @@ essential_ubuntu:
 	sudo adduser $(WWWUSER) $(WWWGROUP)
 	# install apache/wsgi
 	sudo apt-get install -y $(serving_packages)
-	# disable default site
-	sudo a2dissite 000-default
 essential_centos:
 	echo Platform: ${platform}
+	echo Zippy version: ${VERSION}
 	sudo yum -y install epel-release
 	sudo yum repolist
-	sudo yum -y update
+	sudo yum -y update --skip-broken
 	sudo yum install -y sudo wget less make curl vim sqlite unzip htop python2-pip python2-devel ncurses-devel gzip #git
 	#apachectl restart graceful
 	#kill -USR1 `cat /usr/local/httpd/logs/httpd.pid`
@@ -103,7 +106,7 @@ essential_centos:
 	# disable default site
 	#a2dissite 000-default
 print_flags:
-	echo "Installing for platform $(platform), expressed as distro $(distro)"
+	echo "Installing Zippy $(VERSION) for platform $(platform), expressed as distro $(distro)"
 	echo "Installing for server $(server), location ${server_suffix} and enviromnent ${env_suffix}"
 
 
@@ -113,8 +116,8 @@ very_essential_ubuntu:
 	apt-get install -y sudo
 	sudo apt-get install -y sudo less make wget curl vim apt-utils rsync
 very_essential_centos:
-	yum -y update
-	yum -y upgrade
+	yum -y update --skip-broken
+	yum -y upgrade --skip-broken
 	yum install -y sudo
 	sudo yum install -y sudo wget less make curl vim rsync
 
@@ -167,6 +170,9 @@ cleansoftware:
 	sudo rm -rf $(ZIPPYPATH)
 	sudo rm -rf $(ZIPPYWWW)
 	sudo rm -f /etc/httpd/conf.d/zippy.conf
+	sudo rm -f /etc/apache2/conf.d/zippy.conf
+	sudo rm -f /etc/nginx/sites-enabled/zippy
+	sudo rm -f /etc/nginx/sites-available/zippy
 cleandata:
 	sudo rm -rf $(ZIPPYVAR)
 cleandb:
@@ -182,15 +188,8 @@ webservice_ubuntu:
 	mkdir -p $(ZIPPYWWW)
 	sudo cp install/zippy$(environment).wsgi $(ZIPPYWWW)/zippy$(environment).wsgi
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
-	# apache WSGI config
-	cp install/zippy$(environment).hostconfig$(server_suffix) /etc/apache2/sites-available/zippy.conf
 	# enable site and restart
 	make start_$(server)_service$(env_suffix)
-	#Opens the port 80 in the firewall in the system, for public access
-	#Disable SELINUX, this disabling is full while we don't know how to open only the sippy directories to SELINUX.
-	sudo firewall-cmd --zone=public --add-service=http --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
-	sudo firewall-cmd --zone=public --add-port=5000/tcp --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
-	sudo setenforce 0||echo "Could not activate SELINUX properly"
 
 # webservice install (production)
 webservice_centos:
@@ -205,8 +204,11 @@ start_apache_service:
 	# enable site and restart
 	#a2ensite zippy
 	# apache WSGI config
-	sudo cp install/zippy$(environment).hostconfig$(distro_suffix)$(server_suffix) /etc/httpd/conf.d/zippy.conf
-	sudo ln -sf /etc/apache2/sites-available/zippy.conf /etc/apache2/sites-enabled/zippy.conf
+	ls -lRt /etc/$(apachedirtitle)
+	sudo cp install/zippy$(environment).hostconfig$(distro_suffix)$(server_suffix) /etc/$(apachedirtitle)/conf.d/zippy.conf
+	#sudo ln -sf /etc/httpd/sites-available/zippy.conf /etc/httpd/sites-enabled/zippy.conf
+	# disable default site
+	sudo a2dissite 000-default
 	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
 	#/etc/init.d/apache2 start
 	/etc/init.d/apache2 restart
@@ -217,22 +219,23 @@ start_apache_service:
 	sudo setenforce 0||echo "Could not activate SELINUX properly"
 
 start_apache_service_docker:
-	# enable site and restart
-	#a2ensite zippy
 	# apache WSGI config
-	sudo cp install/zippy$(environment).hostconfig$(distro_suffix)$(server_suffix) /etc/httpd/conf.d/zippy.conf
-	sudo ln -sf /etc/apache2/sites-available/zippy.conf /etc/apache2/sites-enabled/zippy.conf
+	ls -lt /etc
+	echo adt $(apachedirtitle)
+	ls -lt /etc/$(apachedirtitle)
+	sudo cp install/zippy$(environment).hostconfig$(distro_suffix)$(server_suffix) /etc/$(apachedirtitle)/conf.d/zippy.conf
+	#sudo ln -sf /etc/httpd/sites-available/zippy.conf /etc/httpd/sites-enabled/zippy.conf
 
-enable_nginx_service:
+enable_zippy_service:
 	sudo systemctl enable zippy
-disable_nginx_service:
+disable_zippy_service:
 	sudo systemctl disable zippy
 start_nginx_service:
 	# enable site and restart
-	#sudo cp install/zippy /etc/nginx/sites-available/zippy
-	#sudo ln -sf /etc/nginx/sites-available/zippy /etc/nginx/sites-enabled/zippy
-	#ls -lRt /etc/nginx
-	sudo cp install/zippy /etc/nginx/conf.d/zippy
+	ls -lRt /etc/nginx
+	sudo cp install/zippy /etc/nginx/sites-available/zippy
+	sudo ln -sf /etc/nginx/sites-available/zippy /etc/nginx/sites-enabled/zippy
+	#sudo cp install/zippy /etc/nginx/conf.d/zippy
 	sudo cp install/zippy.service /etc/systemd/system/zippy.service
 	sudo cp install/zippy.socket /etc/systemd/system/zippy.socket
 	sudo systemctl daemon-reload
@@ -268,11 +271,14 @@ stop_nginx_service:
 gunicorn:
 	source /usr/local/zippy/venv/bin/activate && gunicorn --bind 0.0.0.0:8000 wsgi:app
 run:
-	source /usr/local/zippy/venv/bin/activate && export FLASK_DEBUG=1 && export FLASK_ENV=development && export FLASK_APP=zippy && python run.py
+	source /usr/local/zippy/venv/bin/activate && export FLASK_DEBUG=1 && export FLASK_ENV=development && export FLASK_APP=zippy && /usr/local/zippy/venv/bin/python run.py
 runp:
 	source /usr/local/zippy/venv/bin/activate && python run.py
 zippy:
 	source /usr/local/zippy/venv/bin/activate && cd /usr/local/zippy/zippy && python zippy.py $@
+requirements:
+	source /usr/local/zippy/venv/bin/activate && pip install -U pip
+	source /usr/local/zippy/venv/bin/activate && pip install -r requirements.txt
 
 
 #### genome resources
@@ -311,8 +317,10 @@ resources: genome annotation
 genome: genome-download genome-index
 
 genome-download:
-	source /usr/local/zippy/venv/bin/activate && cd $(ZIPPYPATH) && python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz
-	source /usr/local/zippy/venv/bin/activate && cd $(ZIPPYPATH) && python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta.fai http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai
+	#source /usr/local/zippy/venv/bin/activate && cd $(ZIPPYPATH) && /usr/local/zippy/venv/bin/python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz
+	#source /usr/local/zippy/venv/bin/activate && cd $(ZIPPYPATH) && python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta.fai http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai
+	cd $(ZIPPYPATH) && /usr/local/zippy/venv/bin/python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz
+	cd $(ZIPPYPATH) && /usr/local/zippy/venv/bin/python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta.fai http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai
 	sudo chmod 644 $(ZIPPYVAR)/resources/*
 	sudo chmod 755 $(ZIPPYVAR)/resources
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
@@ -341,7 +349,11 @@ refgene-download:
 	-e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" > refGene
 
 archive:
+	rm -f $(SOURCE)_install_v*.bash
+	rm -f $(SOURCE)-*.tar.gz
 	p=`pwd` && rm -f $$p/$(SOURCE)-$(VERSION).tar.gz && tar --transform="s@^@$(SOURCE)-$(VERSION)/@" -cvzf $$p/$(SOURCE)-$(VERSION).tar.gz *
+	cp -f $(SOURCE)_install.bash $(SOURCE)_install_v$(VERSION).bash
+	chmod +x $(SOURCE)_install_v$(VERSION).bash
 
 gitarchive:
 	@echo Running git archive...
@@ -361,8 +373,8 @@ gitarchive:
 
 toroot:
 	sudo cp -f $(SOURCE)-$(VERSION).tar.gz /root/$(SOURCE)-$(VERSION).tar.gz
-	sudo cp -f $(INSTALLER) /root/$(INSTALLER)
-	sudo chmod +x /root/$(INSTALLER)
+	sudo cp -f $(SOURCE)_install.bash /root/$(SOURCE)_install_v$(VERSION).bash
+	sudo chmod +x /root/$(SOURCE)_install_v$(VERSION).bash
 cleanrootinstallers:
 	sudo rm -rf /root/zippy*
 #sudo firewall-cmd --zone=public --list-all

@@ -34,7 +34,6 @@ class GenePred(IntervalList):
             else:
                 # create gene and add exons
                 f = line.split()
-                sys.stderr.write("err")
                 if len(f)<5:
                     chrom=f[0]
                     geneStart=int(f[1])
@@ -61,11 +60,13 @@ class GenePred(IntervalList):
                             continue
                         if int(e[1]) < geneStart or geneEnd < int(e[0]):
                             continue  # noncoding
+                        #print("exon", e, f[12])
                         try:
                             exonStart = int(e[0]) if noncoding else max(geneStart,int(e[0]))
                             exonEnd = int(e[1]) if noncoding else min(geneEnd,int(e[1]))
                             gene.addSubintervals([Interval(f[2],exonStart,exonEnd,f[12],reverse)])
                         except ValueError:
+                            assert 0
                             pass
                         except:
                             raise
@@ -85,6 +86,7 @@ class GenePred(IntervalList):
                     # add new
                     genes[gene.name].append(gene)
         # name metaexons and combine if small enough
+        #assert 0
         for genename, genelist in genes.items():
             for g in genelist:
                 if combine:
@@ -127,6 +129,8 @@ class GenePred(IntervalList):
                     for i, e in enumerate(sorted(g.subintervals)):
                         exonNumber = len(g.subintervals) - i if g.strand < 0 else i + 1
                         e.name += '_{}'.format(str(exonNumber))
+                        if e.name=="1_1":
+                            print("newname", e.name, type(e))
                         intervalindex[e.name].append(e)
         # split interval if necessary
         for ivs in intervalindex.values():
@@ -194,7 +198,8 @@ class VCF(IntervalList):  # no interval tiling as a variant has to be sequenced 
                     self.samples = line[1:].split()[9:]  # sample header
             else:
                 f = line.split()
-                iv = Interval(f[0],int(f[1]),int(f[1])+max(map(len,[f[3]]+f[4].split(','))),name=f[2] if f[2]!='.' else None)
+                #print(f, fh, f[7])
+                iv = Interval(f[0],int(f[1]),int(f[1])+max(map(len,[f[3]]+f[4].split(','))),name=f[2] if f[2]!='.' else None, metadata=f[7])
                 self.append(iv)
         # add flanks and name
         for e in self:

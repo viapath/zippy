@@ -1,40 +1,42 @@
 #!/bin/bash
-sudo yum -y upgrade
-sudo yum -y install less make wget curl vim git sudo
-srv_zippy=/srv/qgen/zippy
+sudo yum -y upgrade --skip-broken
+sudo yum -y install less make wget curl vim git sudo tar gzip #gunzip
+zippy_parent_folder=/root
+version=6.15
+zippy_folder_title=zippy-${version}
+zippy_folder=${zippy_parent_folder}/${zippy_folder_title}
 
-qseqdnamatch=`expr match "$(pwd)" '.*\(zippy\)'`
-if [[ $qseqdnamatch = "zippy" ]]
+function install(){
+    sudo chmod -R 777 ${zippy_folder}
+    #if [[ $1 = "--fast" ]]
+    #then
+    make print_flags VERSION=${version}
+    make clean VERSION=${version}
+    make install VERSION=${version}
+    make webservice VERSION=${version}
+    #make import-shipped-refgene VERSION=${version}
+    make annotation VERSION=${version}
+    make genome VERSION=${version}
+    #make unstash-resources VERSION=${version}
+    #else
+        #make cleanall recover-resources install webservice resources
+        #make cleanall install webservice resources
+    #fi
+    echo To run the server, now go to /usr/local/zippy
+    echo and execute ´make run´
+}
+qseqdnamatch=`expr match "$(pwd)" '.*\(${zippy_folder_title}\)'`
+if [[ $qseqdnamatch = "${zippy_folder_title}" ]]
 then
     echo "Already in zippy folder."
-    sudo chmod -R 777 ${srv_zippy}
-    #make stash-resources
-    make cleansoftware
-    make cleandb
-    #make cleanall
-    make install
-    #make unstash-resources
-    make webservice
-    #make webservice-dev
-    sudo -u apache -g apache make annotation
-    sudo -u apache -g apache make genome
+    install
 else
-    if [[ -d "${srv_zippy}" ]]
-    then
-        echo "Not in zippy folder, but this folder exists."
-        cd "${srv_zippy}"
-        git pull origin master
-        ./zippy_install.bash $@
-        exit
-    elif [[ -e "${srv_zippy}" ]]
-    then
-        echo "File ${srv_zippy} exists but it is not a directory, thus we can not create a directory with that path tho hold the software reposotory. \
-        See if it is safe to delete or move it, and then execute again this script."
-    else
-        echo "Not in zippy folder, and the zippy folder does not exist."
-        sudo mkdir -p /srv/qgen
-        sudo chmod -R 777 /srv/qgen
-        cd /srv/qgen && git clone --recursive https://github.com/Lucioric2000/zippy
-        cd "${srv_zippy}" && ./zippy_install.bash $@
-    fi
+    p=$(pwd);
+    echo "Not in zippy folder, but in $p."
+    sudo mkdir -p ${zippy_parent_folder}
+    sudo chmod -R 777 ${zippy_parent_folder}
+    rm -rf "${zippy_folder_title}"
+    cd "${zippy_parent_folder}" && tar -xvzf ${zippy_folder_title}.tar.gz
+    cd "${zippy_folder}" && install $@
+    cd $p;
 fi

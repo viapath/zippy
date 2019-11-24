@@ -71,3 +71,6 @@ numpy
 tqdm
 requests
 #download
+biopython
+#xml2dict
+xmltodict

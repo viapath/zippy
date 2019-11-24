@@ -1,27 +1,27 @@
 FROM debian:jessie
 MAINTAINER dbrawand@nhs.net
+ARG server=nginx
 
 ADD . /zippy
 
 RUN apt-get -y update
 RUN apt-get -y upgrade
-RUN apt-get install -y sudo
-RUN sudo apt-get install -y less make wget curl vim apt-utils
+RUN apt-get install -y apt-utils sudo less make wget curl vim
 
-RUN cd /zippy && make print_flags env_suffix=_docker distro=ubuntu
-RUN cd /zippy && make very_essential env_suffix=_docker distro=ubuntu
-RUN cd /zippy && make cleansoftware env_suffix=_docker distro=ubuntu
-RUN cd /zippy && make cleandb env_suffix=_docker distro=ubuntu
+RUN cd /zippy && make print_flags env_suffix=_docker distro=ubuntu server=$server
+RUN cd /zippy && make very_essential env_suffix=_docker distro=ubuntu server=$server
+RUN cd /zippy && make cleansoftware env_suffix=_docker distro=ubuntu server=$server
+RUN cd /zippy && make cleandb env_suffix=_docker distro=ubuntu server=$server
 
-RUN cd /zippy && make install env_suffix=_docker distro=ubuntu
-RUN cd /zippy && make webservice env_suffix=_docker distro=ubuntu
+RUN cd /zippy && make install env_suffix=_docker distro=ubuntu server=$server
+RUN cd /zippy && make webservice env_suffix=_docker distro=ubuntu server=$server
 # prepare genome
-RUN cd /zippy && make genome-download env_suffix=_docker distro=ubuntu
-RUN cd /zippy && make genome-index env_suffix=_docker distro=ubuntu
+#RUN cd /zippy && make genome-download env_suffix=_docker distro=ubuntu server=$server
+#RUN cd /zippy && make genome-index env_suffix=_docker distro=ubuntu server=$server
 
 # get annotation
-RUN cd /zippy && make variation-download env_suffix=_docker distro=ubuntu
-RUN cd /zippy && make refgene-download env_suffix=_docker distro=ubuntu
+#RUN cd /zippy && make variation-download env_suffix=_docker distro=ubuntu server=$server
+#RUN cd /zippy && make refgene-download env_suffix=_docker distro=ubuntu server=$server
 
 EXPOSE 80
 

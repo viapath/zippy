@@ -75,6 +75,13 @@ class PrimerDB(object):
                 cursor.execute('''ALTER TABLE pairs ADD comments TEXT;''')
             except sqlite3.OperationalError:
                 pass  # Table have already been updated to contain the comments field
+            #try:
+            #    # Update the pairs table to add the comments field, for
+            #    # if the table was installed without that field and the
+            #    # updated to add it to the table has not been run already
+            #    cursor.execute('''ALTER TABLE pairs ADD metadata JSON;''')
+            #except sqlite3.OperationalError:
+            #    pass  # Table have already been updated to contain the comments field
             cursor.execute('''CREATE TABLE IF NOT EXISTS target(
                 seq TEXT, chrom TEXT, position INT, reverse BOOLEAN, tm REAL,
                 UNIQUE (seq,chrom,position,reverse),
@@ -264,8 +271,8 @@ class PrimerDB(object):
                 chrom = p[0].targetposition.chrom
                 start = p[0].targetposition.offset
                 end = p[1].targetposition.offset+p[1].targetposition.length
-                cursor.execute('''INSERT OR IGNORE INTO pairs(pairid,uniqueid,left,right,chrom,start,end,dateadded) VALUES(?,?,?,?,?,?,?,?)''', \
-                    (p.name, p.uniqueid(), p[0].name, p[1].name, chrom, start, end, current_time))
+                cursor.execute('''INSERT OR IGNORE INTO pairs(pairid,uniqueid,left,right,chrom,start,end,dateadded,comments) VALUES(?,?,?,?,?,?,?,?,?)''', \
+                    (p.name, p.uniqueid(), p[0].name, p[1].name, chrom, start, end, current_time, p.comments))
             self.db.commit()
         finally:
             self.db.close()
@@ -332,7 +339,6 @@ class PrimerDB(object):
             rightPrimer = Primer(row[6], row[4], targetposition=rightTargetposition, tag=row[2], location=rightLocation)
             # get reverse status (from name)
             orientations = [ x[1] for x in map(parsePrimerName,row[5:7]) ]
-            comments = row[15]
             if not any(orientations) or len(set(orientations))==1:
                 print >> sys.stderr, '\rWARNING: {} orientation is ambiguous ({},{}){}\r'.format(row[0],\
                     '???' if orientations[0]==0 else 'rev' if orientations[0]<0 else 'fwd', \
@@ -346,7 +352,7 @@ class PrimerDB(object):
                 raise Exception('PrimerPairStrandError')
             # Build pair
             primerPairs.append(PrimerPair([leftPrimer, rightPrimer], name=row[0], reverse=reverse,
-                                          comments=comments))
+                                          comments=row[15]))
         return primerPairs  # ordered by midpoint distance
 
     def getLocation(self, loc):

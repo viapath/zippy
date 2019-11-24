@@ -12,7 +12,7 @@ import sys
 from math import ceil
 
 class Interval(object):
-    def __init__(self,chrom,chromStart,chromEnd,name=None,reverse=None,sample=None):
+    def __init__(self,chrom,chromStart,chromEnd,name=None,reverse=None,sample=None, metadata=None):
         self.chrom = chrom
         self.chromStart = int(chromStart)
         self.chromEnd = int(chromEnd)
@@ -20,7 +20,27 @@ class Interval(object):
         self.name = name if name else chrom+':'+str(chromStart)+'-'+str(chromEnd)
         self.strand = 0 if reverse is None else -1 if reverse else 1
         self.sample = sample
+        #self.exons_count = exons_count
+        #self.exon_starts = exon_starts
+        #self.exon_ends = exon_ends
+        #self.gene_name = gene_name
         self.subintervals = IntervalList([])
+        if metadata is None:
+            self.metadata = None
+        else:
+            self.metadata_dict={}
+            self.metadata = metadata.split(";")
+            for attribute in self.metadata:
+                attrparts=attribute.split("=")
+                if len(attrparts)==1:
+                    pass
+                    #assert None not in self.metadata, (self.metadata, attrparts, metadata)
+                    #self.metadata[None] = attrparts[0]
+                elif len(attrparts)==2:
+                    assert attrparts[0] not in self.metadata
+                    self.metadata_dict[attrparts[0]] = attrparts[1]
+                else:
+                    assert 0, attrparts
         return
 
     def name_by_range(self):

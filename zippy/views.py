@@ -137,6 +137,7 @@ def upload():
         downloadFile = os.path.join(downloadFolder, outfile) if outfile else os.path.join(downloadFolder, shortName)
         arrayOfFiles, missedIntervalNames, flash_messages = zippyBatchQuery(config, uploadedFiles, design, downloadFile, db, predesign, tiers)
         for flash_message in flash_messages:
+            print("fmes", flash_message)
             flash(*flash_message)
         return render_template('file_uploaded.html', outputFiles=arrayOfFiles, missedIntervals=missedIntervalNames)
     else:
@@ -212,6 +213,7 @@ def adhocdesign():
         primerTable, resultList, missedIntervals, flash_messages = zippyPrimerQuery(config, args, design, None, db, store, tiers, gap)
 
         for flash_message in flash_messages:
+            print("flashm", flash_message)
             flash(*flash_message)
 
         # get missed and render template
