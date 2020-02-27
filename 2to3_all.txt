@@ -1,0 +1,874 @@
+RefactoringTool: Skipping optional fixer: buffer
+RefactoringTool: Skipping optional fixer: idioms
+RefactoringTool: Skipping optional fixer: set_literal
+RefactoringTool: Skipping optional fixer: ws_comma
+RefactoringTool: Refactored ./download_resources.py
+RefactoringTool: No changes to ./run.py
+RefactoringTool: No changes to ./setup.py
+RefactoringTool: No changes to ./wsgi.py
+RefactoringTool: No changes to ./download/setup.py
+RefactoringTool: No changes to ./download/doc/conf.py
+RefactoringTool: No changes to ./download/download/__init__.py
+RefactoringTool: Refactored ./download/download/download.py
+RefactoringTool: No changes to ./download/download/tests/test_download.py
+RefactoringTool: Refactored ./download/examples/plot_download_file.py
+RefactoringTool: No changes to ./download/examples/plot_download_providers.py
+RefactoringTool: No changes to ./zippy/__init__.py
+RefactoringTool: Refactored ./zippy/views.py
+RefactoringTool: Refactored ./zippy/zippy.py
+--- ./download_resources.py	(original)
++++ ./download_resources.py	(refactored)
+@@ -1,4 +1,4 @@
+-from __future__ import print_function
++
+ import os
+ import download
+ import sys
+--- ./download/download/download.py	(original)
++++ ./download/download/download.py	(refactored)
+@@ -20,7 +20,7 @@
+ if sys.version_info[0] == 3:
+     string_types = str
+ else:
+-    string_types = basestring
++    string_types = str
+ 
+ ALLOWED_KINDS = ['file', 'tar', 'zip', 'tar.gz', 'gz']
+ ZIP_KINDS = ['tar', 'zip', 'tar.gz', 'gz']
+--- ./download/examples/plot_download_file.py	(original)
++++ ./download/examples/plot_download_file.py	(refactored)
+@@ -28,7 +28,7 @@
+ 
+ url = "http://www2.census.gov/geo/tiger/GENZ2016/shp/cb_2016_us_county_20m.zip"
+ path = download(url, './downloaded/counties/', replace=True, kind='zip')
+-print(glob(op.join(path, '*')))
++print((glob(op.join(path, '*'))))
+ sh.rmtree('./downloaded')
+ 
+ plt.show()
+--- ./zippy/views.py	(original)
++++ ./zippy/views.py	(refactored)
+@@ -1,5 +1,5 @@
+ #!/usr/local/env python
+-from __future__ import print_function
++
+ 
+ import sys
+ import os
+@@ -109,7 +109,7 @@
+     uploadFile = request.files['variantTable']
+     uploadFile2 = request.files['missedRegions']
+     uploadFile3 = request.files['singleGenes']
+-    tiers = map(int, request.form.getlist('tiers'))
++    tiers = list(map(int, request.form.getlist('tiers')))
+     predesign = request.form.get('predesign')
+     design = request.form.get('design')
+     outfile = request.form.get('outfile')
+--- ./zippy/zippy.py	(original)
++++ ./zippy/zippy.py	(refactored)
+@@ -1,5 +1,5 @@
+ #!/usr/local/zippy/venv/bin/python
+-from __future__ import print_function
++
+ 
+ __doc__ == """
+ ################################################################
+@@ -24,18 +24,18 @@
+ import hashlib
+ import csv
+ import collections
+-from zippylib.files import VCF, BED, GenePred, Interval, Data, readTargets, readBatch
+-from zippylib.primer import Genome, MultiFasta, Primer3, Primer, PrimerPair, Location, parsePrimerName
+-from zippylib.reports import Test
+-from zippylib.database import PrimerDB
+-from zippylib.interval import IntervalList
+-from zippylib import ConfigError, Progressbar, banner
+-from zippylib.reports import Worksheet
++from .zippylib.files import VCF, BED, GenePred, Interval, Data, readTargets, readBatch
++from .zippylib.primer import Genome, MultiFasta, Primer3, Primer, PrimerPair, Location, parsePrimerName
++from .zippylib.reports import Test
++from .zippylib.database import PrimerDB
++from .zippylib.interval import IntervalList
++from .zippylib import ConfigError, Progressbar, banner
++from .zippylib.reports import Worksheet
+ from argparse import ArgumentParser
+ from copy import deepcopy
+ from collections import defaultdict, Counter
+-from urllib import unquote
+-import cPickle as pickle
++from urllib.parse import unquote
++import pickle as pickle
+ sys.stderr=sys.stdout
+ 
+ '''file MD5'''
+@@ -55,16 +55,16 @@
+     with open(inputfile) as infh:
+         for i,line in enumerate(infh):
+             if i == 0:
+-                header = map(lambda x : x.lower(), line.rstrip().split('\t'))
++                header = [x.lower() for x in line.rstrip().split('\t')]
+             else:
+-                f = map(lambda x: x.strip('"'), line.rstrip().split('\t'))
+-                l = dict(zip(header,f))
++                f = [x.strip('"') for x in line.rstrip().split('\t')]
++                l = dict(list(zip(header,f)))
+                 # store metadata and write fasta
+-                if 'vessel' in l.keys() and 'well' in l.keys() and \
++                if 'vessel' in list(l.keys()) and 'well' in list(l.keys()) and \
+                     l['vessel'] and l['well'] and l['vessel'] != 'None' and l['well'] != 'None':
+                     # store location
+                     loc = Location(l['vessel'],l['well'])
+-                    if l['primername'] in primerlocs.keys():
++                    if l['primername'] in list(primerlocs.keys()):
+                         primerlocs[l['primername']].merge(loc)
+                     else:
+                         primerlocs[l['primername']] = loc
+@@ -88,15 +88,15 @@
+                 for i,line in enumerate(infh):
+                     if i == 0:
+                         minimalHeader = set(['primername','primerset','tag','sequence','vessel','well'])
+-                        header = map(lambda x : x.lower(), line.rstrip().split('\t'))
++                        header = [x.lower() for x in line.rstrip().split('\t')]
+                         try:
+                             assert not minimalHeader.difference(set(header))
+                         except:
+                             print ('ERROR: Missing columns (%s)' % ','.join(list(minimalHeader.difference(set(header)))), file=sys_stderr)
+                             raise Exception('FileHeaderError')
+                     else:
+-                        f = map(lambda x: x.strip('"'), line.rstrip().split('\t'))
+-                        l = dict(zip(header, f))
++                        f = [x.strip('"') for x in line.rstrip().split('\t')]
++                        l = dict(list(zip(header, f)))
+                         # remove tag from sequence
+                         if l['tag']:
+                             try:
+@@ -109,7 +109,7 @@
+                                         l['sequence'] = l['sequence'][len(t):]
+                                         break
+                         # store metadata and write fasta
+-                        if l['primername'] in primerseqs.keys():
++                        if l['primername'] in list(primerseqs.keys()):
+                             try:
+                                 assert l['sequence'] == primerseqs[l['primername']]
+                                 assert l['tag'] == primertags[l['primername']]
+@@ -141,7 +141,7 @@
+     pairs = {}
+     for p in primers:
+         setnames = primersets[p.name] \
+-            if p.name in primersets.keys() and len(primersets[p.name])>0 \
++            if p.name in list(primersets.keys()) and len(primersets[p.name])>0 \
+             else [ parsePrimerName(p.name)[0] ]
+         for setname in setnames:
+             try:
+@@ -176,20 +176,20 @@
+                 print ("PAIRS", pairs[setname], file=sys.stderr) 
+                 raise
+     # check if any unpaired primers
+-    for k,v in pairs.items():
++    for k,v in list(pairs.items()):
+         if not all(v):
+             print ("WARNING: primer set %s is incomplete and skipped" % k,  file=sys.stderr) 
+             del pairs[k]
+     # prune ranks in primer3 mode (renames pair)
+     if primer3:
+-        for p in pairs.values():
++        for p in list(pairs.values()):
+             assert p[0].targetposition and p[1].targetposition  # make sure target postiions are set
+             p.pruneRanks()
+-        validPairs = pairs.values()
++        validPairs = list(pairs.values())
+     else:  # guess target if not set
+         validPairs = []
+         print('Identifying correct amplicons for unplaced primer pairs...',  file=sys.stderr) 
+-        for p in pairs.values():
++        for p in list(pairs.values()):
+             if not p[0].targetposition or not p[1].targetposition:
+                 amplicons = p.amplicons(config['import']['ampliconsize'],autoreverse=True)
+                 if amplicons:
+@@ -317,7 +317,7 @@
+             if designedPairs:
+                 ## import designed primer pairs (place on genome and get amplicons)
+                 with tempfile.NamedTemporaryFile(suffix='.fa',prefix="primers_",delete=False) as fh:
+-                    for k,v in designedPairs.items():
++                    for k,v in list(designedPairs.items()):
+                         for pairnumber, pair in enumerate(v):
+                             print (pair[0].fasta('_'.join([ k.name, str(pairnumber), 'rev' if k.strand < 0 else 'fwd' ])), file=fh)
+                             print (pair[1].fasta('_'.join([ k.name, str(pairnumber), 'fwd' if k.strand < 0 else 'rev' ])), file=fh)
+@@ -383,7 +383,7 @@
+                                             exons[nameparts[0]].append(nameparts[1])
+                                         else:
+                                             exons["_".join(nameparts[0:-1])].append(nameparts[-1])
+-                                    new_name = ",".join("{0}_{1}".format(gene, "_".join(sorted(exons))) for (gene, exons) in exons.items())
++                                    new_name = ",".join("{0}_{1}".format(gene, "_".join(sorted(exons))) for (gene, exons) in list(exons.items()))
+                                     #if new_name=="1_1,2_2":
+                                     #    assert 0, (exons, matches)
+                                     #else:
+@@ -398,7 +398,7 @@
+                     print('INFO: {:2d} pairs violated design limits and were blacklisted ({} total)'.format(failCount,str(len(blacklist))),  file=sys.stderr) 
+                     flash_messages.append(('{:2d} pairs violated design limits and were blacklisted ({} total)'.format(failCount,str(len(blacklist))), 'info'))
+                 # print failed primer designs
+-                for k, v in intervalprimers.items():
++                for k, v in list(intervalprimers.items()):
+                     if len(v)==0:
+                         print('WARNING: Target {} failed on designlimits'.format(k),  file=sys.stderr) 
+                         flash_messages.append(('WARNING: Target {} failed on designlimits'.format(k), 'warning'))
+@@ -411,11 +411,11 @@
+         flash_messages.append(('Could not write to blacklist cache, check permissions', 'error'))
+ 
+     # print primer pair count and build database table
+-    failure = [ iv.name for iv,p in ivpairs.items() if config['report']['pairs']>len(p) ]
++    failure = [ iv.name for iv,p in list(ivpairs.items()) if config['report']['pairs']>len(p) ]
+     print('got primers for {:d} out of {:d} targets'.format(len(ivpairs)-len(failure), len(ivpairs)),  file=sys.stderr) 
+     print('{:<20} {:9} {:<10}'.format('INTERVAL', 'AMPLICONS', 'STATUS'),  file=sys.stderr) 
+     print('-'*41,  file=sys.stderr) 
+-    for iv,p in sorted(ivpairs.items(),key=lambda x:x[0].name):
++    for iv,p in sorted(list(ivpairs.items()),key=lambda x:x[0].name):
+         print('{:<20} {:9} {:<10}'.format(unquote(iv.name), len(p), "FAIL" if len(p)<config['report']['pairs'] else "OK"),  file=sys.stderr) 
+ 
+     # select primer pairs
+@@ -461,9 +461,9 @@
+                 # save to primer table
+                 primerTable.append([unquote(iv.name)] + str(p).split('\t'))
+     # update primer pairs with covered variants
+-    for pp, v in primerVariants.items():
++    for pp, v in list(primerVariants.items()):
+         pp.variants = v
+-    return primerTable, primerVariants.keys(), missedIntervals, flash_messages
++    return primerTable, list(primerVariants.keys()), missedIntervals, flash_messages
+ 
+ # ==============================================================================
+ # === convenience functions for webservice =====================================
+@@ -523,15 +523,15 @@
+         print('Reading additional file {}...'.format(targets[t]),  file=sys.stderr) 
+         sv, g, f = readBatch(targets[t], config['tiling'], database=db)
+         # amend target regions
+-        for k,v in sv.items():
+-            if k in sampleVariants.keys():
++        for k,v in list(sv.items()):
++            if k in list(sampleVariants.keys()):
+                 sampleVariants[k] += v
+             else:
+                 sampleVariants[k] = v
+         genes = list(set(genes) | set(g))
+         fullgenes = list(set(fullgenes) | set(f))
+     print('\n'.join([ '{:<20} {:>2d}'.format(sample,len(variants)) \
+-        for sample,variants in sorted(sampleVariants.items(),key=lambda x: x[0]) ]),  file=sys.stderr) 
++        for sample,variants in sorted(list(sampleVariants.items()),key=lambda x: x[0]) ]),  file=sys.stderr) 
+ 
+     # predesign
+     if predesign and db and genes:
+@@ -568,8 +568,8 @@
+         for t in range(1,len(targets)): # read additional files
+             sv = readBatch(targets[t], config['tiling'], database=db)[0]
+             # amend target regions
+-            for k,v in sv.items():
+-                if k in sampleVariants.keys():
++            for k,v in list(sv.items()):
++                if k in list(sampleVariants.keys()):
+                     saRefactoringTool: No changes to ./zippy/api/views.py
+RefactoringTool: No changes to ./zippy/unittest/test.py
+RefactoringTool: Refactored ./zippy/unittest/test_entrez.py
+RefactoringTool: Refactored ./zippy/zippylib/__init__.py
+mpleVariants[k] += v
+                 else:
+                     sampleVariants[k] = v
+@@ -579,7 +579,7 @@
+     allMissedIntervals = {}
+     missedIntervalNames = []
+     tests = []  # tests to run
+-    for sample, intervals in sorted(sampleVariants.items(),key=lambda x: x[0]):
++    for sample, intervals in sorted(list(sampleVariants.items()),key=lambda x: x[0]):
+         print ("Getting primers for {} variants in sample {}".format(len(intervals),sample), file=sys.stderr)
+         # get/design primers
+         #print(intervals, file=sys.stderr)
+@@ -721,7 +721,7 @@
+                 pass  # empty line (CR/LF)
+             else:
+                 try:
+-                    row = dict(zip(header,line))
++                    row = dict(list(zip(header,line)))
+                     updateList.append([row['PrimerName'], Location(row['Box'].strip('Bbox'), row['Well'])])
+                 except:
+                     raise
+@@ -732,8 +732,8 @@
+ # === CLI ======================================================================
+ # ==============================================================================
+ def main():
+-    from zippylib import ascii_encode_dict
+-    from zippylib import banner
++    from .zippylib import ascii_encode_dict
++    from .zippylib import banner
+ 
+     print (banner(__version__),  file=sys.stderr) 
+ 
+@@ -843,14 +843,14 @@
+         if not options.primers.split('.')[-1].startswith('fa'):  # assume table format
+             locations = importPrimerLocations(options.primers)
+             print ("Setting Primer locations...", file=sys.stderr)
+-            db.addLocations(*locations.items())
++            db.addLocations(*list(locations.items()))
+             sys.stderr.write('Added {} locations for imported primers\n'.format(len(locations)))
+     elif options.which=='dump':  # data dump fucntions (`for bulk downloads`)
+         if options.amplicons:
+             try:
+                 l = options.amplicons.split('-')
+                 assert len(l)==2
+-                amplen = map(int,l)
++                amplen = list(map(int,l))
+             except (AssertionError, ValueError):
+                 raise ConfigError('must give amplicon size to retrieve')
+             except:
+@@ -891,10 +891,10 @@
+             print ('REMOVED ORPHANS:   {}'.format(','.join(db.removeOrphans())), file=sys.stderr)
+     elif options.which=='get':  # get primers for targets (BED/VCF or interval)
+         zippyPrimerQuery(config, options.targets, options.design, options.outfile, \
+-            db, options.store, map(int,options.tiers.split(',')), options.gap)
++            db, options.store, list(map(int,options.tiers.split(','))), options.gap)
+     elif options.which=='batch':
+         zippyBatchQuery(config, options.targets.split(','), options.design, options.outfile, \
+-            db, options.predesign, map(int,options.tiers.split(',')))
++            db, options.predesign, list(map(int,options.tiers.split(','))))
+     elif options.which=='query':
+         searchByName(options.subString, db)
+ 
+--- ./zippy/unittest/test_entrez.py	(original)
++++ ./zippy/unittest/test_entrez.py	(refactored)
+@@ -1,4 +1,4 @@
+-from __future__ import print_function
++
+ from Bio import Entrez
+ import xmltodict
+ import xml.etree.ElementTree as ET
+@@ -14,7 +14,7 @@
+ print("Rs rs1042522 is", hr)
+ xp=xmltodict.parse(hr)
+ gene_name = xp["ExchangeSet"]["DocumentSummary"]["GENES"]["GENE_E"]["NAME"]
+-assert gene_name==u"TP53"
++assert gene_name=="TP53"
+ xfs = ET.fromstring(hr)
+ assert 0, xfs.findall("./*DocumentSummary/*")
+ """
+--- ./zippy/zippylib/__init__.py	(original)
++++ ./zippy/zippylib/__init__.py	(refactored)
+@@ -47,8 +47,8 @@
+ 
+ '''read configuration (convert unicode to ascii string)'''
+ def ascii_encode_dict(data):
+-    ascii_encode = lambda x: x.encode('ascii') if type(x) is unicode else x
+-    return dict(map(ascii_encode, pair) for pair in data.items())
++    ascii_encode = lambda x: x.encode('ascii') if type(x) is str else x
++    return dict(list(map(ascii_encode, pair)) for pair in list(data.items()))
+ 
+ '''banner'''
+ def banner(versionstring=''):
+@@ -73,7 +73,7 @@RefactoringTool: Refactored ./zippy/zippylib/database.py
+RefactoringTool: Refactored ./zippy/zippylib/files.py
+
+ 
+ """Generates the characters from `c1` to `c2`, inclusive."""
+ def char_range(c1, c2):
+-    for c in xrange(ord(c1), ord(c2)+1):
++    for c in range(ord(c1), ord(c2)+1):
+         yield chr(c)
+ 
+ '''exception class for configuration errors'''
+--- ./zippy/zippylib/database.py	(original)
++++ ./zippy/zippylib/database.py	(refactored)
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python
+-from __future__ import print_function
++
+ 
+ __doc__=="""SQLITE Database API"""
+ __author__ = "David Brawand"
+@@ -300,7 +300,7 @@
+                     where p.dateadded LIKE ?
+                     ORDER BY p.pairid;''', \
+                     (subSearchName,))
+-            elif type(query) in [str,unicode]:  # use primerpair name
++            elif type(query) in [str,str]:  # use primerpair name
+                 subSearchName = '%'+query+'%'
+                 cursor.execute('''SELECT DISTINCT p.pairid, l.tag, r.tag, l.seq, r.seq, p.left, p.right,
+                     p.chrom, p.start, p.end, l.vessel, l.well, r.vessel, r.well, 0, p.comments
+@@ -386,7 +386,7 @@
+             for l in cursor.fetchall():
+                 redundant[(l[0],l[1])].append(l[2])
+             # return list of list
+-            return [ [k[0], k[1], ','.join(v)] for k,v in redundant.items() ], ['seq','tag','synonyms']
++            return [ [k[0], k[1], ','.join(v)] for k,v in list(redundant.items()) ], ['seq','tag','synonyms']
+         finally:
+             self.db.close()
+ 
+@@ -419,7 +419,7 @@
+             cursor = self.db.cursor()
+             cursor.executemany('''UPDATE OR IGNORE pairs
+                 SET comments = ? WHERE pairid = ?''', \
+-                ((comments, primerid[9:]) for primerid, comments in comments_multidict.items() if primerid.startswith("comments_")))
++                ((comments, primerid[9:]) for primerid, comments in list(comments_multidict.items()) if primerid.startswith("comments_")))
+             self.db.commit()
+         finally:
+             self.db.close()
+@@ -543,7 +543,7 @@
+                 raise
+             else:
+                 cursor = self.db.cursor()
+-                if 'size' in kwargs.keys() and len(kwargs['size'])==2:
++                if 'size' in list(kwargs.keys()) and len(kwargs['size'])==2:
+                     cursor.execute('''SELECT DISTINCT p.chrom, p.start, p.end, p.pairid
+                         FROM pairs AS p
+                         WHERE p.end - p.start >= ? AND p.end - p.start <= ?
+@@ -583,12 +583,12 @@
+             # define columns
+             columns = ['pairname', 'primername', 'sequence', 'seqtag', 'direction']
+             # add tags and extra columns
+-            if 'extracolumns' in kwargs.keys() and kwargs['extracolumns']:
++            if 'extracolumns' in list(kwargs.keys()) and kwargs['extracolumns']:
+                 columns += [ c[0] for c in kwargs['extracolumns'] ]
+                 for i in range(len(rows)):
+                     rows[i] = list(rows[i]) + [ c[1] for c in kwargs['extracolumns'] ]
+             # add sequence tag
+-            if 'sequencetags' in kwargs.keys() and kwargs['sequencetags']:
++            if 'sequencetags' in list(kwargs.keys()) and kwargs['sequencetags']:
+                 for row in rows:
+                     # get correct tag
+                     try:
+--- ./zippy/zippylib/files.py	(original)
++++ ./zippy/zippylib/files.py	(refactored)
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python
+-from __future__ import print_function
++
+ 
+ __doc__=="""File parsing classes"""
+ __author__ = "David Brawand"
+@@ -17,7 +17,7 @@
+ from hashlib import sha1
+ from . import ConfigError
+ from .interval import *
+-from urllib import quote, unquote
++from urllib.parse import quote, unquote
+ 
+ '''GenePred parser with automatic segment numbering and tiling'''
+ class GenePred(IntervalList):
+@@ -56,7 +56,7 @@
+                     # parse exons
+                     for e in zip(f[9].split(','),f[10].split(',')):
+                         try:
+-                            map(int,e)
++                            list(map(int,e))
+                         except:
+                             continue
+                         if int(e[1]) < geneStart or geneEnd < int(e[0]):
+@@ -88,7 +88,7 @@
+                     genes[gene.name].append(gene)
+         # name metaexons and combine if small enough
+         #assert 0
+-        for genename, genelist in genes.items():
++        for genename, genelist in list(genes.items()):
+             for g in genelist:
+                 if combine:
+                     # iteratively combine closest exons
+@@ -117,7 +117,7 @@
+                     i = 0
+                     for e in combinedExons:
+                         # get exons
+-                        ii = range(i,i+len(e))
++                        ii = list(range(i,i+len(e)))
+                         exonNumbers = [ len(g.subintervals) - x for x in ii ] if g.strand < 0 else [ x+1 for x in ii ]
+                         if len(e)>1:  # combine exons
+                             for j in range(1,len(e)):
+@@ -134,7 +134,7 @@
+                             print("newname", e.name, type(e))
+                         intervalindex[e.name].append(e)
+         # split interval if necessary
+-        for ivs in intervalindex.values():
++        for ivs in list(intervalindex.values()):
+             for iv in ivs:
+                 if interval and overlap and interval < len(iv):
+                     assert '+' not in iv.name  # paranoia
+@@ -170,12 +170,12 @@
+                     raise
+                 intervalindex[iv.name].append(iv)
+         # suffix interval names if necessary
+-        for ivs in intervalindex.values():
++        for ivs in list(intervalindex.values()):
+             if len(ivs)>1:
+                 for i,iv in enumerate(ivs):
+                     iv.name += '-{:02d}'.format(i+1)
+         # split interval if necessary
+-        for ivs in intervalindex.values():
++        for ivs in list(intervalindex.values()):
+             for iv in ivs:
+                 if interval and overlap and interval < len(iv):
+                     self += iv.tile(interval,overlap,len(f)>3)  # name with suffix if named interval
+@@ -199,7 +199,7 @@
+                     self.samples = line[1:].split()[9:]  # sample header
+             else:
+                 f = line.split()
+-                iv = Interval(f[0],int(f[1]),int(f[1])+max(map(len,[f[3]]+f[4].split(','))),name=f[2] if f[2]!='.' else None, metadata=f[7])
++                iv = Interval(f[0],int(f[1]),int(f[1])+max(list(map(len,[f[3]]+f[4].split(',')))),name=f[2] if f[2]!='.' else None, metadata=f[7])
+                 self.append(iv)
+         # add flanks and name
+         for e in self:
+@@ -227,8 +227,8 @@
+                 # parse fields
+                 try:
+                     f = line.rstrip().split(delim)
+-                    row = dict(zip(self.header,f))
+-                    for k,v in row.items():
++                    row = dict(list(zip(self.header,f)))
++                    for k,v in list(row.items()):
+                         try:
+                             self.data[k].append(v)
+                         except:
+@@ -238,9 +238,9 @@
+                     print(row, file=sys.stderr)
+                     raise
+                 # build variant/test description
+-                if 'primers' in row.keys():  # sample, primer list
++                if 'primers' in list(row.keys()):  # sample, primer list
+                     assert db  # must have database handle to xtract targets
+-                    pairnames = map(lambda x: x.strip(), row['primers'].split(','))
++                    pairnames = [x.strip() for x in row['primers'].split(',')]
+                     for pp in pairnames:
+                         # get pair(s)
+                         pairs = db.query(pp)
+@@ -260,20 +260,20 @@
+                     # parse variant name
+                     variantDescription = [ row['geneID'] ]
+                     if '-' in row['position']:  # interval (gene,chrom,exon,hgvs/pos,zyg)
+-                        chromStart, chromEnd = map(int,row['position'].split('-'))
++                        chromStart, chromEnd = list(map(int,row['position'].split('-')))
+                         variantDescription += [ row['chromosome'] ]
+                    RefactoringTool: No changes to ./zippy/zippylib/interval.py
+RefactoringTool: Refactored ./zippy/zippylib/primer.py
+ else:  # variant (gene,tx,exon,hgvs/pos,zyg)
+-                        if 'HGVS_c' in row.keys():
++                        if 'HGVS_c' in list(row.keys()):
+                             chromStart, chromEnd = int(row['position']), int(row['position'])+hgvsLength(row['HGVS_c'])
+-                        elif 'ALT' in row.keys() and 'REF' in row.keys():
+-                            chromStart, chromEnd = int(row['position']), int(row['position'])+max(map(len,[row['REF'],row['ALT']]))
++                        elif 'ALT' in list(row.keys()) and 'REF' in list(row.keys()):
++                            chromStart, chromEnd = int(row['position']), int(row['position'])+max(list(map(len,[row['REF'],row['ALT']])))
+                         else:
+                             raise Exception('UnkownVariantLength')
+-                        if 'transcriptID' in row.keys():
++                        if 'transcriptID' in list(row.keys()):
+                             variantDescription += [ row['transcriptID'] ]
+-                    if 'rank' in row.keys() and '/' in row['rank']:
++                    if 'rank' in list(row.keys()) and '/' in row['rank']:
+                         variantDescription += [ 'exon'+row['rank'].split('/')[0] ] # exonnumber
+-                    variantDescription += [ row['HGVS_c'] if 'HGVS_c' in row.keys() and row['HGVS_c'] else row['position'] ]  # HGVS
++                    variantDescription += [ row['HGVS_c'] if 'HGVS_c' in list(row.keys()) and row['HGVS_c'] else row['position'] ]  # HGVS
+                     variantDescription += [ ':'.join([ row[k] for k in sorted(row.keys()) if k.startswith('GT') ]) ]  # zygosity
+                     iv = Interval(chrom,chromStart,chromEnd,name=quote(','.join(variantDescription)),sample=row['sampleID'])
+                     self.append(iv)
+@@ -299,7 +299,7 @@
+                 raise
+             else:
+                 for row in sorted(self.data):
+-                    d = dict(zip(self.header,row))
++                    d = dict(list(zip(self.header,row)))
+                     if fi.endswith('bed'):
+                         fh.write('\t'.join(map(str,[d['chrom'], d['chromStart'], d['chromEnd'], d['name']]))+'\n')
+                     else:
+--- ./zippy/zippylib/primer.py	(original)
++++ ./zippy/zippylib/primer.py	(refactored)
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python
+-from __future__ import print_function
++
+ # -*- coding: utf-8 -*-
+ 
+ __doc__=="""Primer3 Classes"""
+@@ -18,7 +18,7 @@
+ from collections import defaultdict, OrderedDict, Counter
+ from .interval import Interval
+ from string import maketrans
+-from urllib import unquote
++from urllib.parse import unquote
+ from Bio import Entrez
+ import xmltodict
+ 
+@@ -107,7 +107,7 @@
+                     tm = primer3.calcTm(fasta.fetch(s))  # assume targetlocus is full match
+                     targetLocus = Locus(reTargetposition.group(1), int(reTargetposition.group(2)), int(reTargetposition.group(3))-int(reTargetposition.group(2)), reverse, tm)
+                 # create primer (with target locus)
+-                primertag = tags[primername] if primername in tags.keys() else None
++                primertag = tags[primername] if primername in list(tags.keys()) else None
+                 primers[primername] = Primer(primername, fasta.fetch(s), targetLocus, tag=primertag)
+ 
+         # read SAM OUTPUT and filter alignments
+@@ -130,13 +130,13 @@
+                     if len([ x for x in zip(qry[-endMatch:], ref[-endMatch:]) if x[0]!=x[1] ]) == 0:
+                         primers[primername].addTarget(mappings.getrname(aln.reference_id), aln.pos, aln.is_reverse, aln_tm)
+         # remove primer locations for those that have hit maximum
+-        for k, v in primers.items():
++        for k, v in list(primers.items()):
+             if len(v.loci) >= maxAln:
+                 v.loci = []
+         # cleanup
+         if delete:
+             os.unlink(self.file+'.sam') # delete mapping FILE
+-        return primers.values()
++        return list(primers.values())
+ 
+ '''Boundary exceeded exception (max list size)'''
+ class BoundExceedError(Exception):
+@@ -1RefactoringTool: Refactored ./zippy/zippylib/reports.py
+56,7 +156,7 @@
+         # store wells
+         self.wells = set(well.split(','))
+         try:
+-            assert all(map(lambda x: re.match(r'\w\d',x),list(self.wells)))
++            assert all([re.match(r'\w\d',x) for x in list(self.wells)])
+         except:
+             raise Exception('InvalidWell')
+ 
+@@ -366,7 +366,7 @@
+         return int(self[0].rank)
+ 
+     def check(self, limits):
+-        for k,v in limits.items():
++        for k,v in list(limits.items()):
+             x = getattr(self,k)()
+             try:
+                 x = int(x)
+@@ -452,7 +452,7 @@
+     def fasta(self,seqname=None):
+         if not seqname:
+             seqname = self.name
+-        if 'POSITION' in self.meta.keys():  # append locus
++        if 'POSITION' in list(self.meta.keys()):  # append locus
+             strand = "-" if self.name.endswith('RIGHT') else '+'
+             seqname += '|'+self.meta['POSITION'][0]+':'+"-".join(map(str,self.meta['POSITION'][1:]))+':'+strand
+         return "\n".join([ ">" + seqname, self.seq ])
+@@ -515,7 +515,7 @@
+         for v in snps:
+             f = v.split()
+             snpOffset = (int(f[1])-1) - self.offset  # convert to 0-based
+-            snpLength = max(map(len,[ f[3] ] + f[4].split(',')))
++            snpLength = max(list(map(len,[ f[3] ] + f[4].split(','))))
+             snp_positions.append( (f[0],snpOffset,snpLength,f[2]) )
+         return snp_positions
+ 
+@@ -578,7 +578,7 @@
+         primers = primer3.bindings.designPrimers(seq,pars)
+         # parse primer
+         primerdata, explain = defaultdict(dict), []
+-        for k,v in primers.items():
++        for k,v in list(primers.items()):
+             m = re.match(r'PRIMER_(RIGHT|LEFT)_(\d+)(.*)',k)
+             if m:
+                 primername = name+"_"+str(m.group(2))+'_'+m.group(1)
+@@ -593,17 +593,17 @@
+         designedPrimers, designedPairs = {}, {}
+         for k,v in sorted(primerdata.items()):
+             # k primername # v dict of metadata
+-            if 'SEQUENCE' not in designedPrimers.keys():
++            if 'SEQUENCE' not in list(designedPrimers.keys()):
+                 designedPrimers[v['SEQUENCE']] = Primer(k,v['SEQUENCE'])
+                 m = re.search(r'(\d+)_(LEFT|RIGHT)',k)
+                 # store pairs (reference primers)
+-                if int(m.group(1)) not in designedPairs.keys():
++                if int(m.group(1)) not in list(designedPairs.keys()):
+                     designedPairs[int(m.group(1))] = PrimerPair([None, None])
+                 designedPairs[int(m.group(1))][0 if m.group(2).startswith('LEFT') else 1] = designedPrimers[v['SEQUENCE']]
+                 # all other datafields
+                 designedPrimers[v['SEQUENCE']].meta = v
+         # store
+-        self.pairs = OrderedDict(sorted(designedPairs.items())).values()
++        self.pairs = list(OrderedDict(sorted(designedPairs.items())).values())
+         return len(self.pairs)
+ 
+ 
+--- ./zippy/zippylib/reports.py	(original)
++++ ./zippy/zippylib/reports.py	(refactored)
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python
+-from __future__ import print_function
++
+ # -*- coding: utf-8 -*-
+ 
+ __doc__=="""Report Generator"""
+@@ -22,7 +22,7 @@
+ from collections import Counter
+ from . import PlateError, char_range, imageDir, githash
+ from .primer import parsePrimerName, PrimerPair, Primer
+-from urllib import unquote
++from urllib.parse import unquote
+ 
+ from reportlab.pdfgen import canvas
+ from reportlab.lib import colors
+@@ -45,16 +45,16 @@
+         self.docid = ""
+         self.site = ""
+         # document authorisation, header and worklist
+-        if 'auth' in kwargs.keys():
++        if 'auth' in list(kwargs.keys()):
+             self.auth = kwargs['auth']
+             del kwargs['auth']
+-        if 'docid' in kwargs.keys():
++        if 'docid' in list(kwargs.keys()):
+             self.docid = kwargs['docid']
+             del kwargs['docid']
+-        if 'site' in kwargs.keys():
++        if 'site' in list(kwargs.keys()):
+             self.site = kwargs['site']
+             del kwargs['site']
+-        if 'worklist' in kwargs.keys():
++        if 'worklist' in list(kwargs.keys()):
+             self.worklist = kwargs['worklist']
+             del kwargs['worklist']
+         # build canvas
+@@ -227,7 +227,7 @@
+             ]
+         # MERGE CELLS
+         for i, c in enumerate(mergeColumnFields):
+-            rowRanges = range(firstData[1],len(data[firstData[1]:]))  # groups that are treated seperately
++            rowRanges = list(range(firstData[1],len(data[firstData[1]:])))  # groups that are treated seperately
+             offsetRow = firstData[1]  # define first row offset
+             for k,g in groupby([ data[r][c] for r in range(firstData[1],len(data)) ]):
+                 groupSize = len(list(g))
+@@ -391,7 +391,7 @@
+                 ('LINEBELOW', (1,0), (1,-1), 1.0, colors.black)
+             ]
+             data = []
+-            for t,l in textLines.items():
++            for t,l in list(textLines.items()):
+                 for i in range(l):
+                     data.append([ t+':' if i==0 else '', ''])
+             t = Table(data, colWidths=[4*cm,11.5*cm], rowHeights=0.6*cm)
+@@ -509,12 +509,12 @@
+     def addControls(self,control="NTC"):
+         controlsamples = {}
+         for e in self:
+-            if not e.control and e.primerpair not in controlsamples.keys():
++            if not e.control and e.primerpair not in list(controlsamples.keys()):
+                 x = deepcopy(e)
+                 x.control = True
+                 x.sample = control
+                 controlsamples[e.primerpair] = x
+-        self += controlsamples.values()
++        self += list(controlsamples.values())
+         return
+ 
+     ''' count reactions '''
+@@ -528,10 +528,10 @@
+ 
+     '''PDF worksheet'''
+     def createWorkSheet(self,fi,primertest=False,worklist='',**kwargs):
+-        logo = kwargs['logo'] if 'logo' in kwargs.keys() and kwargs['logo'] else None
+-        site = kwargs['site'] if 'site' in kwargs.keys() and kwargs['site'] else None
+-        auth = kwargs['auth'] if 'auth' in kwargs.keys() and kwargs['auth'] else None
+-        docid = kwargs['docid'] if 'docid' in kwargs.keys() and kwargs['docid'] else None
++        logo = kwargs['logo'] if 'logo' in list(kwargs.keys()) and kwargs['logo'] else None
++        site = kwargs['site'] if 'site' in list(kwargs.keys()) and kwargs['site'] else None
++        auth = kwargs['auth'] if 'auth' in list(kwargs.keys()) and kwargs['auth'] else None
++        docid = kwargs['docid'] if 'docid' in list(kwargs.keys()) and kwargs['docid'] else None
+         r = Report(fi,title=self.name,logo=logo,site=site,auth=auth,docid=docid,worklist=worklist)
+         # add plates
+         samples, primers, plates = [], [], []
+@@ -543,11 +543,11 @@
+         # sample list (similar to plate order)
+         sampleOrder = { s: self.plates[0]._bestRows(Test(PrimerPair([None,None],name='dummyprimer'),s),'sample')[0] \
+             for s in set(samples) }
+-        orderedSamples = [ x[0] for x in sorted(sampleOrder.items(), key=lambda x: x[1]) ]
++        orderedSamples = [ x[0] for x in sorted(list(sampleOrder.items()), key=lambda x: x[1]) ]
+         # primer list (similar to plate order)
+         primerOrder = { p: self.plates[0]._bestRows(Test(p,'dummy'),'primerpair')[0] \
+             for p in set(primers) }
+-        orderedPrimers = [ (x[0].name, x[0].primerSuffixes(), tuple(x[0].locations())) for x in sorted(primerOrder.items(), key=lambda x: x[1]) ]
++        orderedPrimers = [ (x[0].name, x[0].primerSuffixes(), tuple(x[0].locations())) for x in sorted(list(primerOrder.items()), key=lambda x: x[1]) ]
+         # store ordered list of sample (str) and primers (primername, primersuffixes, locations)
+         r.samplePrimerLists(orderedSamples,orderedPrimers,counts=self.reactionCount())
+         # reaction volume list
+@@ -597,7 +597,7 @@
+                         if cell:
+                             # barcode id (with collision check, as trucated 32 byte string)
+                             d = cell.primerpairobject.uniqueid()[:10]  # truncated uniqueid (1,099,511,627,776)
+-                            if d in digests.keys():
++                            if d in list(digests.keRefactoringTool: Files that need to be modified:
+RefactoringTool: ./download_resources.py
+RefactoringTool: ./run.py
+RefactoringTool: ./setup.py
+RefactoringTool: ./wsgi.py
+RefactoringTool: ./download/setup.py
+RefactoringTool: ./download/doc/conf.py
+RefactoringTool: ./download/download/__init__.py
+RefactoringTool: ./download/download/download.py
+RefactoringTool: ./download/download/tests/test_download.py
+RefactoringTool: ./download/examples/plot_download_file.py
+RefactoringTool: ./download/examples/plot_download_providers.py
+RefactoringTool: ./zippy/__init__.py
+RefactoringTool: ./zippy/views.py
+RefactoringTool: ./zippy/zippy.py
+RefactoringTool: ./zippy/api/views.py
+RefactoringTool: ./zippy/unittest/test.py
+RefactoringTool: ./zippy/unittest/test_entrez.py
+RefactoringTool: ./zippy/zippylib/__init__.py
+RefactoringTool: ./zippy/zippylib/database.py
+RefactoringTool: ./zippy/zippylib/files.py
+RefactoringTool: ./zippy/zippylib/interval.py
+RefactoringTool: ./zippy/zippylib/primer.py
+RefactoringTool: ./zippy/zippylib/reports.py
+RefactoringTool: Warnings/messages while refactoring:
+RefactoringTool: ### In file ./zippy/zippylib/files.py ###
+RefactoringTool: Line 59: You should use a for loop here
+ys()):
+                                 try:
+                                     assert cell.primerpair == digests[d]
+                                 except:
+@@ -631,7 +631,7 @@
+         return sum([ len([ f for f in r if f]) for r in self.M ])
+ 
+     def testList(self):
+-        return [ t for t in chain.from_iterable(zip(*self.M)) if t is not None ]
++        return [ t for t in chain.from_iterable(list(zip(*self.M))) if t is not None ]
+ 
+     def platemap(self):
+         s, p = set(), set()
+@@ -643,14 +643,14 @@
+         # # generate plate map
+         trunc = lambda x: '<br/>'.join([ x.sample[:9]+'...' if len(x.sample)>12 else x.sample,
+             x.primerpair[:9]+'...' if len(x.primerpair)>12 else x.primerpair]) if x is not None else "EMPTY"
+-        pm = [ map(trunc,r) for r in self.M ]
++        pm = [ list(map(trunc,r)) for r in self.M ]
+         # return values
+         return sorted(list(s)), sorted(list(p),key=lambda x: x.name), pm
+ 
+     def bestRowNumbers(self,val,attr):
+         rowcounts = { i: len([ e for e in r if e is not None and getattr(e,attr) == val ]) \
+             for i, r in enumerate(self.M) }
+-        return [ x[0] for x in sorted(rowcounts.items(), key=lambda x: x[1], reverse=True) ]
++        return [ x[0] for x in sorted(list(rowcounts.items()), key=lambda x: x[1], reverse=True) ]
+ 
+     def _bestRows(self,x,rvalue):
+         if x.control:  # try to spread across rows
+@@ -663,7 +663,7 @@
+                 len([ e for e in r if e is not None and getattr(e,rvalue) == getattr(x,rvalue) ]) - \
+                 len([ e for e in r if e is not None and getattr(e,rvalue) != getattr(x,rvalue) ]) \
+                 for i, r in enumerate(self.M) }
+-        return [ x[0] for x in sorted(rowcounts.items(), key=lambda x: x[1], reverse=True) ]
++        return [ x[0] for x in sorted(list(rowcounts.items()), key=lambda x: x[1], reverse=True) ]
+ 
+     def isfull(self):
+         return True if len(self)>=len(self.M)*len(self.M[0]) else False
+@@ -680,7 +680,7 @@
+             raise
+         else:
+             # get free columns
+-            availableWells = [ r for r in product(bestRows,range(self.ncol)) if self.M[r[0]][r[1]] is None ]
++            availableWells = [ r for r in product(bestRows,list(range(self.ncol))) if self.M[r[0]][r[1]] is None ]
+         # add to first available well
+         self.M[availableWells[0][0]][availableWells[0][1]] = t
+ 
+@@ -690,7 +690,7 @@
+             for r in range(self.nrow) ]
+         # start with longest row (and only rows which exceed maxColumns)
+         rowOrder = { i: r.count(None) for i,r in enumerate(self.M) if r.count(None) < self.ncol-maxColumn[i] }
+-        longRows = [ i for i,r in sorted(rowOrder.items(), key=lambda x: x[1], reverse=False) ]
++        longRows = [ i for i,r in sorted(list(rowOrder.items()), key=lambda x: x[1], reverse=False) ]
+         for r in longRows:
+             # find best row (sum of empty and own)
+             for c in range(maxColumn[r],self.ncol):

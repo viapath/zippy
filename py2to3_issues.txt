@@ -1,0 +1,26 @@
+/usr/local/zippy/venv/lib/python2.7/site-packages/werkzeug/datastructures.py:869: DeprecationWarning: Overriding __eq__ blocks inheritance of __hash__ in 3.x
+  class Headers(object):
+/usr/local/zippy/venv/lib/python2.7/site-packages/werkzeug/datastructures.py:1284: DeprecationWarning: Overriding __eq__ blocks inheritance of __hash__ in 3.x
+  class EnvironHeaders(ImmutableHeadersMixin, Headers):
+/usr/local/zippy/venv/lib/python2.7/site-packages/werkzeug/routing.py:480: DeprecationWarning: Overriding __eq__ blocks inheritance of __hash__ in 3.x
+  class Rule(RuleFactory):
+/usr/local/zippy/venv/lib/python2.7/site-packages/amqp/serialization.py:407: DeprecationWarning: Overriding __eq__ blocks inheritance of __hash__ in 3.x
+  class GenericContent(object):
+/usr/local/zippy/venv/lib/python2.7/site-packages/amqp/basic_message.py:24: DeprecationWarning: Overriding __eq__ blocks inheritance of __hash__ in 3.x
+  class Message(GenericContent):
+/usr/local/zippy/venv/lib/python2.7/site-packages/kombu/utils/functional.py:12: DeprecationWarning: Overriding __eq__ blocks inheritance of __hash__ in 3.x
+  class lazy(object):
+/usr/local/zippy/venv/lib/python2.7/site-packages/celery/datastructures.py:554: DeprecationWarning: Overriding __eq__ blocks inheritance of __hash__ in 3.x
+  class LimitedSet(object):
+/usr/local/zippy/venv/lib/python2.7/site-packages/bcrypt/__init__.py:23: DeprecationWarning: CObject type is not supported in 3.x. Please use capsule objects instead.
+  from bcrypt import _bcrypt
+/usr/local/zippy/venv/lib/python2.7/site-packages/pysam/__init__.py:5: DeprecationWarning: Overriding __eq__ blocks inheritance of __hash__ in 3.x
+  from pysam.libchtslib import *
+/usr/local/zippy/venv/lib/python2.7/site-packages/Bio/_py3k/__init__.py:232: DeprecationWarning: the commands module has been removed in Python 3.0; use the subprocess module instead
+  from commands import getoutput
+/srv/qgen/zippy/zippy/zippylib/primer.py:145: DeprecationWarning: Overriding __eq__ blocks inheritance of __hash__ in 3.x
+  class Location(object):
+/usr/local/zippy/venv/lib/python2.7/site-packages/PIL/Image.py:49: DeprecationWarning: classic int division
+  MAX_IMAGE_PIXELS = int(1024 * 1024 * 1024 / 4 / 3)
+/usr/local/zippy/venv/lib/python2.7/site-packages/PIL/Image.py:485: DeprecationWarning: Overriding __eq__ blocks inheritance of __hash__ in 3.x
+ 
