@@ -46,8 +46,8 @@ def githash(prefix=None):
 imageDir = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../static')
 
 '''read configuration (convert unicode to ascii string)'''
-def ascii_encode_dict(data):
-    ascii_encode = lambda x: x.encode('ascii') if type(x) is unicode else x
+def ww_ascii_encode_dict(data):
+    ascii_encode = lambda x: x.encode('ascii') if type(x) is str else x
     return dict(map(ascii_encode, pair) for pair in data.items())
 
 '''banner'''
@@ -73,7 +73,7 @@ def flatten(container):
 
 """Generates the characters from `c1` to `c2`, inclusive."""
 def char_range(c1, c2):
-    for c in xrange(ord(c1), ord(c2)+1):
+    for c in range(ord(c1), ord(c2)+1):
         yield chr(c)
 
 '''exception class for configuration errors'''

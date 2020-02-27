@@ -1,4 +1,5 @@
 #!/usr/local/env python
+from __future__ import print_function
 
 import sys
 import os
@@ -13,7 +14,6 @@ from celery import Celery
 from werkzeug.utils import secure_filename
 from . import app
 from .zippy import zippyBatchQuery, zippyPrimerQuery, updateLocation, searchByName, updatePrimerName, updatePrimerPairName, blacklistPair, deletePair, readprimerlocations
-from .zippylib import ascii_encode_dict
 from .zippylib.primer import Location, ChromosomeNotFoundError
 from .zippylib.database import PrimerDB
 
@@ -24,7 +24,8 @@ app.config['DOWNLOAD_FOLDER'] = 'results'
 app.config['CONFIG_FILE'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'zippy.json')
 # read password (SHA1 hash, not the safest)
 with open(app.config['CONFIG_FILE']) as conf:
-    config = json.load(conf, object_hook=ascii_encode_dict)
+    #config = json.load(conf, object_hook=ascii_encode_dict)
+    config = json.load(conf)
     app.config['PASSWORD'] = config['password']
 
 
@@ -63,7 +64,7 @@ def login():
     error = None
     if request.method == 'POST':
         #it used bcrypt.hashpw(request.form['password'].rstrip().encode('utf-8'), app.config['PASSWORD']) in the original viapath/zippy package, but this didn't work
-        if request.form['password'].rstrip().encode('utf-8') == app.config['PASSWORD']:
+        if request.form['password'].rstrip() == app.config['PASSWORD']:
             session['logged_in'] = True
             return redirect(url_for('index'))
         else:
@@ -108,7 +109,7 @@ def upload():
     uploadFile = request.files['variantTable']
     uploadFile2 = request.files['missedRegions']
     uploadFile3 = request.files['singleGenes']
-    tiers = map(int, request.form.getlist('tiers'))
+    tiers = list(map(int, request.form.getlist('tiers')))
     predesign = request.form.get('predesign')
     design = request.form.get('design')
     outfile = request.form.get('outfile')
@@ -119,16 +120,16 @@ def upload():
         if uf and allowed_file(uf.filename):
             uploadedFiles.append(os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(uf.filename)))
             uf.save(uploadedFiles[-1])
-            print >> sys.stderr, "file saved to %s" % uploadedFiles[-1]
+            print("file saved to %s" % uploadedFiles[-1], file=sys.stderr)
 
     if uploadedFiles:
         # open config file and database
         with open(app.config['CONFIG_FILE']) as conf:
-            config = json.load(conf, object_hook=ascii_encode_dict)
+            config = json.load(conf)
             db = PrimerDB(config['database'], dump=config['ampliconbed'])
 
         # create output folder
-        filehash = hashlib.sha1(''.join([ open(uf).read() for uf in uploadedFiles ])).hexdigest()
+        filehash = hashlib.sha1(b''.join([open(uf,"rb").read() for uf in uploadedFiles ])).hexdigest()
         downloadFolder = os.path.join(app.config['DOWNLOAD_FOLDER'], filehash)
         subprocess.check_call(['mkdir', '-p', downloadFolder], shell=False)
 
@@ -137,7 +138,7 @@ def upload():
         downloadFile = os.path.join(downloadFolder, outfile) if outfile else os.path.join(downloadFolder, shortName)
         arrayOfFiles, missedIntervalNames, flash_messages = zippyBatchQuery(config, uploadedFiles, design, downloadFile, db, predesign, tiers)
         for flash_message in flash_messages:
-            print("fmes", flash_message)
+            #print("fmes", flash_message)
             flash(*flash_message)
         return render_template('file_uploaded.html', outputFiles=arrayOfFiles, missedIntervals=missedIntervalNames)
     else:
@@ -177,28 +178,27 @@ def adhocdesign():
     uploadFile = request.files['filePath']
     locus = request.form.get('locus').strip()
     design = request.form.get('design')
-    tiers = map(int,request.form.getlist('tiers'))
+    tiers = list(map(int,request.form.getlist('tiers')))
     gap = request.form.get('gap')
     store = request.form.get('store')
 
-    print >> sys.stderr, 'tiers', tiers
-    print >> sys.stderr, 'locus', locus
-    print >> sys.stderr, 'gap', gap
-
+    print('tiers', tiers, file=sys.stderr)
+    print('locus', locus, file=sys.stderr)
+    print('gap', gap, file=sys.stderr)
     # if locus:
     rematch = re.match('\w{1,6}:\d+[-:]\d+',locus)
     if rematch or (uploadFile and allowed_file(uploadFile.filename)):
         # get target
         if uploadFile:
             filename = secure_filename(uploadFile.filename)
-            print >> sys.stderr, "Uploaded: ", filename
+            print ("Uploaded: ", filename, file=sys.stderr)
             try:
                 target = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             except Exception as exc:
                 import traceback
                 return str(traceback.format_exc())
             uploadFile.save(target)
-            print >> sys.stderr, "file saved to %s" % target
+            print("file saved to %s" % target, file=sys.stderr)
             if len(locus)>0:
                 args=(target,locus)
             else:
@@ -207,13 +207,18 @@ def adhocdesign():
             args = locus
         # read config
         with open(app.config['CONFIG_FILE']) as conf:
-            config = json.load(conf, object_hook=ascii_encode_dict)
+            config = json.load(conf)
             db = PrimerDB(config['database'],dump=config['ampliconbed'])
         # run Zippy
+        """import cProfile
+        profiler = cProfile.Profile()
+        profiler.runcall(zippyPrimerQuery, config, args, design, None, db, store, tiers, gap)
+        profiler.print_stats()
+        assert 0"""
         primerTable, resultList, missedIntervals, flash_messages = zippyPrimerQuery(config, args, design, None, db, store, tiers, gap)
 
         for flash_message in flash_messages:
-            print("flashm", flash_message)
+            #print("flashm", flash_message)
             flash(*flash_message)
 
         # get missed and render template
@@ -222,7 +227,7 @@ def adhocdesign():
             missedIntervalNames.append(interval.name)
         return render_template('/adhoc_result.html', primerTable=primerTable, resultList=resultList, missedIntervals=missedIntervalNames)
     else:
-        print >> sys.stderr, "no locus or file given"
+        print ("no locus or file given", file=sys.stderr)
         return render_template('/adhoc_result.html', primerTable=[], resultList=[], missedIntervals=[])
 
 
@@ -236,11 +241,11 @@ def updatePrimerLocation():
         assert primername
         loc = Location(vessel, well)
     except:
-        print >> sys.stderr, 'Please fill in all fields (PrimerName VesselNumber Well)'
+        print ('Please fill in all fields (PrimerName VesselNumber Well)', file=sys.stderr)
         return render_template('location_updated.html', status=None)
     # read config
     with open(app.config['CONFIG_FILE']) as conf:
-        config = json.load(conf, object_hook=ascii_encode_dict)
+        config = json.load(conf)
         db = PrimerDB(config['database'],dump=config['ampliconbed'])
     # run zippy and render
     updateStatus = updateLocation(primername, loc, db, force)
@@ -259,7 +264,7 @@ def update_pair_name(pairName):
         flash('New name is the same as current', 'warning')
         return render_template('update_pair.html', pairName=pairName)
     with open(app.config['CONFIG_FILE']) as conf:
-        config = json.load(conf, object_hook=ascii_encode_dict)
+        config = json.load(conf)
         db = PrimerDB(config['database'],dump=config['ampliconbed'])
         if updatePrimerPairName(pairName, newName, db):
             flash('Pair "%s" renamed "%s"' % (pairName, newName), 'success')
@@ -285,10 +290,10 @@ def updateLocationFromTable(primerInfo):
             assert primerName
             loc = Location(vessel, well)
         except:
-            print >> sys.stderr, 'Please fill in all fields (PrimerName VesselNumber Well)'
+            print ('Please fill in all fields (PrimerName VesselNumber Well)', file=sys.stderr)
             return render_template('location_updated.html', status=None)
         with open(app.config['CONFIG_FILE']) as conf:
-            config = json.load(conf, object_hook=ascii_encode_dict)
+            config = json.load(conf)
             db = PrimerDB(config['database'], dump=config['ampliconbed'])
         # run zippy and render
         updateStatus = updateLocation(primerName, loc, db, force)
@@ -309,11 +314,11 @@ def updateLocationFromTable(primerInfo):
 @app.route('/select_primer_to_rename/<primerName>/<primerLoc>', methods=['POST'])
 def primer_to_rename(primerName, primerLoc):
     newName = request.form.get('name')
-    print >> sys.stderr, primerName
-    print >> sys.stderr, primerLoc
-    print >> sys.stderr, newName
+    print(primerName, file=sys.stderr)
+    print(primerLoc, file=sys.stderr)
+    print(newName, file=sys.stderr)
     primerInfo = primerName + '|' + primerLoc + '|' + newName
-    print >> sys.stderr, primerInfo
+    print(primerInfo, file=sys.stderr)
     return redirect('/update_primer_name/%s' % (primerInfo))
 
 
@@ -327,7 +332,7 @@ def update_name_of_primer(primerInfo):
         flash('Primer renaming failed - new name is the same as current', 'warning')
         return render_template('update_location_from_table.html', primerName=newName, primerLoc=primerLoc)
     with open(app.config['CONFIG_FILE']) as conf:
-        config = json.load(conf, object_hook=ascii_encode_dict)
+        config = json.load(conf)
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
         if updatePrimerName(currentName, newName, db):
             flash('Primer "%s" renamed "%s"' % (currentName, newName), 'success')
@@ -347,7 +352,7 @@ def searchName():
 def search_by_name():
     searchName = session['searchName']
     with open(app.config['CONFIG_FILE']) as conf:
-        config = json.load(conf, object_hook=ascii_encode_dict)
+        config = json.load(conf)
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
         searchResult = searchByName(searchName, db)
     return render_template('searchname_result.html', searchResult=searchResult, searchName=searchName)
@@ -355,9 +360,9 @@ def search_by_name():
 
 @app.route('/blacklist_pair/<pairname>', methods=['POST'])
 def blacklist_pair(pairname):
-    print >> sys.stderr, 'This is the pairname: ' + pairname
+    print ('This is the pairname: ' + pairname, file=sys.stderr)
     with open(app.config['CONFIG_FILE']) as conf:
-        config = json.load(conf, object_hook=ascii_encode_dict)
+        config = json.load(conf)
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
         blacklisted = blacklistPair(pairname, db)
         for b in blacklisted:
@@ -367,9 +372,9 @@ def blacklist_pair(pairname):
 
 @app.route('/delete_pair/<pairname>', methods=['POST'])
 def delete_pair(pairname):
-    print >> sys.stderr, 'This is the pairname: ' + pairname
+    print ('This is the pairname: ' + pairname, file=sys.stderr)
     with open(app.config['CONFIG_FILE']) as conf:
-        config = json.load(conf, object_hook=ascii_encode_dict)
+        config = json.load(conf)
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
         deleted = deletePair(pairname, db)
         for d in deleted:
@@ -389,7 +394,7 @@ def upload_samplesheet():
             locationsheet.save(saveloc)
             updateList = readprimerlocations(saveloc)
             with open(app.config['CONFIG_FILE']) as conf:
-                config = json.load(conf, object_hook=ascii_encode_dict)
+                config = json.load(conf)
                 db = PrimerDB(config['database'], dump=config['ampliconbed'])
                 for item in updateList:
                     updateStatus = updateLocation(item[0], item[1], db, True)  # Force is set to True, will force primers into any occupied locations
@@ -399,5 +404,5 @@ def upload_samplesheet():
                         flash('%s location sucessfully set to %s' % (item[0], str(item[1])), 'success')
                     else:
                         flash('%s location update to %s failed' % (item[0], str(item[1])), 'warning')
-            print >> sys.stderr, 'Updated locations using :', updateList
+            print ('Updated locations using :', updateList, file=sys.stderr)
     return redirect('/index')

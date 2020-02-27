@@ -8,7 +8,7 @@ User=lucioric
 Group=nginx
 WorkingDirectory=/usr/local/zippy
 Environment="PATH=/usr/local/zippy/venv/bin"
-ExecStart=/usr/local/zippy/venv/bin/gunicorn --access-logfile /var/local/zippy/logs/gunicorn_access.log --error-logfile /var/local/zippy/logs/gunicorn_error.log --workers 3 --bind unix:/run/zippy.sock -m 007 wsgi:app
+ExecStart=/usr/local/zippy/venv/bin/gunicorn --capture-output --access-logfile /var/local/zippy/logs/gunicorn_access.log --error-logfile /var/local/zippy/logs/gunicorn_error.log --workers 3 --bind unix:/run/zippy.sock -m 007 wsgi:app
 
 [Install]
 WantedBy=multi-user.target

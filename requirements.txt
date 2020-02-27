@@ -1,7 +1,7 @@
 alembic==0.8.6
 amqp==1.4.9
 anyjson==0.3.3
-bcrypt==2.0.0
+bcrypt==3.1.7
 beautifulsoup4==4.4.1
 billiard==3.3.0.23
 blinker==1.4
@@ -28,7 +28,8 @@ Flask-Migrate==1.8.0
 Flask-Script==2.0.5
 Flask-SQLAlchemy==2.1
 Flask-WTF==0.12
-gunicorn==19.4.5
+#gunicorn==19.4.5
+gunicorn==20.0.4
 hashids==1.1.0
 ipaddress==1.0.16
 isort==4.2.2
@@ -42,8 +43,9 @@ mccabe==0.4.0
 pep257==0.7.0
 pep8==1.7.0
 pep8-naming==0.3.3
-Pillow==3.3.0
-primer3-py==0.5.0
+#Pillow==3.3.0
+primer3-py==0.6.0
+#primer3-py==0.5.0
 psycopg2==2.6.1
 py==1.4.31
 pycparser==2.14

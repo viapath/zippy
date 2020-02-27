@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 
 __doc__=="""File parsing classes"""
 __author__ = "David Brawand"
@@ -16,68 +17,72 @@ from collections import Counter, defaultdict
 from hashlib import sha1
 from . import ConfigError
 from .interval import *
-from urllib import quote, unquote
+from urllib.parse import quote, unquote
 
-'''GenePred parser with automatic segment numbering and tiling'''
+
 class GenePred(IntervalList):
-    def __init__(self,fh,getgenes=None,interval=None,overlap=None,flank=0,combine=True,noncoding=False):
+    '''GenePred parser with automatic segment numbering and tiling'''
+    def __init__(self, fh, getgenes=None, interval=None, overlap=None, flank=0, combine=True,
+                 noncoding=False):
+        print(f"Running GenePred getgenes={getgenes} interval={interval} overlap={overlap} flank={flank} combine={combine} noncoding={noncoding}")
         IntervalList.__init__(self, [], source='GenePred')
-        counter = Counter()
         intervalindex = defaultdict(list)
         # read exons per gene
+        # Row structure:
+        #                   0  ,              1             ,    2    ,    3   ,     4    ,    5  ,     6    ,    7   ,      8,   ,      9     ,     10   ,   11  ,   12  ,       13     ,      14    ,     15
+        # SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" > refGene
+
         genes = defaultdict(list)
-        for (iline,line) in enumerate(fh):
-            if iline==0 and line.startswith("track"):
+        for (iline, line) in enumerate(fh):
+            if iline == 0 and line.startswith("track"):
                 continue
             if line.startswith("#"):
                 continue
             else:
                 # create gene and add exons
                 f = line.split()
-                if len(f)<5:
-                    chrom=f[0]
-                    geneStart=int(f[1])
-                    geneEnd=int(f[2])
-                    geneName=f[3]
-                    reverse=geneEnd<geneStart
+                if len(f) < 5:
+                    chrom = f[0]
+                    geneStart = int(f[1])
+                    geneEnd = int(f[2])
+                    geneName = f[3]
+                    reverse = geneEnd < geneStart
                     assert not reverse
-                    gene = Interval(chrom,geneStart,geneEnd,geneName,reverse)
-                    #Consider all the gene as exon. TODO: is it good?
-                    gene.addSubintervals([Interval(chrom,geneStart,geneEnd,geneName,reverse)])
+                    gene = Interval(chrom, geneStart, geneEnd, geneName, reverse)
+                    # Consider all the gene as exon. TODO: is it good?
+                    gene.addSubintervals([Interval(chrom, geneStart, geneEnd, geneName, reverse)])
                 else:
-                    if getgenes and (f[12] not in getgenes or int(f[6])==int(f[7])) and not noncoding:  # ignore non-coding transcripts
+                    if getgenes and (f[12] not in getgenes or int(f[6]) == int(f[7])) and not noncoding:  # ignore non-coding transcripts
                         continue
                     # coding / noncoding
+                    # indexes 4 and 5 are tx start and end, respectively
+                    # indexes 6 and 7 are cds start and end, respectively
                     geneStart = int(f[4]) if noncoding else int(f[6])
                     geneEnd = int(f[5]) if noncoding else int(f[7])
                     reverse = f[3].startswith('-')
-                    gene = Interval(f[2],geneStart,geneEnd,f[12],reverse)
+                    gene = Interval(f[2], geneStart, geneEnd, f[12], reverse)
                     # parse exons
-                    for e in zip(f[9].split(','),f[10].split(',')):
+                    for e in zip(f[9].split(','), f[10].split(',')):
                         try:
-                            map(int,e)
+                            eints = list(map(int,e))
                         except:
                             continue
-                        if int(e[1]) < geneStart or geneEnd < int(e[0]):
+                        if eints[1] < geneStart or geneEnd < eints[0]:
                             continue  # noncoding
-                        #print("exon", e, f[12])
                         try:
-                            exonStart = int(e[0]) if noncoding else max(geneStart,int(e[0]))
-                            exonEnd = int(e[1]) if noncoding else min(geneEnd,int(e[1]))
-                            gene.addSubintervals([Interval(f[2],exonStart,exonEnd,f[12],reverse)])
+                            exonStart = eints[0] if noncoding else max(geneStart,eints[0])
+                            exonEnd = eints[1] if noncoding else min(geneEnd,eints[1])
+                            gene.addSubintervals([Interval(f[2], exonStart, exonEnd, f[12], reverse)])
                         except ValueError:
-                            assert 0
                             pass
                         except:
                             raise
                 # find appropriate gene (same name, and overlapping)
                 ovpgenes = [ g for g in genes[gene.name] if gene.overlap(g) ]
                 if ovpgenes:
-                    try:
-                        assert len(ovpgenes) == 1
-                    except:
+                    if len(ovpgenes)>1:
                         # MERGE 2 GENES (there were non-overlapping transcripts in same gene locus!)
-                        for i in range(1,len(ovpgenes)):
+                        for i in range(1, len(ovpgenes)):
                             ovpgenes[0].merge(ovpgenes[i],subintervals=True)
                             genes[gene.name].remove(ovpgenes[i])  # remove merged
                     ovpgenes[0].addSubintervals(gene.subintervals)  # add exons from other transcript/gene
@@ -86,7 +91,6 @@ class GenePred(IntervalList):
                     # add new
                     genes[gene.name].append(gene)
         # name metaexons and combine if small enough
-        #assert 0
         for genename, genelist in genes.items():
             for g in genelist:
                 if combine:
@@ -116,7 +120,7 @@ class GenePred(IntervalList):
                     i = 0
                     for e in combinedExons:
                         # get exons
-                        ii = range(i,i+len(e))
+                        ii = list(range(i,i+len(e)))
                         exonNumbers = [ len(g.subintervals) - x for x in ii ] if g.strand < 0 else [ x+1 for x in ii ]
                         if len(e)>1:  # combine exons
                             for j in range(1,len(e)):
@@ -137,12 +141,14 @@ class GenePred(IntervalList):
             for iv in ivs:
                 if interval and overlap and interval < len(iv):
                     assert '+' not in iv.name  # paranoia
-                    self += iv.tile(interval,overlap,len(f)>3)  # name with suffix if named interval
+                    self += iv.tile(interval, overlap, len(f)>3)  # name with suffix if named interval
                 else:
                     self += [ iv ]
         # add flanks
         for e in self:
+            #eold = repr(e)
             e.extend(flank)
+            #assert 0, (eold, e, flank)
         return
 
 '''bed parser with automatic segment numbering and tiling'''
@@ -165,7 +171,7 @@ class BED(IntervalList):
                     else:  # automatic naming
                         iv = Interval(f[0],int(f[1]),int(f[2]))
                 except:
-                    print >> sys.stderr, f
+                    print (f, file=sys.stderr)
                     raise
                 intervalindex[iv.name].append(iv)
         # suffix interval names if necessary
@@ -198,7 +204,6 @@ class VCF(IntervalList):  # no interval tiling as a variant has to be sequenced 
                     self.samples = line[1:].split()[9:]  # sample header
             else:
                 f = line.split()
-                #print(f, fh, f[7])
                 iv = Interval(f[0],int(f[1]),int(f[1])+max(map(len,[f[3]]+f[4].split(','))),name=f[2] if f[2]!='.' else None, metadata=f[7])
                 self.append(iv)
         # add flanks and name
@@ -234,13 +239,13 @@ class SNPpy(IntervalList):
                         except:
                             raise Exception('UnknownColumn')
                 except:
-                    print >> sys.stderr, line
-                    print >> sys.stderr, row
+                    print(line, file=sys.stderr)
+                    print(row, file=sys.stderr)
                     raise
                 # build variant/test description
                 if 'primers' in row.keys():  # sample, primer list
                     assert db  # must have database handle to xtract targets
-                    pairnames = map(lambda x: x.strip(), row['primers'].split(','))
+                    pairnames = [x.strip() for x in row['primers'].split(',')]
                     for pp in pairnames:
                         # get pair(s)
                         pairs = db.query(pp)
@@ -260,7 +265,7 @@ class SNPpy(IntervalList):
                     # parse variant name
                     variantDescription = [ row['geneID'] ]
                     if '-' in row['position']:  # interval (gene,chrom,exon,hgvs/pos,zyg)
-                        chromStart, chromEnd = map(int,row['position'].split('-'))
+                        chromStart, chromEnd = list(map(int,row['position'].split('-')))
                         variantDescription += [ row['chromosome'] ]
                     else:  # variant (gene,tx,exon,hgvs/pos,zyg)
                         if 'HGVS_c' in row.keys():
@@ -307,15 +312,15 @@ class Data(object):
                 fh.close()
         else: # write as is
             fh = sys.stdout if fi == '-' else open(fi,'w')
-            print >> fh, self.header
+            print(self.header, file=fh)
             for d in self.data:
-                print >> fh, '\t'.join(map(str,[ d[f] for f in self.header]))
+                print('\t'.join(map(str,[ d[f] for f in self.header])), file=fh)
             if fi != '-':
                 fh.close()
 
 
 ''' read target intervals from VCF, BED or directly'''
-def readTargets(targets,tiling):
+def readTargets(targets, tiling):
     if os.path.isfile(targets):
         with open(targets) as fh:
             if targets.endswith('vcf'):  # VCF files (strand 0)
@@ -325,22 +330,22 @@ def readTargets(targets,tiling):
             elif targets.endswith('txt') or targets.lower().endswith('genepred'):  # GenePred files (uses gene name if unique)
                 intervals = GenePred(fh,**tiling)
             else:
-                raise Exception('UnknownFileExtension')
+                raise Exception('Unknown extension of file {0}'.format(targets))
     elif re.match('\w+:\d+-\d+',targets):  # single interval, no tiling
         m = re.match('(\w+):(\d+)-(\d+):?([+-])?',targets)
         rev = None if m.group(4) is None else True if m.group(4) == '-' else False
         intervals = [ Interval(m.group(1),m.group(2),m.group(3),reverse=rev) ]
     else:
-        raise Exception("FileNotFound: {0}".format(targets))
+        raise Exception("File not found: {0}".format(targets))
     return intervals
 
 
 '''readBatch: read file from SNPpy result output'''
-def readBatch(fi,tiling,database=None):
+def readBatch(fi, tiling, database=None):
     try:
         assert os.path.isfile(fi)
     except AssertionError:
-        print >> sys.stderr, "ERROR: Not a readable file (%s)" % fi
+        print("ERROR: Not a readable file (%s)" % fi, file=sys.stderr)
         raise
     with open(fi) as fh:
         intervals = SNPpy(fh,flank=tiling['flank'],db=database)
@@ -366,7 +371,7 @@ def hgvsLength(hgvs,default=10):
         try:
             l = int(hgvs)
         except:
-            print >> sys.stderr, "WARNING: could not find length of variant (%s), assuming %s" % (hgvs,str(default))
+            print("WARNING: could not find length of variant (%s), assuming %s" % (hgvs,str(default)), file=sys.stderr)
             return default
         else:
             return l
@@ -383,4 +388,4 @@ if __name__=="__main__":
     with open(sys.argv[1]) as fh:
         bed = BED(fh,**cfg)
         for i in bed:
-            print i
+            print(i)

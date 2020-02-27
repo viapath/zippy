@@ -4,7 +4,7 @@ ZIPPYPATH=/usr/local/zippy
 ZIPPYVAR=/var/local/zippy
 ZIPPYWWW=/var/www/zippy
 SOURCE=zippy
-VERSION=6.15
+VERSION=7.3
 
 genome=human_g1k_v37
 server=nginx#Can be nginx or apache
@@ -86,15 +86,14 @@ essential_centos:
 	sudo yum -y install epel-release
 	sudo yum repolist
 	sudo yum -y update --skip-broken
-	sudo yum install -y sudo wget less make curl vim sqlite unzip htop python2-pip python2-devel ncurses-devel gzip #git
+	sudo yum install -y sudo wget less make curl vim sqlite unzip htop python3-pip python3-devel ncurses-devel gzip #git
 	#apachectl restart graceful
 	#kill -USR1 `cat /usr/local/httpd/logs/httpd.pid`
 	#kill -USR1 `cat /usr/local/apache2/logs/httpd.pid`
-	sudo yum install -y libxslt-devel libxml2-devel libffi-devel redis python-virtualenv
+	sudo yum install -y libxslt-devel libxml2-devel libffi-devel redis #python3-virtualenv
 	sudo yum install -y $(serving_packages)
 	echo y|sudo yum groupinstall 'Development Tools'
-	sudo yum install -y libjpeg-devel freetype-devel python-imaging mysql postgresql postgresql-devel #-client llibcurl3-devel
-	#Python-dev(el) no se pone por que ya etá python2-devel y se supone que usamos Python 2
+	sudo yum install -y libjpeg-devel freetype-devel python3-imaging mysql postgresql postgresql-devel #-client llibcurl3-devel
 	sudo groupadd -f $(WWWGROUP)
 	getent passwd $(WWWUSER)>/dev/null||sudo adduser $(WWWUSER) -g $(WWWGROUP)
 	#If the user does exists, does not execute the part of the command. This behavior is
@@ -134,7 +133,7 @@ update-zippy-package:
 zippy-install:
 	# virtualenv
 	sudo mkdir -p $(ZIPPYPATH)
-	cd $(ZIPPYPATH) && sudo /usr/bin/virtualenv venv
+	cd $(ZIPPYPATH) && sudo python3 -mvenv venv
 	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
 	sudo $(ZIPPYPATH)/venv/bin/pip install Cython==0.24
 	sudo $(ZIPPYPATH)/venv/bin/pip install -r requirements.txt
@@ -269,16 +268,16 @@ stop_nginx_service:
 
 # Webservers
 gunicorn:
-	source /usr/local/zippy/venv/bin/activate && gunicorn --bind 0.0.0.0:8000 wsgi:app
+	source $(ZIPPYPATH)/venv/bin/activate && gunicorn --bind 0.0.0.0:8000 wsgi:app
 run:
-	source /usr/local/zippy/venv/bin/activate && export FLASK_DEBUG=1 && export FLASK_ENV=development && export FLASK_APP=zippy && /usr/local/zippy/venv/bin/python run.py
+	source $(ZIPPYPATH)/venv/bin/activate && export FLASK_DEBUG=1 && export FLASK_ENV=development && export FLASK_APP=zippy && /usr/local/zippy/venv/bin/python run.py
 runp:
-	source /usr/local/zippy/venv/bin/activate && python run.py
+	source $(ZIPPYPATH)/venv/bin/activate && python run.py
 zippy:
-	source /usr/local/zippy/venv/bin/activate && cd /usr/local/zippy/zippy && python zippy.py $@
+	source $(ZIPPYPATH)/venv/bin/activate && cd $(ZIPPYPATH)/zippy && python zippy.py $@
 requirements:
-	source /usr/local/zippy/venv/bin/activate && pip install -U pip
-	source /usr/local/zippy/venv/bin/activate && pip install -r requirements.txt
+	source $(ZIPPYPATH)/venv/bin/activate && pip install -U pip
+	source $(ZIPPYPATH)/venv/bin/activate && pip install -r requirements.txt
 
 
 #### genome resources
@@ -319,8 +318,8 @@ genome: genome-download genome-index
 genome-download:
 	#source /usr/local/zippy/venv/bin/activate && cd $(ZIPPYPATH) && /usr/local/zippy/venv/bin/python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz
 	#source /usr/local/zippy/venv/bin/activate && cd $(ZIPPYPATH) && python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta.fai http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai
-	cd $(ZIPPYPATH) && /usr/local/zippy/venv/bin/python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz
-	cd $(ZIPPYPATH) && /usr/local/zippy/venv/bin/python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta.fai http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai
+	cd $(ZIPPYPATH) && $(ZIPPYPATH)/venv/bin/python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz
+	cd $(ZIPPYPATH) && $(ZIPPYPATH)/venv/bin/python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta.fai http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai
 	sudo chmod 644 $(ZIPPYVAR)/resources/*
 	sudo chmod 755 $(ZIPPYVAR)/resources
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources

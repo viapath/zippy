@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 # -*- coding: utf-8 -*-
 
 __doc__=="""Primer3 Classes"""
@@ -16,12 +17,11 @@ import pysam
 import subprocess
 from collections import defaultdict, OrderedDict, Counter
 from .interval import Interval
-from string import maketrans
-from urllib import unquote
+from urllib.parse import unquote
 from Bio import Entrez
 import xmltodict
 
-revcmp = maketrans('ACGTNacgtn','TGCANtgcan')
+revcmp = str.maketrans('ACGTNacgtn','TGCANtgcan')
 class ChromosomeNotFoundError(KeyError):
     pass
 
@@ -78,7 +78,7 @@ class MultiFasta(object):
         with pysam.FastaFile(self.file) as fasta:
             self.references = fasta.references
             if len(set(fasta.references))!=len(fasta.references):
-                print >> sys.stderr, self.file
+                print(self.file, file=sys.stderr)
                 raise Exception('DuplicateSequenceNames')
 
     def createPrimers(self,db,bowtie='bowtie2', delete=True, tags={}, tmThreshold=50.0, endMatch=6, maxAln=20):
@@ -135,7 +135,7 @@ class MultiFasta(object):
         # cleanup
         if delete:
             os.unlink(self.file+'.sam') # delete mapping FILE
-        return primers.values()
+        return list(primers.values())
 
 '''Boundary exceeded exception (max list size)'''
 class BoundExceedError(Exception):
@@ -155,7 +155,7 @@ class Location(object):
         # store wells
         self.wells = set(well.split(','))
         try:
-            assert all(map(lambda x: re.match(r'\w\d',x),list(self.wells)))
+            assert all([re.match(r'\w\d',x) for x in list(self.wells)])
         except:
             raise Exception('InvalidWell')
 
@@ -225,7 +225,7 @@ class PrimerPair(list):
     def __hash__(self):
         return hash(self.__str__())
 
-    def __eq__(self,other):
+    def __eq__(self, other):
         return self.name == other.name
 
     def __add__(self, L):
@@ -298,9 +298,9 @@ class PrimerPair(list):
         with open(logfile, 'a') as fh:
             for p in self:
                 threeprimesnps = len([ s for s in p.snp if s[1] >= 2*len(p)/3 ])
-                print >> fh, '{timestamp:26} {primername:20} rank:{rank:<3d} ({fwdrev:1}) {seq:25} snps:{snps:4} misprime:{misprime:2d}'.format(\
+                print ('{timestamp:26} {primername:20} rank:{rank:<3d} ({fwdrev:1}) {seq:25} snps:{snps:4} misprime:{misprime:2d}'.format(\
                     timestamp=timestamp[:26], primername=p.name, rank=p.rank, fwdrev='-' if p.targetposition.reverse else '+',
-                    seq=p.seq, snps=str(len(self[0].snp)-threeprimesnps)+'+'+str(threeprimesnps), misprime=len(p.loci)-1)
+                    seq=p.seq, snps=str(len(self[0].snp)-threeprimesnps)+'+'+str(threeprimesnps), misprime=len(p.loci)-1), file=fh)
         return
 
     def pruneRanks(self):
@@ -378,7 +378,8 @@ class PrimerPair(list):
         return True
 
     def uniqueid(self):
-        return sha1(','.join([str(self[0].tag)+'-'+self[0].seq,str(self[1].tag)+'-'+self[1].seq])).hexdigest()
+        stringtohash = ','.join([str(self[0].tag)+'-'+self[0].seq,str(self[1].tag)+'-'+self[1].seq])
+        return sha1(stringtohash.encode("UTF-8")).hexdigest()
 
     '''returns primer suffixes'''
     def primerSuffixes(self):
@@ -397,7 +398,7 @@ class PrimerPair(list):
         firstDifferent = min([ i for i,x in enumerate(zip(self[0].name,self[1].name)) if len(set(x))!=1 ])
         newName = self[0].name[:firstDifferent].rstrip('_-')
         if newName != self.name and len(newName) >= len(self.name):
-            print >> sys.stderr, 'INFO: Renamed PrimerPair {} -> {}'.format(self.name, newName)
+            print ('INFO: Renamed PrimerPair {} -> {}'.format(self.name, newName), file=sys.stderr)
             self.name = newName
             return True
         return False
@@ -458,10 +459,9 @@ class Primer(object):
 
     def addTarget(self, chrom, pos, reverse, tm=None):
         self.loci.append(Locus(chrom,pos,len(self),reverse,tm))
-        #assert 0, (self.loci, str(self.loci[0]))
         return
 
-    def snpCheckPrimer(self,vcf):
+    def snpCheckPrimer(self, vcf):
         self.snp = self.targetposition.snpCheck(vcf)
         return True if self.snp else False
 
@@ -542,14 +542,14 @@ class Primer3(object):
             upperlimit=min(upperlimit,fasta.lengths[fndref])
         #self.target=(target[0],lowerlimit-self.flank,upperlimit+self.flank)#Assign the target after clipping to valid positions
         self.target=(target[0],lowerlimit,upperlimit)#Assign the target after clipping to valid positions
-        self.designregion = ( str(self.target[0]), lowerlimit, upperlimit )
-        #self.designregion = ( str(self.target[0]), lowerlimit+self.flank, upperlimit+self.flank )
+        #self.designregion = ( str(self.target[0]), lowerlimit, upperlimit )
+        self.designregion = ( self.target[0], lowerlimit, upperlimit )
         try:
-            #self.sequence = fasta.fetch(*self.designregion)
-            self.sequence = fasta.fetch(self.designregion[0])
+            self.sequence = fasta.fetch(*self.designregion)
+            #self.sequence = fasta.fetch(self.designregion[0])
+            #assert 0, (len(self.sequence), self.designregion, fasta.fetch(*self.designregion))
         except KeyError as kerr:
-            #print("Literal sequence not found: {0}".format(self.designregion))
-            assert kerr.args[0]=="sequence '{0}' not present".format(self.designregion[0])
+            assert kerr.args[0]=="sequence 'b'{0}'' not present".format(self.designregion[0]), (kerr, "sequence 'b'{0}'' not present".format(self.designregion[0]))
             assert self.designregion[0][0:3].lower()=="chr"
             #self.target=(self.designregion[0][3:],lowerlimit+self.flank,upperlimit+self.flank)
             self.target=(self.designregion[0][3:],lowerlimit,upperlimit)
@@ -611,4 +611,4 @@ if __name__ == "__main__":
     mf = MultiFasta(sys.argv[1])
     primers = mf.createPrimers('/Users/dbrawand/dev/snappy/WORK/genome/human_g1k_v37.bowtie')
     for primer in primers:
-        print primer
+        print(primer)

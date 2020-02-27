@@ -24,22 +24,22 @@ import tempfile
 import hashlib
 import csv
 import collections
-from zippylib.files import VCF, BED, GenePred, Interval, Data, readTargets, readBatch
-from zippylib.primer import Genome, MultiFasta, Primer3, Primer, PrimerPair, Location, parsePrimerName
-from zippylib.reports import Test
-from zippylib.database import PrimerDB
-from zippylib.interval import IntervalList
-from zippylib import ConfigError, Progressbar, banner
-from zippylib.reports import Worksheet
+import time
+from .zippylib.files import VCF, BED, GenePred, Interval, Data, readTargets, readBatch
+from .zippylib.primer import Genome, MultiFasta, Primer3, Primer, PrimerPair, Location, parsePrimerName
+from .zippylib.reports import Test
+from .zippylib.database import PrimerDB
+from .zippylib.interval import IntervalList
+from .zippylib import ConfigError, Progressbar, banner
+from .zippylib.reports import Worksheet
 from argparse import ArgumentParser
 from copy import deepcopy
 from collections import defaultdict, Counter
-from urllib import unquote
-import cPickle as pickle
+from urllib.parse import unquote
+import pickle
 sys.stderr=sys.stdout
-#def print(*args, **kwa):
-#   sys.stdout.write((args, kwa))
 
+gplist=None #That global variable holds the GenePred object with all genes in refgene
 '''file MD5'''
 def fileMD5(fi, block_size=2**20):
     md5 = hashlib.md5()
@@ -57,9 +57,9 @@ def importPrimerLocations(inputfile):
     with open(inputfile) as infh:
         for i,line in enumerate(infh):
             if i == 0:
-                header = map(lambda x : x.lower(), line.rstrip().split('\t'))
+                header = [x.lower() for x in line.rstrip().split('\t')]
             else:
-                f = map(lambda x: x.strip('"'), line.rstrip().split('\t'))
+                f = [x.strip('"') for x in line.rstrip().split('\t')]
                 l = dict(zip(header,f))
                 # store metadata and write fasta
                 if 'vessel' in l.keys() and 'well' in l.keys() and \
@@ -85,19 +85,19 @@ def importPrimerPairs(inputfile, config, primer3=True):
     if not inputfile.split('.')[-1].startswith('fa'):  # ignores duplicate sequence
         primerseqs = {}
         fastafile = 'import_' + fileMD5(inputfile)[:8] + '.fasta'
-        with open(fastafile,'w') as outfh:
+        with open(fastafile ,'w') as outfh:
             with open(inputfile) as infh:
                 for i,line in enumerate(infh):
                     if i == 0:
                         minimalHeader = set(['primername','primerset','tag','sequence','vessel','well'])
-                        header = map(lambda x : x.lower(), line.rstrip().split('\t'))
+                        header = [x.lower() for x in line.rstrip().split('\t')]
                         try:
                             assert not minimalHeader.difference(set(header))
                         except:
                             print ('ERROR: Missing columns (%s)' % ','.join(list(minimalHeader.difference(set(header)))), file=sys_stderr)
                             raise Exception('FileHeaderError')
                     else:
-                        f = map(lambda x: x.strip('"'), line.rstrip().split('\t'))
+                        f = [x.strip('"') for x in line.rstrip().split('\t')]
                         l = dict(zip(header, f))
                         # remove tag from sequence
                         if l['tag']:
@@ -235,6 +235,8 @@ def importPrimerPairs(inputfile, config, primer3=True):
 
 '''get primers from intervals'''
 def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible=False):
+    global gplist
+    initime = time.time()
     ivpairs = defaultdict(list)  # found/designed primer pairs (from database or design)
     flash_messages = []
     blacklist = db.blacklist() if db else []
@@ -273,7 +275,7 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
     if db:
         progress = Progressbar(len(intervals),'Querying database')
         for i, iv in enumerate(intervals):
-            sys.stderr.write('\r'+progress.show(i))
+            sys.stderr.write('\r' + progress.show(i))
             ivpairs[iv] = []
             primerpairs = db.query(iv)
             if primerpairs:
@@ -288,11 +290,15 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
         print (primers_found_in_DB_string, file=sys.stderr)
         if len(intervals_in_database)>0:
             flash_messages.append((primers_found_in_DB_string, 'info'))
-
-    with open(config['design']['annotation']) as fh:
-        gplist =  GenePred(fh,getgenes=None, combine=False, **config['tiling'])
+    if rename:
+        with open(config['design']['annotation']) as fh:
+            print("inigpl", time.time(), config['tiling'], gplist)
+            if gplist is None:
+                gplist = GenePred(fh, getgenes=None, combine=False, noncoding=True, **config['tiling'])
+            print("endgpl", time.time(), gplist)
     # designing
     if design:
+        print("starting design", time.time())
         for tier in tiers:
             # get intervals which do not satisfy minimum amplicon number
             insufficentAmpliconIntervals = [ iv for iv in intervals if config['report']['pairs']>len(ivpairs[iv]) ]
@@ -318,7 +324,7 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
             sys.stderr.write('\r'+progress.show(len(insufficentAmpliconIntervals))+'\n')
             if designedPairs:
                 ## import designed primer pairs (place on genome and get amplicons)
-                with tempfile.NamedTemporaryFile(suffix='.fa',prefix="primers_",delete=False) as fh:
+                with tempfile.NamedTemporaryFile(suffix='.fa',prefix="primers_",delete=False, mode="wt") as fh:
                     for k,v in designedPairs.items():
                         for pairnumber, pair in enumerate(v):
                             print (pair[0].fasta('_'.join([ k.name, str(pairnumber), 'rev' if k.strand < 0 else 'fwd' ])), file=fh)
@@ -351,9 +357,7 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                 intervalindex = { iv.name: iv for iv in intervals }
                 intervalprimers = { iv.name: set([ p.uniqueid() for p in ivpairs[iv] ]) for iv in intervals }
                 failCount = 0
-                #assert 0, (intervalprimers, pairs[0])
                 for pair in pairs:
-                    passed = 0
                     if pair.uniqueid() not in intervalprimers[pair.name]:
                         if pair.check(config['designlimits']):
                             # add default tag
@@ -364,18 +368,18 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                             intervalprimers[pair.name].add(pair.uniqueid())
                             # rename (for variant based naming which is too rich)
                             if rename:
-                                matches=[]
+                                matches = []
                                 for iv in gplist:  # get intervals from file or commandline
-                                    #if iv
                                     if pair[0].targetposition.chrom == iv.chrom:
-                                        assert iv.chromEnd>iv.chromStart
-                                        if iv.chromStart <= pair[0].targetposition.offset <= iv.chromEnd:
-                                            assert pair[0].targetposition.offset < iv.chromEnd
+                                        targetend = pair[1].targetposition.offset + pair[1].targetposition.length
+                                        assert targetend > pair[0].targetposition.offset
+                                        if (pair[0].targetposition.offset <= iv.chromStart <= targetend) or (pair[0].targetposition.offset <= iv.chromEnd <= targetend) or \
+                                           (iv.chromStart <= pair[0].targetposition.offset <= iv.chromEnd) or (iv.chromStart <= targetend <= iv.chromEnd):
                                             matches.append(iv)
-                                panam = pair.name
+                                            #break
                                 if len(matches)==0:
                                     pass#assert 0
-                                elif len(matches)==1:
+                                elif len(matches) == 1:
                                     ivpairs[intervalindex[pair.name]][-1].rename(matches[0].name)
                                 else:
                                     exons = collections.defaultdict(list)
@@ -386,10 +390,6 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                                         else:
                                             exons["_".join(nameparts[0:-1])].append(nameparts[-1])
                                     new_name = ",".join("{0}_{1}".format(gene, "_".join(sorted(exons))) for (gene, exons) in exons.items())
-                                    #if new_name=="1_1,2_2":
-                                    #    assert 0, (exons, matches)
-                                    #else:
-                                    #    print("newname", new_name)
 
                                     ivpairs[intervalindex[pair.name]][-1].rename(new_name)
                         else:
@@ -404,6 +404,7 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                     if len(v)==0:
                         print('WARNING: Target {} failed on designlimits'.format(k),  file=sys.stderr) 
                         flash_messages.append(('WARNING: Target {} failed on designlimits'.format(k), 'warning'))
+        print("ending design")
 
     # save blacklist cache
     try:
@@ -447,9 +448,8 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
     else:
         # select by best pairs independently (always print database primers)
         for iv in sorted(ivpairs.keys()):
-            #assert 0, (iv, str(iv), repr(iv), type(iv), ivpairs[iv])
             nomers=set((ivpair.name, ivpair.original_name) for ivpair in ivpairs[iv])
-            print("IV", unquote(iv.name),  "nombre", [(ivpair.name, ivpair.designrank(), ivpair.original_name) for ivpair in ivpairs[iv]], file=sys.stderr) 
+            print("IV", unquote(iv.name),  "name", [(ivpair.name, ivpair.designrank(), ivpair.original_name) for ivpair in ivpairs[iv]], file=sys.stderr) 
             if not ivpairs[iv]:
                 missedIntervals.append(iv)
             for i, p in enumerate(sorted(ivpairs[iv])):
@@ -465,7 +465,10 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
     # update primer pairs with covered variants
     for pp, v in primerVariants.items():
         pp.variants = v
-    return primerTable, primerVariants.keys(), missedIntervals, flash_messages
+    endtime = time.time()
+    elapsedtime = initime - endtime
+    print("Zippy elapsed time", elapsedtime)
+    return primerTable, list(primerVariants.keys()), missedIntervals, flash_messages
 
 # ==============================================================================
 # === convenience functions for webservice =====================================
@@ -584,7 +587,6 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
     for sample, intervals in sorted(sampleVariants.items(),key=lambda x: x[0]):
         print ("Getting primers for {} variants in sample {}".format(len(intervals),sample), file=sys.stderr)
         # get/design primers
-        #print(intervals, file=sys.stderr)
         primerTable, resultList, missedIntervals, more_flash_messages = getPrimers(intervals,db,design,config,tiers,rename=shortHumanReadable)
         flash_messages.extend(more_flash_messages)
         if missedIntervals:
@@ -734,8 +736,8 @@ def readprimerlocations(locationfile):
 # === CLI ======================================================================
 # ==============================================================================
 def main():
-    from zippylib import ascii_encode_dict
-    from zippylib import banner
+    from .zippylib import ascii_encode_dict
+    from .zippylib import banner
 
     print (banner(__version__),  file=sys.stderr) 
 
@@ -852,7 +854,7 @@ def main():
             try:
                 l = options.amplicons.split('-')
                 assert len(l)==2
-                amplen = map(int,l)
+                amplen = list(map(int, l))
             except (AssertionError, ValueError):
                 raise ConfigError('must give amplicon size to retrieve')
             except:
@@ -893,10 +895,10 @@ def main():
             print ('REMOVED ORPHANS:   {}'.format(','.join(db.removeOrphans())), file=sys.stderr)
     elif options.which=='get':  # get primers for targets (BED/VCF or interval)
         zippyPrimerQuery(config, options.targets, options.design, options.outfile, \
-            db, options.store, map(int,options.tiers.split(',')), options.gap)
+            db, options.store, list(map(int,options.tiers.split(','))), options.gap)
     elif options.which=='batch':
         zippyBatchQuery(config, options.targets.split(','), options.design, options.outfile, \
-            db, options.predesign, map(int,options.tiers.split(',')))
+            db, options.predesign, list(map(int,options.tiers.split(','))))
     elif options.which=='query':
         searchByName(options.subString, db)
 

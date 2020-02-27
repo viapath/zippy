@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 # -*- coding: utf-8 -*-
 
 __doc__=="""Report Generator"""
@@ -21,7 +22,7 @@ from hashlib import sha1
 from collections import Counter
 from . import PlateError, char_range, imageDir, githash
 from .primer import parsePrimerName, PrimerPair, Primer
-from urllib import unquote
+from urllib.parse import unquote
 
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
@@ -226,7 +227,7 @@ class Report(object):
             ]
         # MERGE CELLS
         for i, c in enumerate(mergeColumnFields):
-            rowRanges = range(firstData[1],len(data[firstData[1]:]))  # groups that are treated seperately
+            rowRanges = list(range(firstData[1],len(data[firstData[1]:])))  # groups that are treated seperately
             offsetRow = firstData[1]  # define first row offset
             for k,g in groupby([ data[r][c] for r in range(firstData[1],len(data)) ]):
                 groupSize = len(list(g))
@@ -469,12 +470,12 @@ class Worksheet(list):
                         tagseq = config['sequencetags'][p.tag]['tags'][tagorder[i]]
                     except:
                         tagseq = '' if not p.tag else p.tag+'-'
-                    print >> fh, '\t'.join([ p.name, tagseq+p.seq ] + config['extracolumns'])
+                    print('\t'.join([ p.name, tagseq+p.seq ] + config['extracolumns']), file=fh)
 
     '''print robot csv, (DestinationPlate,DestinationWell,SampleID,PrimerID)'''
     def robotCsv(self,fi,sep=','):
         with open(fi,'w') as fh:
-            print >> fh, sep.join(['DestinationPlate','DestinationWell','PrimerID','SampleID','PrimerName'])
+            print(sep.join(['DestinationPlate','DestinationWell','PrimerID','SampleID','PrimerName']), file=fh)
             for n, p in enumerate(self.plates):
                 P = 'Plate'+str(n+1)
                 for col in range(p.ncol):
@@ -483,7 +484,7 @@ class Worksheet(list):
                         R = chr(ord('A')+row)
                         cell = p.M[row][col]
                         if cell:
-                            print >> fh, sep.join([P,R+C,cell.primerpairobject.uniqueid()[:10],cell.sample,cell.primerpair])
+                            print (sep.join([P,R+C,cell.primerpairobject.uniqueid()[:10],cell.sample,cell.primerpair]), file=fh)
 
     '''assign tests to plate (smart work better only for big test sets)'''
     def fillPlates(self,size=[8,12],randomize=True,roworder='primerpair',includeSamples=True,includeControls=True):
@@ -589,7 +590,7 @@ class Worksheet(list):
         # detects collisions, run with empty output to validate
         digests = {}  # digest -> name
         with open(fi,'w') as fh:
-            print >> fh, '~SD30'  # darkness to maximum
+            print ('~SD30', file=fh)  # darkness to maximum
             for n, p in enumerate(self.plates):
                 for i,row in enumerate(p.M):
                     for j,cell in enumerate(row):
@@ -609,12 +610,12 @@ class Worksheet(list):
                             locations = ' '.join([ str(l) if l else '' for l in cell.primerpairobject.locations() ])
                             # get tag name
                             tagstring = '/'.join(set([ x.tag for x in cell.primerpairobject ]))
-                            print >> fh, "^XA"  # start label
-                            print >> fh, "^PR1,A,A"  # slower print speed
-                            print >> fh, "^FO20,50^AB^FD{}  {}^FS".format(self.date[:self.date.rfind('.')],locations)  # date and location
-                            print >> fh, "^FO20,70^AB,25^FD{}^FS".format(cell.primerpair)  # primer name
-                            print >> fh, "^FO20,100^BY1.5^BCN,80,Y,N,N^FD{}^FS".format(d)  # Barcode uniqueid
-                            print >> fh, "^XZ"  # end label
+                            print("^XA", file=fh)  # start label
+                            print("^PR1,A,A", file=fh)  # slower print speed
+                            print("^FO20,50^AB^FD{}  {}^FS".format(self.date[:self.date.rfind('.')],locations), file=fh)  # date and location
+                            print("^FO20,70^AB,25^FD{}^FS".format(cell.primerpair), file=fh)  # primer name
+                            print("^FO20,100^BY1.5^BCN,80,Y,N,N^FD{}^FS".format(d), file=fh)  # Barcode uniqueid
+                            print("^XZ", file=fh)  # end label
 
 
 class Plate(object):
@@ -642,7 +643,7 @@ class Plate(object):
         # # generate plate map
         trunc = lambda x: '<br/>'.join([ x.sample[:9]+'...' if len(x.sample)>12 else x.sample,
             x.primerpair[:9]+'...' if len(x.primerpair)>12 else x.primerpair]) if x is not None else "EMPTY"
-        pm = [ map(trunc,r) for r in self.M ]
+        pm = [list(map(trunc,r)) for r in self.M ]
         # return values
         return sorted(list(s)), sorted(list(p),key=lambda x: x.name), pm
 
