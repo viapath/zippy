@@ -194,8 +194,8 @@ webservice_ubuntu:
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 
 	# disable the server software not un use
-	make stop_$(theotherserver)_service$(env_suffix)
-	make disble_$(theotherserver)_service$(env_suffix)
+	make stop_$(theotherserver)_service$(env_suffix)>/dev/null
+	make disble_$(theotherserver)_service$(env_suffix)>/dev/null
 
 	# enable site and restart
 	make start_$(server)_service$(env_suffix)
@@ -211,8 +211,8 @@ webservice_centos:
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 
 	# disable the server software not un use
-	make stop_$(theotherserver)_service$(env_suffix)
-	make disble_$(theotherserver)_service$(env_suffix)
+	make stop_$(theotherserver)_service$(env_suffix)>/dev/null
+	make disble_$(theotherserver)_service$(env_suffix)>/dev/null
 
 	# enable site and restart
 	make start_$(server)_service$(env_suffix)
@@ -399,7 +399,7 @@ gitarchive:
 		(cd $$path && git archive --prefix=$(SOURCE)-$(VERSION)/ HEAD > $$p/tmp.tar && tar --concatenate --file=$$p/$(SOURCE)-$(VERSION).tar $$p/tmp.tar && rm $$p/tmp.tar); \
 	done && gzip -f $$p/$(SOURCE)-$(VERSION).tar
 
-toroot:
+toroot: archive
 	sudo cp -f $(SOURCE)-$(VERSION).tar.gz /root/$(SOURCE)-$(VERSION).tar.gz
 	sudo cp -f $(SOURCE)_install.bash /root/$(SOURCE)_install_v$(VERSION).bash
 	sudo chmod +x /root/$(SOURCE)_install_v$(VERSION).bash
