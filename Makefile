@@ -4,7 +4,7 @@ ZIPPYPATH=/usr/local/zippy
 ZIPPYVAR=/var/local/zippy
 ZIPPYWWW=/var/www/zippy
 SOURCE=zippy
-VERSION=7.3
+VERSION := $(shell cat version.dat)
 
 genome=human_g1k_v37
 server=nginx#Can be nginx or apache
@@ -35,15 +35,20 @@ else
 		serving_packages=nginx
 	else
 		serving_packages=mod_wsgi httpd
-		#serving_packages=apache2 apache2.2-common apache2-mpm-prefork apache2-utils libexpat1 ssl-cert libapache2-mod-wsgi
-		#apachedirtitle=apache2
 		apachedirtitle=httpd
 	endif
 endif
+
 ifeq ($(env_suffix),_dev)
 	environment=_dev
 else
 	environment=
+endif
+
+ifeq ($(server),apache)
+	theotherserver=nginx
+else
+	theotherserver=apache
 endif
 
 # development installs (with mounted volume)
@@ -187,8 +192,16 @@ webservice_ubuntu:
 	mkdir -p $(ZIPPYWWW)
 	sudo cp install/zippy$(environment).wsgi $(ZIPPYWWW)/zippy$(environment).wsgi
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
+
+	# disable the server software not un use
+	make stop_$(theotherserver)_service$(env_suffix)
+	make disble_$(theotherserver)_service$(env_suffix)
+
 	# enable site and restart
 	make start_$(server)_service$(env_suffix)
+	make enable_$(server)_service$(env_suffix)
+	make start_zippy_service$(env_suffix)
+	make enable_zippy_service$(env_suffix)
 
 # webservice install (production)
 webservice_centos:
@@ -196,8 +209,16 @@ webservice_centos:
 	sudo mkdir -p $(ZIPPYWWW)
 	sudo cp install/zippy$(environment).wsgi $(ZIPPYWWW)/zippy$(environment).wsgi
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
+
+	# disable the server software not un use
+	make stop_$(theotherserver)_service$(env_suffix)
+	make disble_$(theotherserver)_service$(env_suffix)
+
 	# enable site and restart
 	make start_$(server)_service$(env_suffix)
+	make enable_$(server)_service$(env_suffix)
+	make start_zippy_service$(env_suffix)
+	make enable_zippy_service$(env_suffix)
 
 start_apache_service:
 	# enable site and restart
@@ -227,19 +248,28 @@ start_apache_service_docker:
 
 enable_zippy_service:
 	sudo systemctl enable zippy
+	sudo systemctl enable zippy.socket
+
 disable_zippy_service:
 	sudo systemctl disable zippy
+	sudo systemctl disable zippy.socket
+
 start_nginx_service:
 	# enable site and restart
 	ls -lRt /etc/nginx
+	sudo mkdir -p /etc/nginx/sites-available
+	sudo mkdir -p /etc/nginx/sites-enabled
 	sudo cp install/zippy /etc/nginx/sites-available/zippy
 	sudo ln -sf /etc/nginx/sites-available/zippy /etc/nginx/sites-enabled/zippy
 	#sudo cp install/zippy /etc/nginx/conf.d/zippy
+	sudo systemctl restart nginx
+
+start_zippy_service:
 	sudo cp install/zippy.service /etc/systemd/system/zippy.service
 	sudo cp install/zippy.socket /etc/systemd/system/zippy.socket
 	sudo systemctl daemon-reload
-	sudo systemctl restart nginx
 	sudo systemctl restart zippy
+	sudo systemctl restart zippy.socket
 	#Opens the port 80 in the firewall in the system, for public access
 	#Disable SELINUX, this disabling is full while we don't know how to open only the sippy directories to SELINUX.
 	sudo firewall-cmd --zone=public --add-service=http --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
@@ -259,10 +289,9 @@ stop_apache_service:
 	/etc/init.d/apache2 stop
 
 stop_nginx_service:
-	# enable site and restart
-	sudo ln -sf /etc/nginx/sites-available/zippy /etc/nginx/sites-enabled/zippy
-	#/etc/init.d/apache2 start
 	sudo systemctl stop nginx
+
+stop_zippy_service:
 	sudo systemctl stop zippy
 	sudo systemctl stop zippy.socket
 
