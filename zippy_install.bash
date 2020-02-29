@@ -1,7 +1,7 @@
 #!/bin/bash
 sudo yum -y upgrade --skip-broken
 sudo yum -y install less make wget curl vim git sudo tar gzip #gunzip
-zippy_parent_folder=/root
+zippy_parent_folder=$(pwd)
 version=7.5
 zippy_folder_title=zippy-${version}
 zippy_folder=${zippy_parent_folder}/${zippy_folder_title}
@@ -22,14 +22,13 @@ function install(){
         #make cleanall recover-resources install webservice resources
         #make cleanall install webservice resources
     #fi
-    echo To run the server, now go to /usr/local/zippy
-    echo and execute ´make run´
+    echo To run the server, now go to /usr/local/zippy and execute ´make run´
 }
 qseqdnamatch=`expr match "$(pwd)" '.*\(${zippy_folder_title}\)'`
 if [[ $qseqdnamatch = "${zippy_folder_title}" ]]
 then
     echo "Already in zippy folder."
-    install
+    install $@
 else
     p=$(pwd);
     echo "Not in zippy folder, but in $p."

@@ -193,9 +193,9 @@ webservice_ubuntu:
 	sudo cp install/zippy$(environment).wsgi $(ZIPPYWWW)/zippy$(environment).wsgi
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 
-	# disable the server software not un use
-	make stop_$(theotherserver)_service$(env_suffix)>/dev/null
-	make disble_$(theotherserver)_service$(env_suffix)>/dev/null
+	# disable the apache server software (that can conflict with nginx port listening)
+	make stop_$(theotherserver)_service$(env_suffix) &>/dev/null || echo "The apache service was not running"
+	make disable_$(theotherserver)_service$(env_suffix) &>/dev/null || echo "The apache service was not enabled"
 
 	# enable site and restart
 	make start_$(server)_service$(env_suffix)
@@ -210,9 +210,9 @@ webservice_centos:
 	sudo cp install/zippy$(environment).wsgi $(ZIPPYWWW)/zippy$(environment).wsgi
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 
-	# disable the server software not un use
-	make stop_$(theotherserver)_service$(env_suffix)>/dev/null
-	make disble_$(theotherserver)_service$(env_suffix)>/dev/null
+	# disable the apache server software (that can conflict with nginx port listening)
+	make stop_$(theotherserver)_service$(env_suffix) &>/dev/null || echo "The apache service was not running"
+	make disable_$(theotherserver)_service$(env_suffix) &>/dev/null || echo "The apache service was not enabled"
 
 	# enable site and restart
 	make start_$(server)_service$(env_suffix)
@@ -245,6 +245,9 @@ start_apache_service_docker:
 	ls -lt /etc/$(apachedirtitle)
 	sudo cp install/zippy$(environment).hostconfig$(distro_suffix)$(server_suffix) /etc/$(apachedirtitle)/conf.d/zippy.conf
 	#sudo ln -sf /etc/httpd/sites-available/zippy.conf /etc/httpd/sites-enabled/zippy.conf
+
+enable_nginx_service:
+	sudo systemctl enable nginx
 
 enable_zippy_service:
 	sudo systemctl enable zippy

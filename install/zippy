@@ -3,6 +3,8 @@ server {
     listen       [::]:80;
     server_name  bioinfojdp.freelancecuernavaca.com;
     root         /usr/share/nginx/html;
+    fastcgi_read_timeout 300;
+    proxy_read_timeout 300;
 
     # Load configuration files for the default server block.
     include /etc/nginx/default.d/*.conf;
@@ -47,6 +49,9 @@ server {
         proxy_redirect off;
     }
 
+
+    fastcgi_read_timeout 300;
+    proxy_read_timeout 300;
 
     error_page 404 /404.html;
         location = /40x.html {
