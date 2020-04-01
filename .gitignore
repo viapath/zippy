@@ -87,8 +87,8 @@ zippyvenv/*
 venv/*
 
 # resources
-zippy_resources/*
 resources/*
+prebuilt_resources/*
 
 # scratch
 scratch/*

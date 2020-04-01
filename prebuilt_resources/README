@@ -1,0 +1,3 @@
+The content of this folder will be added to the docker resource directory.
+Adding the BOWTIE2 indexes and reference genome and variation files
+will dramatically increase the speed of the docker build.
