@@ -112,9 +112,9 @@
         "designrank": 100
     },
     "report": {
-        "auth": "Frances Smith",
-        "docid": "LF-HAE-PND147",
-        "site": "KINGS COLLEGE HOSPITAL, MOLECULAR PATHOLOGY",
+        "auth": "AUTHORISER_NOT_DEFINED",
+        "docid": "NO_DOCUMENT_ID_ASSIGNED",
+        "site": "NO_SITE_DEFINED",
         "logo": "zippy.png",
         "pairs": 1,
         "platesize": [8,12],
@@ -127,9 +127,9 @@
         }
     },
     "l_report": {
-        "auth": "Frances Smith",
-        "docid": "LF-HAE-PND147",
-        "site": "KINGS COLLEGE HOSPITAL, MOLECULAR PATHOLOGY",
+        "auth": "AUTHORISER_NOT_DEFINED",
+        "docid": "NO_DOCUMENT_ID_ASSIGNED",
+        "site": "NO_SITE_DEFINED",
         "logo": "zippy.png",
         "pairs": 1,
         "platesize": [8,12],

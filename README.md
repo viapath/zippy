@@ -1,6 +1,39 @@
 # Zippy
 Primer database and design tool
 
+- [Zippy](#zippy)
+  - [Description](#description)
+    - [Primer design](#primer-design)
+    - [Storage Management](#storage-management)
+    - [Batch processing](#batch-processing)
+  - [Install](#install)
+    - [Docker setup](#docker-setup)
+      - [Configuration](#configuration)
+    - [Legacy methods](#legacy-methods)
+      - [Virtual machine setup](#virtual-machine-setup)
+      - [Native Install](#native-install)
+      - [Apache Webservice Install](#apache-webservice-install)
+  - [Usage](#usage)
+    - [Webservice](#webservice)
+    - [Command line interface](#command-line-interface)
+  - [Release Notes](#release-notes)
+    - [v1.0](#v10)
+    - [v1.1](#v11)
+    - [v1.2](#v12)
+    - [v2.0.0](#v200)
+    - [v2.0.1](#v201)
+    - [v2.1.0](#v210)
+    - [v2.2.0](#v220)
+    - [v2.2.1](#v221)
+    - [v2.2.2](#v222)
+    - [v2.3.0](#v230)
+    - [FUTURE](#future)
+  - [Resource Info](#resource-info)
+    - [Reference Genome](#reference-genome)
+    - [Common variation](#common-variation)
+
+  - [Reference Genome](#reference-genome)
+
 ## Description
 This program integrates a simple SQLite primer database and design tool based on the Primer3 library.
 It allows the automatic generation of primer pairs based on a VCF, BED or SNPpy result table.
@@ -27,24 +60,48 @@ For information on the Hamilton Robot program please contact the authors.
 The installation procedure installs an Apache2 webserver and installs all required python modules in a *virtualenv* in `/usr/local/zippy`. Genomic data is stored
 
 ### Docker setup
-The easiest way to test zippy without changing your existing system is to run zippy from a docker container.
+The easiest way to test zippy without changing your existing system is to run zippy from a docker container. The webinterface is exposed on port `5000`.
 
 1. Build the image (requires installation of docker)
-> docker build -t dbrawand/zippy .
+> `docker build -t kingspm/zippy .`
 Alternatively you can pull an image from DockerHub
-> docker pull dbrawand/zippy
-2. start the image (and bind to local port 9999)
-> docker run -it -p 9999:80 -m 6144m dbrawand/zippy
+> `docker pull kingspm/zippy`
+2. start the image as a daemon (bind to local port 9999)
+> `docker run -d -p 9999:5000 -m 6144m kingspm/zippy`
 3. Web interface can be accessed on `localhost:9999`
 
-### Virtual machine setup
+#### Configuration
+The configured password can be overridden using the ZIPPY_PASSWORD environment variable.
+
+If you require a custom configuration file, mount your configuration file to `/usr/local/zippy/zippy/zippy.json` as below:
+> `docker run -d -p 9999:5000 -v zippy.json:/usr/local/zippy/zippy/zippy.json`
+
+You should consider mounting database and log files, if those should persist beyond container lifetime.
+For example, the database can be persisted as follows:
+> `docker run -d -p 9999:5000 -v zippy.sqlite:/var/local/zippy/zippy.sqlite kingspm/zippy`
+
+The following files should be persisted outside of the docker container in a production setup:
+
+|File|Description|
+|:---|:---|
+|`/var/local/zippy/zippy.sqlite`|Primer database (SQLite3)|
+|`/var/local/zippy/zippy.log`|Log file|
+|`/var/local/zippy/.blacklist.cache`|Blacklisted Primer Cache (pickle)|
+|`/var/local/zippy/zippy.bed`|BED file of all amplicons in database (updates on database change)|
+|`/var/log/zippy_access.log`|Access log (gunicorn in docker)|
+|`/var/log/zippy_error.log`|Error log (gunicorn in docker)|
+
+### Legacy methods
+The following install options are no longer maintained. Use the docker deployment instead.
+
+#### Virtual machine setup
 fire up the virtual machine and connect with
 > `vagrant up && vagrant ssh`
 
 then follow the local installation instructions below.
 
-### Install
-The current installation routine will download and build the human *GRCh_37* genome index and download the common variantion data from *dbsnp142*. If you desire to use your own resources or an alternative reference genome simply put everything into the `./resource` directory and it will be imported to `/var/local/zippy/resources` during the installation process.
+#### Native Install
+The current installation routine will download and build the human *GRCh_37* genome index and download the common variantion data from *dbsnp1xx*. If you desire to use your own resources or an alternative reference genome simply put everything into the `./resource` directory and it will be imported to `/var/local/zippy/resources` during the installation process.
 Make sure to modify the configuration file `zippy.json` accordingly.
 
 To install the development version (uses zippy from mounted NFS volume) run
@@ -56,7 +113,7 @@ Alternatively you can download b37 genomes, index and annotations with
 
 NB: The default install makes the database/resource directory accessible for all users.
 
-### Webservice
+#### Apache Webservice Install
 The webservice will be exposed to the VM host at address `55.55.55.5`.
 
 To install or update the webservice (independent of mounted folders, best for VM distribution)
@@ -65,7 +122,7 @@ To install or update the webservice (independent of mounted folders, best for VM
 ## Usage
 
 ### Webservice
-The application runs on Apache Webserver (WSGI).
+The application runs on Apache Webserver (native) or gunicorn (docker) using WSGI.
 The standard install exposes the service on port 80 on the guest and forwards to host machine port 5000.
 
 Currently the design process is executed synchronously. This can potentially lead to timeouts during the design process if many target regions are requested. In this case please run *zippy* from the command line interface.
@@ -164,7 +221,12 @@ Set/update primer storage location
 - Import from files (fasta,list)
 - Better detection of foreign amplicons
 
-## Reference Genome
+## Resource Info
+
+### Reference Genome
 Primers are designed from the unmasked 1kg reference genome while ignoring simple repeat regions.
 Alternatively, use a Repeatmasked reference genome. Even better if common SNPs are masked as well (eg. >1%).
 BEDTOOLS offers `maskfasta` for this purpose. Masking data in BED format can be obtained from UCSC (http://genome.ucsc.edu/cgi-bin/hgTables?command=start).
+
+### Common variation
+The default setup and the docker image contain a copy of the common variation listed in dbSNP (see `Makefile` for version). This includes known polymorphisms above 1% population frequency. Design paramteres can allow or restrict presence of SNPs in the whole primer, or in the 3' end of the primer (last third of the total length) for which allele specific amplification is likely.
