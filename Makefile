@@ -8,17 +8,28 @@ WWWUSER=flask
 WWWGROUP=www-data
 
 # production install
-release: install resources webservice
+release: essential install resources webservice
 
 # development installs (with mounted volume)
-all: install resources
+all: essential install resources
 
-install: essential zippy-install
+# zippy install with virtual env
+install: zippy-setup
+	# virtualenv
+	cd $(ZIPPYPATH) && virtualenv venv
+	$(ZIPPYPATH)/venv/bin/pip2 install Cython==0.24
+	$(ZIPPYPATH)/venv/bin/pip2 install -r package-requirements.txt
+
+# native zippy install (eg for containers)
+install-dockerized: zippy-setup
+	# do not use a venv (eg for docker images)
+	pip install Cython==0.24
+	pip install cffi==1.14.0
+	pip install -r package-requirements.txt
 
 # requirements
 essential:
-	apt-get install -y wget
-	apt-get install -y sqlite3 unzip git htop
+	apt-get install -y wget sqlite3 unzip git htop jq
 	apt-get install -y python-pip python2.7-dev ncurses-dev python-virtualenv
 	apt-get install -y libxslt-dev libxml2-dev libffi-dev
 	apt-get install -y redis-server
@@ -26,6 +37,11 @@ essential:
 	apt-get install -y mysql-client
 	apt-get install -y bowtie2
 	apt-get install -y postgresql-server-dev-9.4
+	wget -O /usr/local/bin/blat http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/blat/blat && chmod +x /usr/local/bin/blat
+	wget -O /usr/local/bin/faToTwoBit http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/faToTwoBit && chmod +x /usr/local/bin/faToTwoBit
+
+# optional apache install (no longer recommended)
+apache-install:
 	# add apache user
 	useradd -M $(WWWUSER)
 	usermod -s /bin/false $(WWWUSER)
@@ -37,13 +53,8 @@ essential:
 	# disable default site
 	a2dissite 000-default
 
-# zippy setup (will move to distutils in future release)
-zippy-install:
-	# virtualenv
-	mkdir -p $(ZIPPYPATH)
-	cd $(ZIPPYPATH) && virtualenv venv
-	$(ZIPPYPATH)/venv/bin/pip install Cython==0.24
-	$(ZIPPYPATH)/venv/bin/pip install -r package-requirements.txt
+# setup paths and files for zippy
+zippy-setup:
 	# create empty database
 	mkdir -p $(ZIPPYVAR)
 	touch $(ZIPPYVAR)/zippy.sqlite
@@ -54,7 +65,7 @@ zippy-install:
 	chmod -R 777 $(ZIPPYVAR)
 
 # gunicorn/nginx webserver
-unicorn:
+gunicorn:
 	apt-get install nginx
 	# start gunicorn with
 	# gunicorn --bind 0.0.0.0:8000 wsgi:app
@@ -105,6 +116,10 @@ genome-download:
 genome-index:
 	cd $(ZIPPYVAR)/resources && \
 	bowtie2-build human_g1k_v37.fasta human_g1k_v37.bowtie
+
+genome-index-blat:
+	cd $(ZIPPYVAR)/resources && \
+	faToTwoBit human_g1k_v37.fasta human_g1k_v37.2bit
 
 annotation: variation-download refgene-download
 
