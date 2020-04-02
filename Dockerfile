@@ -1,16 +1,21 @@
-FROM debian:jessie
-MAINTAINER dbrawand@nhs.net
-
+# bare container without resources (must be mounted into /var/local/zippy/resources)
+FROM debian:jessie as bare
+LABEL maintainer="dbrawand@nhs.net"
 RUN apt-get update && apt-get -y upgrade
 RUN apt-get -y install less make wget vim curl
 ADD Makefile /usr/local/zippy/Makefile
 ADD package-requirements.txt /usr/local/zippy/package-requirements.txt
+ADD wsgi.py /usr/local/zippy
+ADD LICENSE /usr/local/zippy
+ADD resources /usr/local/zippy
+ADD gunicorn.conf.py /usr/local/zippy
+ADD zippy /usr/local/zippy
 WORKDIR /usr/local/zippy
-RUN make essential
 RUN make install-dockerized
-RUN make variation-download
-RUN make refgene-download
-RUN make genome
-ADD . /usr/local/zippy
 EXPOSE 5000
 CMD ["gunicorn","wsgi:app"]
+
+## monolithic image with all genome resources
+FROM standalone as mono
+ADD prebuilt_resources/* /var/local/zippy/resources
+RUN make resources

@@ -9,13 +9,11 @@ Primer database and design tool
   - [Install](#install)
     - [Docker setup](#docker-setup)
       - [Configuration](#configuration)
-    - [Legacy methods](#legacy-methods)
-      - [Virtual machine setup](#virtual-machine-setup)
-      - [Native Install](#native-install)
-      - [Apache Webservice Install](#apache-webservice-install)
+    - [Native Install](#native-install)
   - [Usage](#usage)
     - [Webservice](#webservice)
     - [Command line interface](#command-line-interface)
+      - [Importing exisitng primer library](#importing-exisitng-primer-library)
   - [Release Notes](#release-notes)
     - [v1.0](#v10)
     - [v1.1](#v11)
@@ -27,6 +25,7 @@ Primer database and design tool
     - [v2.2.1](#v221)
     - [v2.2.2](#v222)
     - [v2.3.0](#v230)
+    - [v2.4.0](#v240)
     - [FUTURE](#future)
   - [Resource Info](#resource-info)
     - [Reference Genome](#reference-genome)
@@ -70,6 +69,9 @@ Alternatively you can pull an image from DockerHub
 > `docker run -d -p 9999:5000 -m 6144m kingspm/zippy`
 3. Web interface can be accessed on `localhost:9999`
 
+This procedure will create a monolithic docker image that contains all genome, annotation and variation data (it will be big). If you want to mount those resources from a directory a host, the container can be built using the `bare` target to prevent adding those resources to the image.
+> `docker build --target bare -t kingspm/zippy:bare`
+
 #### Configuration
 The configured password can be overridden using the ZIPPY_PASSWORD environment variable.
 
@@ -91,42 +93,30 @@ The following files should be persisted outside of the docker container in a pro
 |`/var/log/zippy_access.log`|Access log (gunicorn in docker)|
 |`/var/log/zippy_error.log`|Error log (gunicorn in docker)|
 
-### Legacy methods
-The following install options are no longer maintained. Use the docker deployment instead.
-
-#### Virtual machine setup
 fire up the virtual machine and connect with
 > `vagrant up && vagrant ssh`
 
 then follow the local installation instructions below.
 
-#### Native Install
+### Native Install
 The current installation routine will download and build the human *GRCh_37* genome index and download the common variantion data from *dbsnp1xx*. If you desire to use your own resources or an alternative reference genome simply put everything into the `./resource` directory and it will be imported to `/var/local/zippy/resources` during the installation process.
 Make sure to modify the configuration file `zippy.json` accordingly.
 
 To install the development version (uses zippy from mounted NFS volume) run
 > `sudo make install`
 
-During installation preindexed genomes and annotations in the _resource_ folder are imported into the VM.
-Alternatively you can download b37 genomes, index and annotations with
+You can download b37 genomes, index and annotations with
 > `sudo make resources`
 
 NB: The default install makes the database/resource directory accessible for all users.
 
-#### Apache Webservice Install
-The webservice will be exposed to the VM host at address `55.55.55.5`.
-
-To install or update the webservice (independent of mounted folders, best for VM distribution)
-> `sudo make webservice`
-
 ## Usage
 
 ### Webservice
-The application runs on Apache Webserver (native) or gunicorn (docker) using WSGI.
-The standard install exposes the service on port 80 on the guest and forwards to host machine port 5000.
+The application runs on gunicorn using WSGI.
+The standard install exposes the service on port 5000 on the guest.
 
 Currently the design process is executed synchronously. This can potentially lead to timeouts during the design process if many target regions are requested. In this case please run *zippy* from the command line interface.
-This will be changed in a future version.
 
 ### Command line interface
 Before running zippy from the CLI, make sure to activate the virtual environment first
@@ -150,6 +140,11 @@ Blacklist primer
 Set/update primer storage location
 > `zippy.py update -l <PRIMERNAME> <VESSEL> <WELL>`
 
+#### Importing exisitng primer library
+Exisitng primers can be imported from the command line with:
+> `zippy.py add <FASTA>`
+The entries in the FASTA file should pair the primers using `_rev` or `_fwd` suffixes in their names.
+On import all primers will be checked against the design limits specified in the configuration. This allows to import and validate existing primers against a new genome assembly.
 
 ## Release Notes
 ### v1.0
@@ -212,6 +207,13 @@ Set/update primer storage location
 - added gap-PCR functionality
 - added WSGI file for gunicorn
 - bugfixes
+
+### v2.4.0
+- simplified installation
+- switched to gunicorn (+nginx) webserver
+- Updated README
+- added optional blat indexing (not implemented in Zippy yet)
+- Reset configuration to sensible defaults
 
 ### FUTURE
 - Support for primer collections (multiplexing)

@@ -41,7 +41,7 @@
                 "PRIMER_PRODUCT_SIZE_RANGE": [[100,550]],
                 "PRIMER_GC_CLAMP": 1,
                 "PRIMER_NUM_RETURN": 10,
-                "PRIMER_MISPRIMING_LIBRARY":"/var/local/zippy/resources/human_repeat_simple.fa"
+                "PRIMER_MISPRIMING_LIBRARY":"/usr/local/zippy/resources/human_repeat_simple.fa"
             },
             {
                 "PRIMER_TASK": "generic",
@@ -58,7 +58,7 @@
                 "PRIMER_PRODUCT_SIZE_RANGE": [[100,550]],
                 "PRIMER_GC_CLAMP": 1,
                 "PRIMER_NUM_RETURN": 100,
-                "PRIMER_MISPRIMING_LIBRARY":"/var/local/zippy/resources/human_repeat_simple.fa"
+                "PRIMER_MISPRIMING_LIBRARY":"/usr/local/zippy/resources/human_repeat_simple.fa"
             },
             {
                 "PRIMER_TASK": "generic",
@@ -75,7 +75,7 @@
                 "PRIMER_PRODUCT_SIZE_RANGE": [[100,550]],
                 "PRIMER_GC_CLAMP": 1,
                 "PRIMER_NUM_RETURN": 200,
-                "PRIMER_MISPRIMING_LIBRARY":"/var/local/zippy/resources/human_repeat_simple.fa"
+                "PRIMER_MISPRIMING_LIBRARY":"/usr/local/zippy/resources/human_repeat_simple.fa"
             },
             {
                 "PRIMER_TASK": "generic",
@@ -92,7 +92,7 @@
                 "PRIMER_PRODUCT_SIZE_RANGE": [[100,1200]],
                 "PRIMER_GC_CLAMP": 1,
                 "PRIMER_NUM_RETURN": 200,
-                "PRIMER_MISPRIMING_LIBRARY":"/var/local/zippy/resources/human_repeat_simple.fa"
+                "PRIMER_MISPRIMING_LIBRARY":"/usr/local/zippy/resources/human_repeat_simple.fa"
             }
         ]
     },
