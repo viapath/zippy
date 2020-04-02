@@ -16,6 +16,6 @@ EXPOSE 5000
 CMD ["gunicorn","wsgi:app"]
 
 ## monolithic image with all genome resources
-FROM standalone as mono
+FROM bare as mono
 ADD prebuilt_resources/* /var/local/zippy/resources
 RUN make resources
