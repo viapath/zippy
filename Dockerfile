@@ -7,9 +7,9 @@ ADD Makefile /usr/local/zippy/Makefile
 ADD package-requirements.txt /usr/local/zippy/package-requirements.txt
 ADD wsgi.py /usr/local/zippy
 ADD LICENSE /usr/local/zippy
-ADD resources /usr/local/zippy
+ADD resources /usr/local/zippy/resources
 ADD gunicorn.conf.py /usr/local/zippy
-ADD zippy /usr/local/zippy
+ADD zippy /usr/local/zippy/zippy
 WORKDIR /usr/local/zippy
 RUN make install-dockerized
 EXPOSE 5000
