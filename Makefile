@@ -51,10 +51,12 @@ zippy-setup:
 	mkdir -p $(ZIPPYVAR)/results
 	chmod -R 777 $(ZIPPYVAR)
 
-#### genome resources
+######################
+## genome resources ##
+######################
+
 resources: genome annotation
 
-#genome: genome-download genome-index
 genome: human_g1k_v37.fasta human_g1k_v37.fasta.fai genome-index
 
 human_g1k_v37.fasta:
