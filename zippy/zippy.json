@@ -4,6 +4,8 @@
     "logfile": "/var/local/zippy/zippy.log",
     "ampliconbed": "/var/local/zippy/zippy.bed",
     "blacklistcache": "/var/local/zippy/.blacklist.cache",
+    "results_folder": "/var/local/zippy/results",
+    "uploads_folder": "/var/local/zippy/uploads",
     "tiling": {
         "interval": 500,
         "overlap": 10,

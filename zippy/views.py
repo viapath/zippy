@@ -19,14 +19,13 @@ from .zippylib.database import PrimerDB
 
 app.config['ALLOWED_EXTENSIONS'] = set(['txt', 'batch', 'vcf', 'bed', 'csv', 'tsv'])
 app.secret_key = 'Zippy is the best handpuppet out there'
-app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['DOWNLOAD_FOLDER'] = 'results'
 app.config['CONFIG_FILE'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'zippy.json')
-# read password (bcrypt)
+
+# configure flask app
 with open(app.config['CONFIG_FILE']) as conf:
     config = json.load(conf, object_hook=ascii_encode_dict)
+    # read password (bcrypt), override if ENV variable set with a value
     app.config['PASSWORD'] = config['password']
-    # override if ENV variable set with a value
     try:
         assert os.environ['ZIPPY_PASSWORD']
     except KeyError, AssertionError:
@@ -37,6 +36,9 @@ with open(app.config['CONFIG_FILE']) as conf:
         print >> sys.stderr, "WARNING: Using Password from ENV (overriding default configuration)"
         hashed_env_password = bcrypt.hashpw(os.environ['ZIPPY_PASSWORD'], bcrypt.gensalt())
         app.config['PASSWORD'] = hashed_env_password
+    # read folder locations
+    app.config['UPLOAD_FOLDER'] = config['uploads_folder']
+    app.config['DOWNLOAD_FOLDER'] = config['results_folder']
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']

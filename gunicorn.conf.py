@@ -4,7 +4,7 @@
 import os
 import multiprocessing
 
-_LOGS = '/var/log/zippy'
+_LOGS = '/var/local/zippy'
 errorlog = os.path.join(_LOGS, 'zippy_error.log')
 accesslog = os.path.join(_LOGS, 'zippy_access.log')
 loglevel = 'info'

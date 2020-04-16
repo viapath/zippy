@@ -90,8 +90,10 @@ The following files should be persisted outside of the docker container in a pro
 |`/var/local/zippy/zippy.log`|Log file|
 |`/var/local/zippy/.blacklist.cache`|Blacklisted Primer Cache (pickle)|
 |`/var/local/zippy/zippy.bed`|BED file of all amplicons in database (updates on database change)|
-|`/var/log/zippy_access.log`|Access log (gunicorn in docker)|
-|`/var/log/zippy_error.log`|Error log (gunicorn in docker)|
+|`/var/local/zippy/zippy_access.log`|Access log (gunicorn in docker)|
+|`/var/local/zippy/zippy_error.log`|Error log (gunicorn in docker)|
+|`/var/local/zippy/uploads`|Uploads folder|
+|`/var/local/zippy/results`|Results folder (eg Worksheets)|
 
 fire up the virtual machine and connect with
 > `vagrant up && vagrant ssh`
