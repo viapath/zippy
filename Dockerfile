@@ -5,7 +5,7 @@ RUN apt-get update && apt-get -y upgrade
 RUN apt-get -y install less make wget vim curl
 ADD Makefile /usr/local/zippy/Makefile
 ADD package-requirements.txt /usr/local/zippy/package-requirements.txt
-ADD wsgi.py /usr/local/zippy
+ADD run.py /usr/local/zippy
 ADD LICENSE /usr/local/zippy
 ADD resources /usr/local/zippy/resources
 ADD gunicorn.conf.py /usr/local/zippy
@@ -13,7 +13,7 @@ ADD zippy /usr/local/zippy/zippy
 WORKDIR /usr/local/zippy
 RUN make install-dockerized
 EXPOSE 5000
-CMD ["gunicorn","wsgi:app"]
+CMD ["gunicorn","zippy:app"]
 
 ## monolithic image with all genome resources
 FROM bare as mono

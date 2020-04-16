@@ -4,9 +4,9 @@
 import os
 import multiprocessing
 
-_VAR = '/var'
-errorlog = os.path.join(_VAR, 'log/zippy_error.log')
-accesslog = os.path.join(_VAR, 'log/zippy_access.log')
+_LOGS = '/var/log/zippy'
+errorlog = os.path.join(_LOGS, 'zippy_error.log')
+accesslog = os.path.join(_LOGS, 'zippy_access.log')
 loglevel = 'info'
 bind = '0.0.0.0:5000'
 workers = multiprocessing.cpu_count() * 2 + 1

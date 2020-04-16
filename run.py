@@ -1,8 +1,7 @@
-#!venv/bin/python
-
-'''runs flask development server'''
+#!/usr/bin/env python
 
 from zippy import app
 
-app.debug = True
-app.run(host='0.0.0.0')
+if __name__ == "__main__":
+    app.debug = True
+    app.run(host='0.0.0.0')
