@@ -10,6 +10,7 @@ ADD LICENSE /usr/local/zippy
 ADD resources /usr/local/zippy/resources
 ADD gunicorn.conf.py /usr/local/zippy
 ADD zippy /usr/local/zippy/zippy
+ADD .git /usr/local/zippy/.git
 WORKDIR /usr/local/zippy
 RUN make install-dockerized
 EXPOSE 5000

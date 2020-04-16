@@ -87,7 +87,7 @@ def file_uploaded():
 
 @app.route('/file_uploaded/<path:filename>')
 def download_file(filename):
-    return send_from_directory(os.getcwd(), filename, as_attachment=True)
+    return send_from_directory(app.config['DOWNLOAD_FOLDER'], filename, as_attachment=True)
 
 @app.route('/adhoc_result')
 def adhoc_result(primerTable, resultList, missedIntervals):
@@ -132,6 +132,7 @@ def upload():
         shortName = os.path.splitext(os.path.basename(uploadedFiles[0]))[0]
         downloadFile = os.path.join(downloadFolder, outfile) if outfile else os.path.join(downloadFolder, shortName)
         arrayOfFiles, missedIntervalNames = zippyBatchQuery(config, uploadedFiles, design, downloadFile, db, predesign, tiers)
+        arrayOfFiles = list([ f[len(app.config['DOWNLOAD_FOLDER']):].lstrip('/') for f in arrayOfFiles if f.startswith(app.config['DOWNLOAD_FOLDER'])])
         return render_template('file_uploaded.html', outputFiles=arrayOfFiles, missedIntervals=missedIntervalNames)
     else:
         print("file for upload not supplied or file-type not allowed")
