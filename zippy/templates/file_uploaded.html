@@ -5,7 +5,7 @@
 	<ul>
 		{% for file in outputFiles %}
 			{% set filelist = file.split('/') %}
-			<li><a href="/file_uploaded/{{file}}" target="_blank">{{filelist[-1]}}</a></li>
+			<li><a href="{{ url_for('download_file', filename=file) }}" target="_blank">{{filelist[-1]}}</a></li>
 		{% endfor %}
 	</ul>
 	{% if missedIntervals is not equalto [] %}

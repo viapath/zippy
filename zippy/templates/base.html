@@ -1,11 +1,12 @@
 <html>
     <head>
       <title>Zippy - Primer Design Tool</title>
-      <link rel="stylesheet" type="text/css" href="../static/styles.css">
+      <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+      <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
     </head>
     <body>
       <div>
-        <a href="/index"><header><b>Zippy: Primer Design and Storage</b></header></a>
+        <a href="{{ url_for('index') }}"><header><b>Zippy: Primer Design and Storage</b></header></a>
       </div>
       <div id="below_header">
         <br>

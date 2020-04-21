@@ -70,12 +70,14 @@ def login():
         else:
             error = 'Wrong password. Please try again.'
     return render_template('login.html', error=error)
+@app.route('/favicon.ico') 
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 @app.route('/logout')
 def logout():
     session.pop('logged_in', None)
     return redirect(url_for('login'))
-
 
 @app.route('/no_file')
 def no_file():
@@ -96,7 +98,6 @@ def adhoc_result(primerTable, resultList, missedIntervals):
 @app.route('/location_updated')
 def location_updated(status):
     return render_template('location_updated.html', status)
-
 
 @app.route('/upload/', methods=['POST', 'GET'])
 def upload():
@@ -136,7 +137,7 @@ def upload():
         return render_template('file_uploaded.html', outputFiles=arrayOfFiles, missedIntervals=missedIntervalNames)
     else:
         print("file for upload not supplied or file-type not allowed")
-        return redirect('/no_file')
+        return redirect(url_for('no_file'))
 
 @app.route('/adhoc_design/', methods=['POST'])
 def adhocdesign():
@@ -220,10 +221,11 @@ def update_pair_name(pairName):
             flash('Pair renaming failed', 'warning')
     return render_template('update_pair.html', pairName=newName)
 
+@app.route('/select_primer_to_update/<primerName>')
 @app.route('/select_primer_to_update/<primerName>/<primerLoc>')
-def primer_to_update(primerName, primerLoc):
+def primer_to_update(primerName, primerLoc="None"):
     primerInfo = primerName + '|' + primerLoc
-    return redirect('/update_location_from_table/%s' % (primerInfo))
+    return redirect(url_for('updateLocationFromTable', primerInfo=primerInfo))
 
 @app.route('/update_location_from_table/<primerInfo>', methods=['GET','POST'])
 def updateLocationFromTable(primerInfo):
@@ -264,7 +266,7 @@ def primer_to_rename(primerName, primerLoc):
     print >> sys.stderr, newName
     primerInfo = primerName + '|' + primerLoc + '|' + newName
     print >> sys.stderr, primerInfo
-    return redirect('/update_primer_name/%s' % (primerInfo))
+    return redirect(url_for('update_name_of_primer', primerInfo=primerInfo))
 
 @app.route('/update_primer_name/<primerInfo>')
 def update_name_of_primer(primerInfo):
@@ -292,7 +294,7 @@ def update_pair_cond(pairname):
         db = PrimerDB(config['database'],dump=config['ampliconbed'])
         longbatch = updatePairCond(pairname, db)
         flash('%s added to longbatch program' % (longbatch,), 'success')
-    return redirect('/search_by_name/')
+    return redirect(url_for('search_by_name'))
 
 @app.route('/update_pair_conditions_std/<pairname>', methods=['POST'])
 def update_pair_cond_std(pairname):
@@ -302,13 +304,13 @@ def update_pair_cond_std(pairname):
         db = PrimerDB(config['database'],dump=config['ampliconbed'])
         stdbatch = updatePairCondStd(pairname, db)
         flash('%s added to standard program' % (stdbatch,), 'success')
-    return redirect('/search_by_name/')
+    return redirect(url_for('search_by_name'))
 
 @app.route('/specify_searchname/', methods=['POST'])
 def searchName():
     searchName = request.form.get('searchName')
     session['searchName'] = searchName
-    return redirect('/search_by_name/')
+    return redirect(url_for('search_by_name'))
 
 @app.route('/search_by_name/')
 def search_by_name():
@@ -328,7 +330,7 @@ def blacklist_pair(pairname):
         blacklisted = blacklistPair(pairname, db)
         for b in blacklisted:
             flash('%s added to blacklist' % (b,), 'success')
-    return redirect('/search_by_name/')
+    return redirect(url_for('search_by_name'))
 
 @app.route('/delete_pair/<pairname>', methods=['POST'])
 def delete_pair(pairname):
@@ -339,7 +341,7 @@ def delete_pair(pairname):
         deleted = deletePair(pairname, db)
         for d in deleted:
             flash('%s deleted' % (d,), 'success')
-    return redirect('/search_by_name/')
+    return redirect(url_for('search_by_name'))
 
 @app.route('/upload_batch_locations/', methods=['POST'])
 def upload_samplesheet():
@@ -364,4 +366,4 @@ def upload_samplesheet():
                     else:
                         flash('%s location update to %s failed' % (item[0], str(item[1])), 'warning')
             print >> sys.stderr, 'Updated locations using :', updateList
-    return redirect('/index')
+    return redirect(url_for('index'))

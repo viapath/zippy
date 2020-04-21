@@ -3,7 +3,7 @@
     <div class="container">
       <h3>Please enter password</h3>
       <br>
-      <form action="" method="post">
+      <form action="{{ url_for('login') }}" method="post">
         <input type="password" placeholder="Password" name="password" value="{{ request.form.password }}">
         <input class="btn btn-default" type="submit" value="Login">
       </form>
