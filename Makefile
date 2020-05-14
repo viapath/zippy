@@ -71,15 +71,15 @@ deploy-dev: cleansoftware cleandb zippy-install webservice-dev
 essential_ubuntu:
 	echo Platform: ${platform}
 	echo Zippy version: ${VERSION}
-	apt-get -y update && apt-get -y upgrade
+	sudo apt-get -y update && sudo apt-get -y upgrade
 	sudo apt-get install -y sudo less make wget curl vim apt-utils
-	sudo apt-get install -y sqlite3 unzip htop libcurl3-dev #git
-	sudo apt-get install -y python-pip python2.7-dev ncurses-dev python-virtualenv
-	sudo apt-get install -y libxslt-dev libxml2-dev libffi-dev redis-server mysql-client
-	sudo apt-get install -y build-essential libjpeg-dev libfreetype6-dev python-dev python-imaging
-	sudo apt-get install -y postgresql postgresql-client postgresql-server-dev-9.4
+	sudo apt-get install -y sqlite3 unzip htop libcurl3-dev libbz2-dev liblzma-dev #git
+	#sudo apt-get install -y python-pip python2.7-dev python-virtualenv
+	sudo apt-get install -y python3-pip python3-dev python3-virtualenv
+	sudo apt-get install -y libxslt-dev libxml2-dev libffi-dev redis-server mysql-client ncurses-dev
+	sudo apt-get install -y postgresql postgresql-client postgresql libpq-dev #postgresql-server-dev-9.4
 	# add apache user
-	sudo useradd -M $(WWWUSER)
+	sudo useradd -M $(WWWUSER) || echo User $(WWWUSER) already existed
 	sudo usermod -s /bin/false $(WWWUSER)
 	sudo usermod -L $(WWWUSER)
 	sudo adduser $(WWWUSER) $(WWWGROUP)
@@ -140,7 +140,8 @@ zippy-install:
 	sudo mkdir -p $(ZIPPYPATH)
 	cd $(ZIPPYPATH) && sudo python3 -mvenv venv
 	sudo $(ZIPPYPATH)/venv/bin/pip install --upgrade pip
-	sudo $(ZIPPYPATH)/venv/bin/pip install Cython==0.24
+	sudo $(ZIPPYPATH)/venv/bin/pip install wheel
+	sudo $(ZIPPYPATH)/venv/bin/pip install Cython #==0.24
 	sudo $(ZIPPYPATH)/venv/bin/pip install -r requirements.txt
 	#sudo rsync -a --exclude-from=.gitignore . $(ZIPPYPATH)
 	sudo rsync -a . $(ZIPPYPATH)

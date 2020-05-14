@@ -7,7 +7,8 @@ beautifulsoup4==4.4.1
 billiard==3.3.0.23
 blinker==1.4
 celery==3.1.23
-cffi==1.6.0
+#cffi==1.6.0
+cffi
 cssmin==0.2.0
 dominate==2.2.0
 factory-boy==2.6.1
@@ -52,8 +53,8 @@ psycopg2
 py==1.4.31
 pycparser==2.14
 pyflakes==1.0.0
-#pysam==0.9.0
-pysam==0.15
+#pysam==0.15
+pysam
 pytest==2.9.0
 python-dateutil==2.5.3
 python-editor==1.0
