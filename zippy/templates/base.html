@@ -3,6 +3,20 @@
       <title>Zippy - Primer Design Tool</title>
       <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
       <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+      <script>
+        $(function(){
+            $('input:submit').click(function(){
+                $(this).val('Please wait...');
+                $(this).attr('disabled', 'disabled');
+                $('.hideOnLoad').hide();
+                $(this).parents('form').submit();
+            });
+        });
+        $(window).load(function(){
+            $('input:submit').removeAttr('disabled');
+        });
+      </script>
     </head>
     <body>
       <div>

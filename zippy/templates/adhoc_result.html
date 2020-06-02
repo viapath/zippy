@@ -2,14 +2,11 @@
 {% block content %}
 	<h3>Primer Query Results:</h3>
 	{% if resultList is not equalto [] %}
-		<hr>
 		{% for item in resultList %}
-			<b>Primer Pair Name:</b> {{item.name}}  <b>Amplicon:</b> {{item[0].targetposition.chrom}}:{{item[0].targetposition.offset+item[0].targetposition.length}}-{{item[1].targetposition.offset}} (Length: {{item[1].targetposition.offset+item[1].targetposition.length-item[0].targetposition.offset}})
-			<br><hr><br>
 			<table class="primer">
 				<th class="primer">
-					<td class="primer">Left</td>
-					<td class="primer">Right</td>
+					<td class="primer">{{ item.name }}</td>
+					<td class="primer"></td>
 				</th>
 				<tr>
 					<td class="left"><span class="pop">Name</span></td>
@@ -35,6 +32,11 @@
 					<td class="left"><span class="pop">GC content</span></td>
 					<td class="right">{{ '%0.1f'|format((item[0].gc * 100)|float) }}%</td>
 					<td class="right">{{ '%0.1f'|format((item[1].gc * 100)|float) }}%</td>
+				</tr>
+				<tr>
+					<td class="left"></td>
+					<td class="left"></td>
+					<td class="left"></td>
 				</tr>
 			</table>
 		{% endfor %}
