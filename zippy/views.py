@@ -218,7 +218,6 @@ def adhocdesign():
         primerTable, resultList, missedIntervals, flash_messages = zippyPrimerQuery(config, args, design, None, db, store, tiers, gap)
 
         for flash_message in flash_messages:
-            #print("flashm", flash_message)
             flash(*flash_message)
 
         # get missed and render template

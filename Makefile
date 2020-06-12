@@ -5,16 +5,17 @@ ZIPPYVAR=/var/local/zippy
 ZIPPYWWW=/var/www/zippy
 SOURCE=zippy
 VERSION := $(shell cat version.dat)
+#See which distro does the host have
+#distro can be centos or ubuntu
+distro := $(shell ./get_distro.bash)
 
 genome=human_g1k_v37
 server=nginx#Can be nginx or apache
 server_suffix=_privateserver
 env_suffix=#Can be an empty string, _dev or _docker
 
-#See which distro does the host have
-distro=centos#Can be centos or ubuntu
-ifneq (,$(findstring ubuntu,${distro}))
-	#distro=ubuntu
+ifneq (,$(findstring ubuntu,$(distro)))
+	distro=ubuntu2
 	WWWGROUP=www-data
 	WWWUSER=flask
 	PKGINSTALL=apt-get
@@ -26,7 +27,7 @@ ifneq (,$(findstring ubuntu,${distro}))
 		apachedirtitle=apache2
 	endif
 else
-	#distro=centos
+	distro=centos2
 	WWWGROUP=$(server)
 	WWWUSER=$(server)
 	PKGINSTALL=yum
@@ -69,13 +70,13 @@ deploy-dev: cleansoftware cleandb zippy-install webservice-dev
 
 # requirements
 essential_ubuntu:
-	echo Platform: ${platform}
+	echo Distro: ${distro}
 	echo Zippy version: ${VERSION}
 	sudo apt-get -y update && sudo apt-get -y upgrade
-	sudo apt-get install -y sudo less make wget curl vim apt-utils
+	sudo apt-get install -y sudo less make wget curl vim apt-utils firewalld
 	sudo apt-get install -y sqlite3 unzip htop libcurl3-dev libbz2-dev liblzma-dev #git
 	#sudo apt-get install -y python-pip python2.7-dev python-virtualenv
-	sudo apt-get install -y python3-pip python3-dev python3-virtualenv
+	sudo apt-get install -y python3-pip python3-dev python3-virtualenv mysql-server
 	sudo apt-get install -y libxslt-dev libxml2-dev libffi-dev redis-server mysql-client ncurses-dev
 	sudo apt-get install -y postgresql postgresql-client postgresql libpq-dev #postgresql-server-dev-9.4
 	# add apache user
@@ -86,7 +87,7 @@ essential_ubuntu:
 	# install apache/wsgi
 	sudo apt-get install -y $(serving_packages)
 essential_centos:
-	echo Platform: ${platform}
+	echo Distro: ${distro}
 	echo Zippy version: ${VERSION}
 	sudo yum -y install epel-release
 	sudo yum repolist
@@ -110,7 +111,7 @@ essential_centos:
 	# disable default site
 	#a2dissite 000-default
 print_flags:
-	echo "Installing Zippy $(VERSION) for platform $(platform), expressed as distro $(distro)"
+	echo "Installing Zippy ${VERSION} for distro $(distro)"
 	echo "Installing for server $(server), location ${server_suffix} and enviromnent ${env_suffix}"
 
 
@@ -190,7 +191,7 @@ cleandb:
 # webservice install (production)
 webservice_ubuntu:
 	# make WWW directories
-	mkdir -p $(ZIPPYWWW)
+	sudo mkdir -p $(ZIPPYWWW)
 	sudo cp install/zippy$(environment).wsgi $(ZIPPYWWW)/zippy$(environment).wsgi
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYWWW)
 
@@ -301,16 +302,16 @@ stop_zippy_service:
 
 # Webservers
 gunicorn:
-	source $(ZIPPYPATH)/venv/bin/activate && gunicorn --bind 0.0.0.0:8000 wsgi:app
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && gunicorn --bind 0.0.0.0:8000 wsgi:app"
 run:
-	source $(ZIPPYPATH)/venv/bin/activate && export FLASK_DEBUG=1 && export FLASK_ENV=development && export FLASK_APP=zippy && /usr/local/zippy/venv/bin/python run.py
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && export FLASK_DEBUG=1 && export FLASK_ENV=development && export FLASK_APP=zippy && /usr/local/zippy/venv/bin/python run.py"
 runp:
-	source $(ZIPPYPATH)/venv/bin/activate && python run.py
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && python run.py"
 zippy:
-	source $(ZIPPYPATH)/venv/bin/activate && cd $(ZIPPYPATH)/zippy && python zippy.py $@
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && cd $(ZIPPYPATH)/zippy && python zippy.py $@"
 requirements:
-	source $(ZIPPYPATH)/venv/bin/activate && pip install -U pip
-	source $(ZIPPYPATH)/venv/bin/activate && pip install -r requirements.txt
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && pip install -U pip"
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && pip install -r requirements.txt"
 
 
 #### genome resources
@@ -349,8 +350,6 @@ resources: genome annotation
 genome: genome-download genome-index
 
 genome-download:
-	#source /usr/local/zippy/venv/bin/activate && cd $(ZIPPYPATH) && /usr/local/zippy/venv/bin/python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz
-	#source /usr/local/zippy/venv/bin/activate && cd $(ZIPPYPATH) && python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta.fai http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai
 	cd $(ZIPPYPATH) && $(ZIPPYPATH)/venv/bin/python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz
 	cd $(ZIPPYPATH) && $(ZIPPYPATH)/venv/bin/python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta.fai http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai
 	sudo chmod 644 $(ZIPPYVAR)/resources/*
@@ -358,9 +357,9 @@ genome-download:
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 genome-index:
-	ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null && ( \
-		echo bowtie file $(ZIPPYVAR)/resources/${genome}.bowtie exists, thus not running bowtie command ) || \
-		( cd $(ZIPPYVAR)/resources; /usr/local/bin/bowtie2-build ${genome}.fasta ${genome}.bowtie )
+	ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 && \
+		( echo bowtie file $(ZIPPYVAR)/resources/${genome}.bowtie exists, thus not running bowtie command ) || ( \
+		cd $(ZIPPYVAR)/resources; echo running bowtie; sudo -u $(WWWUSER) /usr/local/bin/bowtie2-build ${genome}.fasta ${genome}.bowtie )
 	sudo chmod 644 $(ZIPPYVAR)/resources/*
 	sudo chmod 755 $(ZIPPYVAR)/resources
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
@@ -369,16 +368,17 @@ annotation: variation-download refgene-download
 
 variation-download:
 	#The files specified by the following commands did not exist as of 30 th, July, 2018, so that were updated by the later version present: b151_GRCh37p13
-	sudo mkdir -p $(ZIPPYVAR)/resources && cd $(ZIPPYVAR)/resources && \
-	( ls 00-common_all.vcf.gz &>/dev/null && echo 00-common_all.vcf.gz already found || wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz )
-	cd $(ZIPPYVAR)/resources && wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
+	sudo mkdir -p $(ZIPPYVAR)/resources
+	bash -c "ls $(ZIPPYVAR)/resources/00-common_all.vcf.gz &>/dev/null && echo $(ZIPPYVAR)/resources/00-common_all.vcf.gz already found || sudo -u $(WWWUSER) wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz -O $(ZIPPYVAR)/resources/00-common_all.vcf.gz"
+	cd $(ZIPPYVAR)/resources && sudo -u $(WWWUSER) wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
 	
 
 refgene-download:
 	sudo firewall-cmd --zone=public --add-port=3306/tcp &&sudo firewall-cmd --reload||echo "You didn't have the port 3306 blocked"
-	(cd $(ZIPPYVAR)/resources && ls refGene &>/dev/null) && echo refGene file exists || \
-	mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -N -D hg19 -P 3306 \
-	-e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" > refGene
+	bash -c "ls $(ZIPPYVAR)/resources/refGene &>/dev/null && echo $(ZIPPYVAR)/resources/refGene file exists || make refgene"
+
+refgene:
+	mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -N -D hg19 -P 3306 -e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" | sudo -u $(WWWUSER) dd of=$(ZIPPYVAR)/resources/refGene
 
 archive:
 	rm -f $(SOURCE)_install_v*.bash
