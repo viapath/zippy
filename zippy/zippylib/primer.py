@@ -541,9 +541,10 @@ class Primer3(object):
             lowerlimit=min(lowerlimit,fasta.lengths[fndref])
             upperlimit=min(upperlimit,fasta.lengths[fndref])
         #self.target=(target[0],lowerlimit-self.flank,upperlimit+self.flank)#Assign the target after clipping to valid positions
-        self.target=(target[0],lowerlimit,upperlimit)#Assign the target after clipping to valid positions
+        self.target=(strselftarget0,lowerlimit,upperlimit)#Assign the target after clipping to valid positions
         #self.designregion = ( str(self.target[0]), lowerlimit, upperlimit )
         self.designregion = ( self.target[0], lowerlimit, upperlimit )
+        print("dereg", self.designregion)
         try:
             self.sequence = fasta.fetch(*self.designregion)
             #self.sequence = fasta.fetch(self.designregion[0])

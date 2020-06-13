@@ -242,8 +242,8 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
     blacklist = db.blacklist() if db else []
     try:
         blacklist += pickle.load(open(config['blacklistcache'],'rb'))
-    except:
-        print ('Could not read blacklist cache, check permissions', config['blacklistcache'], file=sys.stderr)
+    except Exception as exc:
+        print ('Could not read blacklist cache from', config['blacklistcache'], "error:", exc, file=sys.stderr)
     seqhash = lambda x,y: hashlib.sha1(','.join([x,y])).hexdigest()  # sequence pair hashing function
     # build gap primers and hash valid pairs
     if compatible:

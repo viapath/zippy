@@ -7,7 +7,7 @@ SOURCE=zippy
 VERSION := $(shell cat version.dat)
 #See which distro does the host have
 #distro can be centos or ubuntu
-distro := $(shell ./get_distro.bash)
+distro := $(shell bash -c "yum --help&>/dev/null && echo centos || echo ubuntu")
 
 genome=human_g1k_v37
 server=nginx#Can be nginx or apache
@@ -15,7 +15,7 @@ server_suffix=_privateserver
 env_suffix=#Can be an empty string, _dev or _docker
 
 ifneq (,$(findstring ubuntu,$(distro)))
-	distro=ubuntu2
+	#distro=ubuntu2
 	WWWGROUP=www-data
 	WWWUSER=flask
 	PKGINSTALL=apt-get
@@ -27,7 +27,7 @@ ifneq (,$(findstring ubuntu,$(distro)))
 		apachedirtitle=apache2
 	endif
 else
-	distro=centos2
+	#distro=centos2
 	WWWGROUP=$(server)
 	WWWUSER=$(server)
 	PKGINSTALL=yum
@@ -111,8 +111,8 @@ essential_centos:
 	# disable default site
 	#a2dissite 000-default
 print_flags:
-	echo "Installing Zippy ${VERSION} for distro $(distro)"
-	echo "Installing for server $(server), location ${server_suffix} and enviromnent ${env_suffix}"
+	@echo "Installing Zippy ${VERSION} for distro $(distro)"
+	@echo "Installing for server $(server), location ${server_suffix} and enviromnent ${env_suffix}"
 
 
 very_essential_ubuntu:
@@ -162,7 +162,9 @@ zippy-install:
 	sudo touch $(ZIPPYVAR)/logs/gunicorn_error.log
 	sudo touch $(ZIPPYVAR)/zippy.log
 	sudo touch $(ZIPPYVAR)/logs
-	sudo touch $(ZIPPYVAR)/.blacklist.cache
+	#Creates a pickle dump of an empty list for the blacklist cache
+	sudo $(ZIPPYPATH)/venv/bin/python -c "import pickle; pickle.dump([],open('$(ZIPPYVAR)/.blacklist.cache','wb'))"
+	#sudo touch $(ZIPPYVAR)/.blacklist.cache
 	sudo touch $(ZIPPYVAR)/zippy.bed
 	#sudo chmod 666 $(ZIPPYVAR)/zippy.sqlite $(ZIPPYVAR)/zippy.log $(ZIPPYVAR)/logs $(ZIPPYVAR)/.blacklist.cache $(ZIPPYVAR)/zippy.bed
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
@@ -307,8 +309,11 @@ run:
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate && export FLASK_DEBUG=1 && export FLASK_ENV=development && export FLASK_APP=zippy && /usr/local/zippy/venv/bin/python run.py"
 runp:
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate && python run.py"
+test:
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && python zippy/unittest/test.py"
 zippy:
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate && cd $(ZIPPYPATH)/zippy && python zippy.py $@"
+
 requirements:
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate && pip install -U pip"
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate && pip install -r requirements.txt"
