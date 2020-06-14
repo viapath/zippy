@@ -1,4 +1,4 @@
-FROM centos:centos7.3.1611
+FROM centos:centos7.5
 MAINTAINER lucioric2000@hotmail.com
 ARG server=nginx
 
@@ -6,25 +6,23 @@ ADD . /zippy
 
 RUN yum -y update
 RUN yum -y upgrade
-#RUN yum install -y sudo
-#RUN sudo yum install -y sudo wget less make curl vim rsync
 RUN yum install -y sudo wget less make curl vim rsync
 
 
-RUN cd /zippy && make print_flags env_suffix=_docker distro=centos server=$server
-RUN cd /zippy && make very_essential env_suffix=_docker distro=centos server=$server
-RUN cd /zippy && make cleansoftware env_suffix=_docker distro=centos server=$server
-RUN cd /zippy && make cleandb env_suffix=_docker distro=centos server=$server
+RUN cd /zippy && make print_flags env_suffix=_docker server=$server
+RUN cd /zippy && make very_essential env_suffix=_docker server=$server
+RUN cd /zippy && make cleansoftware env_suffix=_docker server=$server
+RUN cd /zippy && make cleandb env_suffix=_docker server=$server
 
-RUN cd /zippy && make install env_suffix=_docker distro=centos server=$server
-RUN cd /zippy && make webservice env_suffix=_docker distro=centos server=$server
+RUN cd /zippy && make install env_suffix=_docker server=$server
+RUN cd /zippy && make webservice env_suffix=_docker server=$server
 # prepare genome
-#RUN cd /zippy && make genome-download env_suffix=_docker distro=centos server=$server
-#RUN cd /zippy && make genome-index env_suffix=_docker distro=centos server=$server
+#RUN cd /zippy && make genome-download env_suffix=_docker server=$server
+#RUN cd /zippy && make genome-index env_suffix=_docker server=$server
 
 # get annotation
-#RUN cd /zippy && make variation-download env_suffix=_docker distro=centos server=$server
-#RUN cd /zippy && make refgene-download env_suffix=_docker distro=centos server=$server
+#RUN cd /zippy && make variation-download env_suffix=_docker server=$server
+#RUN cd /zippy && make refgene-download env_suffix=_docker server=$server
 
 EXPOSE 80
 

@@ -236,6 +236,9 @@ def importPrimerPairs(inputfile, config, primer3=True):
 '''get primers from intervals'''
 def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible=False):
     global gplist
+    combine = True
+    noncoding = True
+    getgenes = False
     initime = time.time()
     ivpairs = defaultdict(list)  # found/designed primer pairs (from database or design)
     flash_messages = []
@@ -290,18 +293,18 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
         print (primers_found_in_DB_string, file=sys.stderr)
         if len(intervals_in_database)>0:
             flash_messages.append((primers_found_in_DB_string, 'info'))
-    if rename:
+    if rename and gplist is None:
         with open(config['design']['annotation']) as fh:
             print("inigpl", time.time(), config['tiling'], gplist)
-            if gplist is None:
-                gplist = GenePred(fh, getgenes=None, combine=False, noncoding=True, **config['tiling'])
+            gplist = GenePred(fh, getgenes=getgenes, combine=combine, noncoding=noncoding, **config['tiling'])
             print("endgpl", time.time(), gplist)
     # designing
     if design:
-        print("starting design", time.time())
+        print("starting design at", time.time(), tiers)
         for tier in tiers:
             # get intervals which do not satisfy minimum amplicon number
             insufficentAmpliconIntervals = [ iv for iv in intervals if config['report']['pairs']>len(ivpairs[iv]) ]
+            print("leninsuf", len(insufficentAmpliconIntervals))
             if not insufficentAmpliconIntervals:
                 break  # end design process
             print ("Round #{} ({} intervals)".format(tier+1, len(insufficentAmpliconIntervals)), file=sys.stderr)
@@ -324,7 +327,7 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
             sys.stderr.write('\r'+progress.show(len(insufficentAmpliconIntervals))+'\n')
             if designedPairs:
                 ## import designed primer pairs (place on genome and get amplicons)
-                with tempfile.NamedTemporaryFile(suffix='.fa',prefix="primers_",delete=False, mode="wt") as fh:
+                with tempfile.NamedTemporaryFile(suffix='.fa',prefix="primers_", delete=False, mode="wt") as fh:
                     for k,v in designedPairs.items():
                         for pairnumber, pair in enumerate(v):
                             print (pair[0].fasta('_'.join([ k.name, str(pairnumber), 'rev' if k.strand < 0 else 'fwd' ])), file=fh)
@@ -377,6 +380,7 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                                            (iv.chromStart <= pair[0].targetposition.offset <= iv.chromEnd) or (iv.chromStart <= targetend <= iv.chromEnd):
                                             matches.append(iv)
                                             #break
+                                #print("mitches", matches)
                                 if len(matches)==0:
                                     pass#assert 0
                                 elif len(matches) == 1:
@@ -466,7 +470,7 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
     for pp, v in primerVariants.items():
         pp.variants = v
     endtime = time.time()
-    elapsedtime = initime - endtime
+    elapsedtime = endtime - initime
     print("Zippy elapsed time", elapsedtime)
     return primerTable, list(primerVariants.keys()), missedIntervals, flash_messages
 
@@ -499,8 +503,8 @@ def zippyPrimerQuery(config, targets, design=True, outfile=None, db=None, store=
             flash_messages.append(("ERROR: gap-PCR primers can only be designed for a single pair of breakpoint intervals on the same chromosome!", "error"))
         except:
             raise
-    primerTable, resultList, missedIntervals, more_flash_messages = getPrimers(intervals,db,design,config,tiers,compatible=True if gap else False,
-        rename=shortHumanReadable)
+    primerTable, resultList, missedIntervals, more_flash_messages = getPrimers(intervals,db,design,config,tiers,
+        compatible=True if gap else False, rename=shortHumanReadable)
     flash_messages.extend(more_flash_messages)
     ## print primerTable
     if outfile:
@@ -558,9 +562,7 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
         # add full genes
         if fullgenes:
             with open(config['design']['annotation']) as fh:
-                #print("will run GenePred")
                 intervals += GenePred(fh,getgenes=fullgenes,**config['tiling'])
-                #print("ran GenePred")
         # predesign and store
         if intervals:
             primerTable, resultList, missedIntervals, more_flash_messages = getPrimers(intervals,db,predesign,config,tiers)

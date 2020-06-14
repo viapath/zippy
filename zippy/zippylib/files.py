@@ -32,6 +32,8 @@ class GenePred(IntervalList):
         #                   0  ,              1             ,    2    ,    3   ,     4    ,    5  ,     6    ,    7   ,      8,   ,      9     ,     10   ,   11  ,   12  ,       13     ,      14    ,     15
         # SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" > refGene
 
+        #nametodump = "LOC108783645"
+        nametodump = "DNM1L"
         genes = defaultdict(list)
         for (iline, line) in enumerate(fh):
             if iline == 0 and line.startswith("track"):
@@ -124,7 +126,15 @@ class GenePred(IntervalList):
                         exonNumbers = [ len(g.subintervals) - x for x in ii ] if g.strand < 0 else [ x+1 for x in ii ]
                         if len(e)>1:  # combine exons
                             for j in range(1,len(e)):
+                                if e[0].name == nametodump:
+                                    stre0 = str(e[0])
                                 e[0].merge(e[j])
+                                if e[0].name == nametodump:
+                                    stre0 = str(e[0])
+                                    print("cmb", j, e[j], stre0, e[0])
+                        if e[0].name == nametodump:
+                            toadd = '_{}'.format('+'.join(map(str,sorted(exonNumbers))))
+                            print("ena0", toadd, i, e[0], e[0].strand, e[0].metadata, type(e), type(e[0]))
                         e[0].name += '_{}'.format('+'.join(map(str,sorted(exonNumbers))))
                         intervalindex[e[0].name].append(e[0])
                         i += len(e)
@@ -132,6 +142,9 @@ class GenePred(IntervalList):
                     # append exon number
                     for i, e in enumerate(sorted(g.subintervals)):
                         exonNumber = len(g.subintervals) - i if g.strand < 0 else i + 1
+                        #print ("exnum", exonNumber)
+                        if e.name == nametodump:
+                            print("ena", exonNumber, i, e, e.strand, e.metadata, type(e))
                         e.name += '_{}'.format(str(exonNumber))
                         if e.name=="1_1":
                             print("newname", e.name, type(e))
@@ -146,9 +159,7 @@ class GenePred(IntervalList):
                     self += [ iv ]
         # add flanks
         for e in self:
-            #eold = repr(e)
             e.extend(flank)
-            #assert 0, (eold, e, flank)
         return
 
 '''bed parser with automatic segment numbering and tiling'''

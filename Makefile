@@ -148,7 +148,7 @@ zippy-install:
 	sudo rsync -a . $(ZIPPYPATH)
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	cd $(ZIPPYPATH)/download && sudo $(ZIPPYPATH)/venv/bin/python setup.py install
-	cd $(ZIPPYPATH) && sudo $(ZIPPYPATH)/venv/bin/python setup.py install
+	#cd $(ZIPPYPATH) && sudo $(ZIPPYPATH)/venv/bin/python setup.py install
 	#sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYPATH)
 	# create empty database
 	sudo mkdir -p $(ZIPPYVAR)
