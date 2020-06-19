@@ -12,7 +12,8 @@ import sys
 from math import ceil
 
 class Interval(object):
-    def __init__(self,chrom,chromStart,chromEnd,name=None,reverse=None,sample=None, metadata=None):
+    def __init__(self, chrom, chromStart, chromEnd, name=None, reverse=None, sample=None,
+        metadata=None):
         self.chrom = chrom
         self.chromStart = int(chromStart)
         self.chromEnd = int(chromEnd)
@@ -28,7 +29,7 @@ class Interval(object):
         if metadata is None:
             self.metadata = None
         else:
-            self.metadata_dict={}
+            self.metadata_dict = {}
             self.metadata = metadata.split(";")
             for attribute in self.metadata:
                 attrparts=attribute.split("=")
@@ -72,7 +73,7 @@ class Interval(object):
     def __str__(self):
         return "\t".join(map(str,[self.chrom, self.chromStart, self.chromEnd, self.name]))
 
-    def tile(self,i,o,suffix=True):  # interval, overlap
+    def tile(self, i, o, suffix=True):  # interval, overlap
         splitintervals = int(ceil( (len(self)-o) / float(i-o) ))  # interval number
         optimalsize = int(ceil( (len(self) + splitintervals*o - o) / float(splitintervals) ))  # optimal interval size
         # get tile spans (and number of exons)
@@ -138,6 +139,7 @@ class Interval(object):
                 else:
                     merged.append(self.subintervals[i])
             self.subintervals = IntervalList(merged)
+
     def unionSubintervals(self):
         if self.subintervals:
             self.subintervals.sort()

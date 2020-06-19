@@ -30,7 +30,7 @@ from .zippylib.primer import Genome, MultiFasta, Primer3, Primer, PrimerPair, Lo
 from .zippylib.reports import Test
 from .zippylib.database import PrimerDB
 from .zippylib.interval import IntervalList
-from .zippylib import ConfigError, Progressbar, banner
+from .zippylib import ConfigError, Progressbar, banner, range_string
 from .zippylib.reports import Worksheet
 from argparse import ArgumentParser
 from copy import deepcopy
@@ -40,6 +40,7 @@ import pickle
 sys.stderr=sys.stdout
 
 gplist=None #That global variable holds the GenePred object with all genes in refgene
+random_gene_names_re = re.compile("LOC(\\d+)", re.IGNORECASE) #regular expresion for random gene names
 '''file MD5'''
 def fileMD5(fi, block_size=2**20):
     md5 = hashlib.md5()
@@ -234,7 +235,7 @@ def importPrimerPairs(inputfile, config, primer3=True):
     return validPairs
 
 '''get primers from intervals'''
-def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible=False):
+def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible=False, name_to_dump=None):
     global gplist
     combine = True
     noncoding = True
@@ -244,7 +245,8 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
     flash_messages = []
     blacklist = db.blacklist() if db else []
     try:
-        blacklist += pickle.load(open(config['blacklistcache'],'rb'))
+        with open(config['blacklistcache'],'rb') as opf:
+            blacklist += pickle.load(opf)
     except Exception as exc:
         print ('Could not read blacklist cache from', config['blacklistcache'], "error:", exc, file=sys.stderr)
     seqhash = lambda x,y: hashlib.sha1(','.join([x,y])).hexdigest()  # sequence pair hashing function
@@ -295,16 +297,17 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
             flash_messages.append((primers_found_in_DB_string, 'info'))
     if rename and gplist is None:
         with open(config['design']['annotation']) as fh:
-            print("inigpl", time.time(), config['tiling'], gplist)
-            gplist = GenePred(fh, getgenes=getgenes, combine=combine, noncoding=noncoding, **config['tiling'])
-            print("endgpl", time.time(), gplist)
+            #print("inigpl", time.time(), config['tiling'], gplist)
+            gplist = GenePred(fh, getgenes=getgenes, combine=combine, noncoding=noncoding,
+                name_to_dump=name_to_dump, **config['tiling'])
+            #print("endgpl", time.time(), gplist)
     # designing
     if design:
         print("starting design at", time.time(), tiers)
         for tier in tiers:
             # get intervals which do not satisfy minimum amplicon number
             insufficentAmpliconIntervals = [ iv for iv in intervals if config['report']['pairs']>len(ivpairs[iv]) ]
-            print("leninsuf", len(insufficentAmpliconIntervals))
+            #print("leninsuf", len(insufficentAmpliconIntervals))
             if not insufficentAmpliconIntervals:
                 break  # end design process
             print ("Round #{} ({} intervals)".format(tier+1, len(insufficentAmpliconIntervals)), file=sys.stderr)
@@ -390,11 +393,13 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                                     for match in matches:
                                         nameparts = match.name.split("_")
                                         if len(nameparts)==2:
-                                            exons[nameparts[0]].append(nameparts[1])
+                                            gene_name = nameparts[0]
                                         else:
-                                            exons["_".join(nameparts[0:-1])].append(nameparts[-1])
-                                    new_name = ",".join("{0}_{1}".format(gene, "_".join(sorted(exons))) for (gene, exons) in exons.items())
-
+                                            gene_name = "_".join(nameparts[0:-1])
+                                        exons[gene_name].append(nameparts[-1])
+                                    new_name = ",".join("{0}_{1}".format(gene, range_string(sorted(exons))) for (gene, exons) in exons.items() if random_gene_names_re.match(gene) is None)
+                                    if new_name == "":
+                                        new_name = ",".join("{0}_{1}".format(gene, range_string(sorted(exons))) for (gene, exons) in exons.items())
                                     ivpairs[intervalindex[pair.name]][-1].rename(new_name)
                         else:
                             # add to blacklist if design limits fail
@@ -412,7 +417,8 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
 
     # save blacklist cache
     try:
-        pickle.dump(list(set(blacklist)),open(config['blacklistcache'],'wb'))
+        with open(config['blacklistcache'],'wb') as opf:
+            pickle.dump(list(set(blacklist)),opf)
     except:
         print('Could not write to blacklist cache, check permissions',  file=sys.stderr) 
         flash_messages.append(('Could not write to blacklist cache, check permissions', 'error'))
@@ -455,6 +461,7 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
             nomers=set((ivpair.name, ivpair.original_name) for ivpair in ivpairs[iv])
             print("IV", unquote(iv.name),  "name", [(ivpair.name, ivpair.designrank(), ivpair.original_name) for ivpair in ivpairs[iv]], file=sys.stderr) 
             if not ivpairs[iv]:
+                print("missing", v, ivpairs[iv])
                 missedIntervals.append(iv)
             for i, p in enumerate(sorted(ivpairs[iv])):
                 if i == config['report']['pairs']:
@@ -479,7 +486,8 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
 # ==============================================================================
 
 # query database / design primer for VCF,BED,GenePred or interval
-def zippyPrimerQuery(config, targets, design=True, outfile=None, db=None, store=False, tiers=[0], gap=None):
+def zippyPrimerQuery(config, targets, design=True, outfile=None, db=None, store=False, tiers=[0],
+    gap=None, name_to_dump=None):
     flash_messages = []
     if isinstance(targets,tuple):
         intervalforlocus = readTargets(targets[1], config['tiling'])  # get intervals from file or commandline
@@ -504,7 +512,7 @@ def zippyPrimerQuery(config, targets, design=True, outfile=None, db=None, store=
         except:
             raise
     primerTable, resultList, missedIntervals, more_flash_messages = getPrimers(intervals,db,design,config,tiers,
-        compatible=True if gap else False, rename=shortHumanReadable)
+        compatible=True if gap else False, rename=shortHumanReadable, name_to_dump=name_to_dump)
     flash_messages.extend(more_flash_messages)
     ## print primerTable
     if outfile:
@@ -548,7 +556,7 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
         selectedgeneexons = list(set(genes) - set(fullgenes))
         print("Designing exon primers for {} variants..".format(str(len(designVariants))),  file=sys.stderr) 
         # get variants with no overlapping amplicon -> get variants which need new primer designs
-        intervals = IntervalList([],source='GenePred')
+        intervals = IntervalList([], source='GenePred')
         if designVariants:
             with open(config['design']['annotation'], "r", encoding="utf-8") as fh:
                 for iv in GenePred(fh,getgenes=selectedgeneexons,**config['tiling']):  # get intervals from file or commandline

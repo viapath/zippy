@@ -15,7 +15,7 @@ import os
 from math import ceil
 from collections import Counter, defaultdict
 from hashlib import sha1
-from . import ConfigError
+from . import ConfigError, range_string
 from .interval import *
 from urllib.parse import quote, unquote
 
@@ -23,7 +23,7 @@ from urllib.parse import quote, unquote
 class GenePred(IntervalList):
     '''GenePred parser with automatic segment numbering and tiling'''
     def __init__(self, fh, getgenes=None, interval=None, overlap=None, flank=0, combine=True,
-                 noncoding=False):
+                 noncoding=False, name_to_dump=None):
         print(f"Running GenePred getgenes={getgenes} interval={interval} overlap={overlap} flank={flank} combine={combine} noncoding={noncoding}")
         IntervalList.__init__(self, [], source='GenePred')
         intervalindex = defaultdict(list)
@@ -32,8 +32,6 @@ class GenePred(IntervalList):
         #                   0  ,              1             ,    2    ,    3   ,     4    ,    5  ,     6    ,    7   ,      8,   ,      9     ,     10   ,   11  ,   12  ,       13     ,      14    ,     15
         # SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" > refGene
 
-        #nametodump = "LOC108783645"
-        nametodump = "DNM1L"
         genes = defaultdict(list)
         for (iline, line) in enumerate(fh):
             if iline == 0 and line.startswith("track"):
@@ -126,16 +124,15 @@ class GenePred(IntervalList):
                         exonNumbers = [ len(g.subintervals) - x for x in ii ] if g.strand < 0 else [ x+1 for x in ii ]
                         if len(e)>1:  # combine exons
                             for j in range(1,len(e)):
-                                if e[0].name == nametodump:
+                                if e[0].name == name_to_dump:
                                     stre0 = str(e[0])
                                 e[0].merge(e[j])
-                                if e[0].name == nametodump:
-                                    stre0 = str(e[0])
+                                if e[0].name == name_to_dump:
                                     print("cmb", j, e[j], stre0, e[0])
-                        if e[0].name == nametodump:
-                            toadd = '_{}'.format('+'.join(map(str,sorted(exonNumbers))))
-                            print("ena0", toadd, i, e[0], e[0].strand, e[0].metadata, type(e), type(e[0]))
-                        e[0].name += '_{}'.format('+'.join(map(str,sorted(exonNumbers))))
+                        toadd = '_{}'.format(range_string(exonNumbers))
+                        if e[0].name == name_to_dump:
+                            print("gene", toadd, i, e[0], e[0].strand, e[0].metadata, type(e), type(e[0]))
+                        e[0].name += toadd
                         intervalindex[e[0].name].append(e[0])
                         i += len(e)
                 else:
@@ -143,8 +140,8 @@ class GenePred(IntervalList):
                     for i, e in enumerate(sorted(g.subintervals)):
                         exonNumber = len(g.subintervals) - i if g.strand < 0 else i + 1
                         #print ("exnum", exonNumber)
-                        if e.name == nametodump:
-                            print("ena", exonNumber, i, e, e.strand, e.metadata, type(e))
+                        if e.name == name_to_dump:
+                            print("gene_2", exonNumber, i, e, e.strand, e.metadata, type(e))
                         e.name += '_{}'.format(str(exonNumber))
                         if e.name=="1_1":
                             print("newname", e.name, type(e))

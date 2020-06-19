@@ -76,6 +76,31 @@ def char_range(c1, c2):
     for c in range(ord(c1), ord(c2)+1):
         yield chr(c)
 
+"""Generates a range string for the exon numbers"""
+def _segment_str(segment):
+    if segment[0] == segment[1]:
+        return str(segment[0])
+    else:
+        return f"{segment[0]}-{segment[1]}"
+def range_string(exon_numbers):
+    #"_".join(sorted(exons))
+    #assume exon_numbers is a sorted list of integers
+    if len(exon_numbers)==0:
+        return ""
+    elif len(exon_numbers)==1:
+        return str(exon_numbers[0])
+    for (inumber, number) in enumerate(exon_numbers):
+        if inumber == 0:
+            chunks = [[number, number]]
+        elif inumber == (len(exon_numbers) + 1) or number == (lastnum + 1):
+            chunks[-1][1] = number
+        else:
+            #print("refill", lastnum, number)
+            chunks[-1][1]= lastnum
+            chunks.append([number, number])
+        lastnum = number
+    return ",".join(_segment_str(chunk) for chunk in chunks)
+
 '''exception class for configuration errors'''
 class ConfigError(Exception):
     def __init__(self, value):

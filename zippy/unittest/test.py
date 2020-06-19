@@ -2,10 +2,14 @@
 
 import unittest, pysam, json
 from zippy import zippy
-#assert 0, zippy
-#from . import zippy
+from zippy.zippylib import range_string
 from zippy.zippylib.database import PrimerDB
 #This script is prepared to be run run from the zippy root folder as python -m zippy.unittest.test
+
+class TestRanges(unittest.TestCase):
+    def test_range1(self):
+        rs = range_string([1,2, 3,4,5,7,8,9,11, 14])
+        assert 0, rs
 
 class TestPrimers(unittest.TestCase):
 
@@ -32,6 +36,7 @@ class TestPrimers(unittest.TestCase):
         with self.assertRaises(TypeError):
             s.split(2)
 
+#@unittest.skip("accelerate the testing")
 class TestGenome(unittest.TestCase):
     def test_chr10(self):
         pfile = pysam.FastaFile("/var/local/zippy/resources/human_g1k_v37.fasta")
@@ -42,8 +47,9 @@ class TestGenome(unittest.TestCase):
         with open("zippy/zippy.json") as conf:
             config = json.load(conf)
             db = PrimerDB(config['database'],dump=config['ampliconbed'])
+            zippy.gplist = None
             results = zippy.zippyPrimerQuery(config, "12:32895523-32895682", True, None, db,
-                None, [0, 1, 2])
+                None, [0, 1, 2], name_to_dump="DNM1L")
             assert 0, results
         """
 ordinal 0-based chr start emn name strand
@@ -70,12 +76,13 @@ ordinal 0-based chr start emn name strand
 21 20 12    32896287        32896344        DNM1L 1
 
         """
-    def wtest_primerexonname1(self):
+    def test_primerexonname1(self):
         with open("zippy/zippy.json") as conf:
             config = json.load(conf)
             db = PrimerDB(config['database'],dump=config['ampliconbed'])
+            zippy.gplist = None
             results = zippy.zippyPrimerQuery(config, "6:26091069-26091332", True, None, db,
-                None, [0, 1, 2])
+                None, [0, 1, 2], name_to_dump=None)
             assert 0, results
 
 if __name__ == '__main__':

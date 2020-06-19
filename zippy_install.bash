@@ -6,7 +6,10 @@ version=$(cat version.dat)
 zippy_folder_title=zippy-${version}
 zippy_folder=${zippy_parent_folder}/${zippy_folder_title}
 #Tests it it is centos or ubuntu
-distro=$(./get_distro.bash)
+#function get_distro(){
+#    yum --help&>/dev/null && echo centos || echo ubuntu;
+#}
+#distro=$(./get_distro.bash)
 yum --help&>/dev/null && distro=centos || distro=ubuntu
 function install(){
     if [[ $distro = "ubuntu" ]]
@@ -20,13 +23,13 @@ function install(){
     sudo chmod -R 777 ${zippy_folder}
     #if [[ $1 = "--fast" ]]
     #then
-    make print_flags VERSION=${version} distro=${distro}
-    make clean VERSION=${version} distro=${distro}
-    make install VERSION=${version} distro=${distro}
-    make webservice VERSION=${version} distro=${distro}
-    #make import-shipped-refgene VERSION=${version} distro=${distro}
-    make annotation VERSION=${version} distro=${distro}
-    make genome VERSION=${version} distro=${distro}
+    make print_flags VERSION=${version}
+    make clean VERSION=${version}
+    make install VERSION=${version}
+    make webservice VERSION=${version}
+    #make import-shipped-refgene VERSION=${version}
+    make annotation VERSION=${version}
+    make genome VERSION=${version}
     #make unstash-resources VERSION=${version} distro=${distro}
     #else
         #make cleanall recover-resources install webservice resources distro=${distro}

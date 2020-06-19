@@ -310,7 +310,7 @@ run:
 runp:
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate && python run.py"
 test:
-	bash -c "source $(ZIPPYPATH)/venv/bin/activate && python zippy/unittest/test.py"
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && python -m zippy.unittest.test"
 zippy:
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate && cd $(ZIPPYPATH)/zippy && python zippy.py $@"
 
