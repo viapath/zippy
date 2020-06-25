@@ -450,6 +450,35 @@ class Report(object):
             self.elements.append(KeepTogether(t))
             self.elements.append(Spacer(1, 12))
 
+        if program == 'Beta_seq':
+            data = [['','Temp','Time','No. of Cycles'],
+            ['Stage 1', '94', '10m', '1'],
+            ['Stage 2', '94', '30s', '32'],
+            ['', '56', '30s', ''],
+            ['', '72', '30s', ''],
+            ['Stage 3', '72', '5m', '1'],
+            ['Stage 4', '10', '10m', '1']]
+            t = Table(data, colWidths=[2.5*cm,2.0*cm,2.0*cm,3.0*cm], rowHeights=0.6*cm)
+            t.setStyle(TableStyle([
+                ('BOX', (0,0), (3,-1), 1, colors.black),
+                ('FONTSIZE', (0,0), (3,0), 10),
+                ('FONTSIZE', (0,1), (0,4), 10),
+                ('FONTSIZE', (1,1), (3,-1), 8),
+                ('INNERGRID', (0,0), (3,1), 0.25, colors.black),
+                ('LINEABOVE', (0,2), (3,2), 0.25, colors.black),
+                ('LINEBEFORE', (1,2), (1,-1), 0.25, colors.black),
+                ('LINEBEFORE', (3,0), (3,-1), 0.25, colors.black),
+                ('INNERGRID', (1,2), (2,-1), 0.25, colors.black),
+                ('LINEABOVE', (0,-2), (3,-2), 0.25, colors.black),
+                ('LINEABOVE', (0,-1), (3,-1), 0.25, colors.black),
+                ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
+                ('ALIGN',(0,0),(2,-1),'LEFT'),
+                ('ALIGN',(-1,1),(-1,-1),'CENTER'),
+                ]))
+            self.elements.append(Spacer(1, 12))
+            self.elements.append(KeepTogether(t))
+            self.elements.append(Spacer(1, 12))
+
 
 # #!!!!!!!!!!THIS WORKS DO NOT DELETE
 #     def pcrLongProgram(self):
@@ -881,25 +910,25 @@ class Worksheet(list):
                     for j,cell in enumerate(row):
                         if cell:
                             # barcode id (with collision check, as trucated 32 byte string)
-                            d = cell.primerpairobject.uniqueid()[:10]  # truncated uniqueid (1,099,511,627,776)
+                            d = cell.sample  # truncated uniqueid (1,099,511,627,776)
                             if d in digests.keys():
                                 try:
-                                    assert cell.primerpair == digests[d]
+                                    assert cell.sample == digests[d]
                                 except:
                                     raise Exception('BarcodeCollision')
                                 else:
                                     continue  # dont print same barcode multiple times
                             else:
-                                digests[d] = cell.primerpair
+                                digests[d] = cell.sample
                             # Location string
                             locations = ' '.join([ str(l) if l else '' for l in cell.primerpairobject.locations() ])
                             # get tag name
-                            tagstring = '/'.join(set([ x.tag for x in cell.primerpairobject ]))
+                            #tagstring = '/'.join(set([ x.tag for x in cell.sample]))
                             print >> fh, "^XA"  # start label
                             print >> fh, "^PR1,A,A"  # slower print speed
-                            print >> fh, "^FO20,50^AB^FD{}  {}^FS".format(self.date[:self.date.rfind('.')],locations)  # date and location
-                            print >> fh, "^FO20,70^AB,25^FD{}^FS".format(cell.primerpair)  # primer name
-                            print >> fh, "^FO20,100^BY1.5^BCN,80,Y,N,N^FD{}^FS".format(d)  # Barcode uniqueid
+                            #print >> fh, "^FO20,50^AB^FD{}  {}^FS".format(self.date[:self.date.rfind('.')],locations)  # date and location
+                            print >> fh, "^FO20,70^AB,25^FD{}^FS".format(cell.sample)  # sample id
+                            #print >> fh, "^FO20,100^BY1.5^BCN,80,Y,N,N^FD{}^FS".format(d)  # Barcode uniqueid
                             print >> fh, "^XZ"  # end label
 
 class Plate(object):

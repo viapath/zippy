@@ -606,10 +606,16 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             ws_beta.addControls()
             ws_beta.fillPlates(size=config['report']['platesize'],randomize=True)
             ws_beta.createBetaWorkSheet(writtenFiles[-1], worklist=worksheetName, **config['beta_report'])
+
         # robot csv
             writtenFiles.append(outfile+'_beta.csv')
             print >> sys.stderr, "Writing beta batch robot CSV to {}...".format(writtenFiles[-1])
             ws_beta.robotCsv(writtenFiles[-1], sep=',')
+
+        # sample labels
+            writtenFiles.append(outfile+'_beta.samplelabels.txt')
+            print >> sys.stderr, "Writing beta batch sample labels to {}...".format(writtenFiles[-1])
+            ws_beta.sampleLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
 
         # Batch PCR worksheet alpha
         if tests_alpha:
