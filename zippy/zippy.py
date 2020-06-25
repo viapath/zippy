@@ -521,6 +521,8 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
     tests = [] # all tests
     tests_long = []
     tests_std = []
+    tests_beta = []
+    tests_alpha = []
     for sample, intervals in sorted(sampleVariants.items(),key=lambda x: x[0]):
         print >> sys.stderr, "Getting primers for {} variants in sample {}".format(len(intervals),sample)
         # get/design primers
@@ -540,7 +542,11 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             # print(resultList)
             if primerpair.cond == 'LB':
                 tests_long.append(Test(primerpair,sample))
-            elif primerpair.cond == 'STD':
+            if primerpair.cond == 'BETA':
+                tests_beta.append(Test(primerpair,sample))
+            if primerpair.cond == 'ALPHA_1' or primerpair.cond == 'ALPHA_2':
+                tests_alpha.append(Test(primerpair,sample))
+            if primerpair.cond == 'STD':
                 tests_std.append(Test(primerpair,sample))
             else:
                 print('failed to add {} to a batch'.format(primerpair))
@@ -591,6 +597,33 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             writtenFiles.append(outfile+'_long.tubelabels.txt')
             print >> sys.stderr, "Writing long batch tube labels to {}...".format(writtenFiles[-1])
             ws_long.tubeLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
+
+        # Batch PCR worksheet beta
+        if tests_beta:
+            writtenFiles.append(outfile+'_beta.pdf')
+            print >> sys.stderr, "Writing worksheet to {}...".format(writtenFiles[-1])
+            ws_beta = Worksheet(tests_beta,name='Variant Confirmations')
+            ws_beta.addControls()
+            ws_beta.fillPlates(size=config['report']['platesize'],randomize=True)
+            ws_beta.createBetaWorkSheet(writtenFiles[-1], worklist=worksheetName, **config['beta_report'])
+        # robot csv
+            writtenFiles.append(outfile+'_beta.csv')
+            print >> sys.stderr, "Writing beta batch robot CSV to {}...".format(writtenFiles[-1])
+            ws_beta.robotCsv(writtenFiles[-1], sep=',')
+
+        # Batch PCR worksheet alpha
+        if tests_alpha:
+            writtenFiles.append(outfile+'_alpha.pdf')
+            print >> sys.stderr, "Writing worksheet to {}...".format(writtenFiles[-1])
+            ws_alpha = Worksheet(tests_alpha,name='Variant Confirmations')
+            ws_alpha.addControls()
+            ws_alpha.fillPlates(size=config['alpha_report']['platesize'],randomize=True)
+            ws_alpha.createWorkSheet(writtenFiles[-1], worklist=worksheetName, **config['alpha_report'])
+        # robot csv
+            writtenFiles.append(outfile+'_alpha.csv')
+            print >> sys.stderr, "Writing alpha batch robot CSV to {}...".format(writtenFiles[-1])
+            ws_alpha.robotCsv(writtenFiles[-1], sep=',')
+
         # Batch PCR worksheet std
         if tests_std:
             writtenFiles.append(outfile+'.pdf')

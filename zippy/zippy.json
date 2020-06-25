@@ -138,8 +138,41 @@
             "qsolution": 5,
             "water": 5.5,
             "excess": 0.15,
+            "program": "A1_TDZippy"
+        }
+    },
+    "alpha_report": {
+        "auth": "Frances Smith",
+        "docid": "LF-HAE-PND147",
+        "site": "KINGS COLLEGE HOSPITAL, MOLECULAR PATHOLOGY",
+        "logo": "zippy.png",
+        "pairs": 1,
+        "platesize": [8,12],
+        "volumes": {
+            "mastermix": 25,
+            "qsolution": 10,
+            "water": 11,
+            "excess": 0.15,
             "program": "A1_TD"
         }
+      },
+      "beta_report": {
+          "auth": "Frances Smith",
+          "docid": "LF-HAE-PND147",
+          "site": "KINGS COLLEGE HOSPITAL, MOLECULAR PATHOLOGY",
+          "logo": "zippy.png",
+          "pairs": 1,
+          "platesize": [8,12],
+          "volumes": {
+              "pcrbuffer": 2.5,
+              "dNTPs": 2.5,
+              "mgcl2": 2.5,
+              "bsa": 2.5,
+              "taq": 0.2,
+              "water": 10.8,
+              "excess": 0.15,
+              "program": "Beta_seq"
+          }
     },
     "ordersheet": {
         "extracolumns": [
