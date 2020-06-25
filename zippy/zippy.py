@@ -522,7 +522,8 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
     tests_long = []
     tests_std = []
     tests_beta = []
-    tests_alpha = []
+    tests_alpha_1 = []
+    tests_alpha_2 = []
     for sample, intervals in sorted(sampleVariants.items(),key=lambda x: x[0]):
         print >> sys.stderr, "Getting primers for {} variants in sample {}".format(len(intervals),sample)
         # get/design primers
@@ -544,8 +545,10 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
                 tests_long.append(Test(primerpair,sample))
             if primerpair.cond == 'BETA':
                 tests_beta.append(Test(primerpair,sample))
-            if primerpair.cond == 'ALPHA_1' or primerpair.cond == 'ALPHA_2':
-                tests_alpha.append(Test(primerpair,sample))
+            if primerpair.cond == 'ALPHA_1':
+                tests_alpha_1.append(Test(primerpair,sample))
+            if primerpair.cond == 'ALPHA_2':
+                tests_alpha_2.append(Test(primerpair,sample))
             if primerpair.cond == 'STD':
                 tests_std.append(Test(primerpair,sample))
             else:

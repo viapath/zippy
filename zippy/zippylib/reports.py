@@ -373,7 +373,7 @@ class Report(object):
             ('LINEABOVE', (0,1),(3,1), 1, colors.black),
             ('BACKGROUND',(2,-1),(3,-1),colors.lightgrey),
             ('BACKGROUND', (0,0), (3,0), colors.bisque),
-            ('BACKGROUND',(5,-1),(6,-1),colors.lightgrey),
+            ('BACKGROUND',(5,4),(6,-1),colors.lightgrey),
             ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
             ('ALIGN',(0,0),(-1,-1),'RIGHT'),
             ('BOX', (0,0), (3,-1), 1, colors.black),
@@ -554,17 +554,17 @@ class Report(object):
             TABLE_STYLE = TableStyle([
                 ('ALIGN',(0,0),(-1,-1),'RIGHT'),
                 ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
-                ('FONTSIZE',(0,1),(-1,-1),11),
+                ('FONTSIZE',(0,1),(-1,-1),10),
                 ('BOX', (0,0), (-1,-1), 1, colors.black),
                 ('INNERGRID', (0,0), (-1,1), 0.25, colors.black),
-                ('INNERGRID', (1,2),(-1,5),0.25, colors.black),
-                ('INNERGRID', (1,6),(-1,-1), 0.25, colors.black),
+                ('INNERGRID', (1,1),(-1,5),0.25, colors.black),
+                ('INNERGRID', (1,5),(-1,-1), 0.25, colors.black),
                 ('LINEABOVE', (0,1), (-1,1), 1, colors.black),
-                ('LINEABOVE', (0,2), (-1,2), 1, colors.black),
-                ('LINEABOVE', (0,6), (-1,6), 1, colors.black),
+                ('LINEABOVE', (0,4), (-1,4), 1, colors.black),
+                ('LINEABOVE', (0,8), (-1,8), 1, colors.black),
                 ('LINEBEFORE', (1,2), (1,-1), 0.25, colors.black),
                 ('BACKGROUND', (0,0), (-1,0), colors.bisque),
-                ('BACKGROUND', (1,1), (1,1), colors.lightgrey),
+                ('BACKGROUND', (1,1), (1,3), colors.lightgrey),
                 ])
             data = [tableHeader]
             for i in range(len(checktable)):
@@ -774,7 +774,7 @@ class Worksheet(list):
         r.volumeLists(sum([len(p) for p in self.plates]),kwargs['volumes']['mastermix'],kwargs['volumes']['qsolution'],kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'])
         # add checkboxes
         checkTasks= ['New primers ordered', 'Plate orientation checked', 'Primer checked and storage assigned'] if primertest \
-    else ['Plate orientation checked', 'Transfer Check:', 'Dilution / External tube', 'H20 Lot#: __________________','','Labelling Check:', 'Failing Barcode / Barcode Override','','']
+    else ['Plate orientation and labelling', 'Correct Hamilton Method', 'Manual entry of PCR plate numbers','Transfer Check:', 'Dilution / External tube', 'H20 Lot#: __________________','','Labelling Check:', 'Failing Barcode / Barcode Override','','']
         r.checkBoxes(title='',checktable=checkTasks)
         r.pcrProgram(tableTitle='PCR Cycling Conditions',program=kwargs['volumes']['program'])
         # plate layout
@@ -835,7 +835,7 @@ class Worksheet(list):
         kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'])
         # add checkboxes
         checkTasks= ['New primers ordered', 'Plate orientation checked', 'Primer checked and storage assigned'] if primertest \
-    else ['Plate orientation checked', 'Transfer Check:', 'Dilution / External tube', 'H20 Lot#: __________________','','Labelling Check:', 'Failing Barcode / Barcode Override','','']
+    else ['Plate orientation and labelling', 'Correct Hamilton Method', 'Manual entry of PCR plate numbers','Transfer Check:', 'Dilution / External tube', 'H20 Lot#: __________________','','Labelling Check:', 'Failing Barcode / Barcode Override','','']
         r.checkBoxes(title='',checktable=checkTasks)
         r.pcrProgram(tableTitle='PCR Cycling Conditions',program=kwargs['volumes']['program'])
         # plate layout
@@ -911,6 +911,7 @@ class Worksheet(list):
                         if cell:
                             # barcode id (with collision check, as trucated 32 byte string)
                             d = cell.sample  # truncated uniqueid (1,099,511,627,776)
+
                             if d in digests.keys():
                                 try:
                                     assert cell.sample == digests[d]
