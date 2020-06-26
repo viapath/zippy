@@ -605,7 +605,7 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
         if tests_beta:
             writtenFiles.append(outfile+'_beta.pdf')
             print >> sys.stderr, "Writing worksheet to {}...".format(writtenFiles[-1])
-            ws_beta = Worksheet(tests_beta,name='Variant Confirmations')
+            ws_beta = Worksheet(tests_beta,name='HBB sequencing')
             ws_beta.addControls()
             ws_beta.fillPlates(size=config['report']['platesize'],randomize=True)
             ws_beta.createBetaWorkSheet(writtenFiles[-1], worklist=worksheetName, **config['beta_report'])
@@ -621,17 +621,29 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             ws_beta.sampleLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
 
         # Batch PCR worksheet alpha
-        if tests_alpha:
-            writtenFiles.append(outfile+'_alpha.pdf')
+        if tests_alpha_1:
+            writtenFiles.append(outfile+'_alpha1.pdf')
             print >> sys.stderr, "Writing worksheet to {}...".format(writtenFiles[-1])
-            ws_alpha = Worksheet(tests_alpha,name='Variant Confirmations')
-            ws_alpha.addControls()
-            ws_alpha.fillPlates(size=config['alpha_report']['platesize'],randomize=True)
-            ws_alpha.createWorkSheet(writtenFiles[-1], worklist=worksheetName, **config['alpha_report'])
+            ws_alpha1 = Worksheet(tests_alpha_1,name='HBA1 sequencing')
+            ws_alpha1.addControls()
+            ws_alpha1.fillPlates(size=config['alpha_report_1']['platesize'],randomize=True)
+            ws_alpha1.createWorkSheet(writtenFiles[-1], worklist=worksheetName, **config['alpha_report_1'])
         # robot csv
-            writtenFiles.append(outfile+'_alpha.csv')
+            writtenFiles.append(outfile+'_alpha1.csv')
             print >> sys.stderr, "Writing alpha batch robot CSV to {}...".format(writtenFiles[-1])
-            ws_alpha.robotCsv(writtenFiles[-1], sep=',')
+            ws_alpha1.robotCsv(writtenFiles[-1], sep=',')
+
+        if tests_alpha_2:
+            writtenFiles.append(outfile+'_alpha2.pdf')
+            print >> sys.stderr, "Writing worksheet to {}...".format(writtenFiles[-1])
+            ws_alpha2 = Worksheet(tests_alpha_2,name='HBA2 sequencing')
+            ws_alpha2.addControls()
+            ws_alpha2.fillPlates(size=config['alpha_report_2']['platesize'],randomize=True)
+            ws_alpha2.createWorkSheet(writtenFiles[-1], worklist=worksheetName, **config['alpha_report_2'])
+        # robot csv
+            writtenFiles.append(outfile+'_alpha2.csv')
+            print >> sys.stderr, "Writing alpha batch robot CSV to {}...".format(writtenFiles[-1])
+            ws_alpha2.robotCsv(writtenFiles[-1], sep=',')
 
         # Batch PCR worksheet std
         if tests_std:

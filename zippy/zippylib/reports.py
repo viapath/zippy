@@ -450,6 +450,38 @@ class Report(object):
             self.elements.append(KeepTogether(t))
             self.elements.append(Spacer(1, 12))
 
+        if program == 'A2_TD':
+            data = [['','Temp','Time','No. of Cycles'],
+            ['Stage 1', '94', '14m', '1'],
+            ['Stage 2', '95', '30s', '5'],
+            ['', '66', '30s', ''],
+            ['', '72', '1m 30s', ''],
+            ['Stage 3', '95', '30s', '5'],
+            ['', '64', '30s', ''],
+            ['', '72', '1m 30s', ''],
+            ['Stage 4', '95', '30s', '29'],
+            ['', '62', '30s', ''],
+            ['', '72', '1m 30s', ''],
+            ['Stage 5', '10', '10m', '1']]
+            t = Table(data, colWidths=[2.5*cm,2.0*cm,2.0*cm,3.0*cm], rowHeights=0.6*cm)
+            t.setStyle(TableStyle([
+                ('BOX', (0,0), (3,-1), 1, colors.black),
+                ('FONTSIZE', (0,0), (3,0), 10),
+                ('FONTSIZE', (0,1), (0,5), 10),
+                ('FONTSIZE', (1,1), (-1,-1), 8),
+                ('INNERGRID', (0,0), (3,1), 0.25, colors.black),
+                ('LINEABOVE', (0,2), (3,2), 0.25, colors.black),
+                ('LINEBEFORE', (1,2), (1,-1), 0.25, colors.black),
+                ('LINEBEFORE', (3,0), (3,-1), 0.25, colors.black),
+                ('INNERGRID', (1,2), (2,-1), 0.25, colors.black),
+                ('LINEABOVE', (0,5), (3,5), 0.25, colors.black),
+                ('LINEABOVE', (0,-4), (3,-4), 0.25, colors.black),
+                ('LINEABOVE', (0,-1), (3,-1), 0.25, colors.black),
+                ]))
+            self.elements.append(Spacer(1, 12))
+            self.elements.append(KeepTogether(t))
+            self.elements.append(Spacer(1, 12))
+
         if program == 'Beta_seq':
             data = [['','Temp','Time','No. of Cycles'],
             ['Stage 1', '94', '10m', '1'],
