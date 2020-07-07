@@ -36,8 +36,8 @@ essential:
 	apt-get install -y mysql-client
 	apt-get install -y bowtie2
 	apt-get install -y postgresql-server-dev-9.4
-	wget -O /usr/local/bin/blat http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/blat/blat && chmod +x /usr/local/bin/blat
-	wget -O /usr/local/bin/faToTwoBit http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/faToTwoBit && chmod +x /usr/local/bin/faToTwoBit
+	#wget -O /usr/local/bin/blat http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/blat/blat && chmod +x /usr/local/bin/blat
+	#wget -O /usr/local/bin/faToTwoBit http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/faToTwoBit && chmod +x /usr/local/bin/faToTwoBit
 
 # setup paths and files for zippy
 zippy-setup:
