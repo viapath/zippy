@@ -110,7 +110,7 @@
         "amplicons": 1,
         "criticalsnp": 0,
         "mispriming": 10,
-        "snpcount": 1,
+        "snpcount": 0,
         "designrank": 100
     },
     "report": {
