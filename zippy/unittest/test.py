@@ -8,14 +8,17 @@ from zippy.zippylib.database import PrimerDB
 
 class TestRanges(unittest.TestCase):
     def test_range1(self):
-        rs = range_string([1,2, 3,4,5,7,8,9,11, 14])
-        assert 0, rs
+        rs = range_string([1,2,3,4,5, 7,8,9, 11, 14])
+        self.assertEqual(rs, "1-5,7-9,11,14")
+    def test_range2(self):
+        rs = range_string([1,3,4,5, 7,8,9, 11, 14])
+        self.assertEqual(rs, "1,3-5,7-9,11,14")
 
 class TestPrimers(unittest.TestCase):
 
-    def setUp(self):
-        # add primers to database
-        raise NotImplementedError
+    #def setUp(self):
+    #    # add primers to database
+    #    raise NotImplementedError
 
     def test_retrival(self):
         # get
@@ -42,40 +45,47 @@ class TestGenome(unittest.TestCase):
         pfile = pysam.FastaFile("/var/local/zippy/resources/human_g1k_v37.fasta")
         args =('10', 43613278, 43614409)
         fetched = pfile.fetch(*args)
-        print("testchr10", fetched)
+        self.assertEqual(fetched, """TGGTAACTAACGGAGTGTGAGCTGCTGACGTGTGTGTGACGGATACATCAGCAGCACAGGAGATGCCTGGGCTCCAGGCTGGCCATCTCAGACAGGAGCGGGAAATGGGGAGCCTGGTCGCGGTGTGTGGACCTCCTTTATGGCTCTCCACCTTCTCCAGGGCCTCTCCCGACAAGTGGGTGTGTGGGTACCCCTCACCTTTCCAGAATGATTAATGCGGGGAATTTCTGTGGACGACTGTCTTCTAAAGACAATGACTACAGGAACATAATGCCACATACACAGGTGGCCCAGCCCTGGGACACTCTGGGGAAAGATCCGGCATGTGTGGTTGCTGGCTCCTCAGGGTGCTTCTTCCTCAGGGTGGATGAGGCCCCTGTCCACTGATCCCAAAGGCTGGGAGAAGCCTCAAGCAGCATCGTCTTTGCAGGCCTCTCTGTCTGAACTTGGGCAAGGCGATGCAGGTCCATCCTGACCTGGTATGGTCATGGAAGGGGCTTCCAGGAGCGATCGTTTGCAACCTGCTCTGTGCTGCATTTCAGAGAACGCCTCCCCGAGTGAGCTGCGAGACCTGCTGTCAGAGTTCAACGTCCTGAAGCAGGTCAACCACCCACATGTCATCAAATTGTATGGGGCCTGCAGCCAGGATGGTAAGGCCAGCTGCAGGGTGAGGTGGGCAGCCACTGCACCCAGGCTGGGGGCTCCATACAGCCCTGTTCTCCCTCTTTCTCCCTTTCCCTACTGCTCCTGCCCTGTTTCCTGTTCTCCCTCTTTCTGGAAGCCTGGCTCAGGCCCCAGCCTGGAGCTTGTGTCTAGCTGAGTCCACGGGCTGAGTGGTCACTTTCCATCAGAGGGGCCCCGCGCTAGCGGCACTCCCTGGGCCCACAGGGCTACTCAGAGGTCTCTGGTGTGACACTGCCATGTGTCCTCACCCAGTTCGGGGCTGGGCCCGTGGGGCAGGGAGCTCTAGGAATGGACAGTGCATCCTGGGTACTAGGGTACCCTGGGTACCACAGGGCACCAGGTGTGCTGTGACCTCAGGTGACCCCAGCCCCGCCCTGCATGGCAGGAACATTGTCACCATTTCTCAGATAAAGACCCAGGAGACCAGCCTGGTTTGTTGGTTTTCCA""")
+        #print("testchr10", fetched)
+    #@unittest.skip("fastening tests")
     def test_primerexonname2(self):
         with open("zippy/zippy.json") as conf:
             config = json.load(conf)
+            config["blacklistcache"]="/dev/null"
             db = PrimerDB(config['database'],dump=config['ampliconbed'])
             zippy.gplist = None
             results = zippy.zippyPrimerQuery(config, "12:32895523-32895682", True, None, db,
                 None, [0, 1, 2], name_to_dump="DNM1L")
             assert 0, results
-        """
-ordinal 0-based chr start emn name strand
-1 0 12      32832297        32832399        DNM1L 1
-2 1 12      32854348        32854496        DNM1L 1
-3 2 12      32858758        32858797        DNM1L 1
-4 3 12      32860300        32860347        DNM1L 1
-5 4 12      32861086        32861158        DNM1L 1
-6 5 12      32863862        32863949        DNM1L 1
-7 6 12      32866142        32866305        DNM1L 1
-8 7 12      32871576        32871697        DNM1L 1
-9 8 12      32873597        32873729        DNM1L 1
-10 9 12     32875360        32875567        DNM1L 1
-11 10 12    32883947        32884068        DNM1L 1
-12 11 12    32884289        32884445        DNM1L 1
-13 12 12    32884787        32884877        DNM1L 1
-14 13 12    32886648        32886741        DNM1L 1
-15 14 12    32890038        32890095        DNM1L 1
-16 15 12    32890798        32890876        DNM1L 1
-17 16 12    32891197        32891230        DNM1L 1
-18 17 12    32892997        32893174        DNM1L 1
-19 18 12    32893342        32893452        DNM1L 1
-20 19 12    32895522        32895682        DNM1L 1
-21 20 12    32896287        32896344        DNM1L 1
-
-        """
+    @unittest.skip("fastening tests")
+    def test_primerexonname2_dontcombine(self):
+        with open("zippy/zippy.json") as conf:
+            config = json.load(conf)
+            config["blacklistcache"]="/dev/null"
+            db = PrimerDB(config['database'],dump=config['ampliconbed'])
+            zippy.gplist = None
+            results = zippy.zippyPrimerQuery(config, "12:32895523-32895682", True, None, db,
+                None, [0, 1, 2], name_to_dump="DNM1L")
+            assert 0, results
+    @unittest.skip("fastening tests")
+    def test_primerexonname50(self):
+        with open("zippy/zippy.json") as conf:
+            config = json.load(conf)
+            db = PrimerDB(config['database'],dump=config['ampliconbed'])
+            zippy.gplist = None
+            results = zippy.zippyPrimerQuery(config, "12:32892997-32893452", True, None, db,
+                None, [0, 1, 2], name_to_dump="DNM1L")
+            assert 0, results
+    @unittest.skip("fastening tests")
+    def test_primerexonname3(self):
+        with open("zippy/zippy.json") as conf:
+            config = json.load(conf)
+            db = PrimerDB(config['database'],dump=config['ampliconbed'])
+            zippy.gplist = None
+            results = zippy.zippyPrimerQuery(config, "12:32895351-32895785", True, None, db,
+                None, [0, 1, 2], name_to_dump="DNM1L")
+            assert 0, results
+    @unittest.skip("fastening tests")
     def test_primerexonname1(self):
         with open("zippy/zippy.json") as conf:
             config = json.load(conf)
@@ -84,6 +94,23 @@ ordinal 0-based chr start emn name strand
             results = zippy.zippyPrimerQuery(config, "6:26091069-26091332", True, None, db,
                 None, [0, 1, 2], name_to_dump=None)
             assert 0, results
+    @unittest.skip("fastening tests")
+    def test_snplimits(self):
+        with open("zippy/zippy.json") as conf:
+            config = json.load(conf)
+            config["blacklistcache"]="/dev/null"
+            db = PrimerDB(config['database'],dump=config['ampliconbed'])
+            zippy.gplist = None
+            config["designlimits"]["criticalsnp"] == 20
+            config["designlimits"]["snpcount"] == 20
+            results = zippy.zippyPrimerQuery(config, "uploads/NEB_S2.smCounter.anno.vcf", True, None, db,
+                None, [0, 1, 2], name_to_dump=None)
+            zippy.gplist = None
+            config["designlimits"]["criticalsnp"] == 0
+            config["designlimits"]["snpcount"] == 0
+            results2 = zippy.zippyPrimerQuery(config, "uploads/NEB_S2.smCounter.anno.vcf", True, None, db,
+                None, [0, 1, 2], name_to_dump=None)
+            assert results==results2, (results, results2)
 
 if __name__ == '__main__':
     unittest.main()

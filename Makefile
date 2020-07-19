@@ -5,16 +5,17 @@ ZIPPYVAR=/var/local/zippy
 ZIPPYWWW=/var/www/zippy
 SOURCE=zippy
 VERSION := $(shell cat version.dat)
+ROOT=/root
 #See which distro does the host have
 #distro can be centos or ubuntu
-distro := $(shell bash -c "yum --help&>/dev/null && echo centos || echo ubuntu")
+DISTRO := $(shell bash -c "yum --help&>/dev/null && echo centos || echo ubuntu")
 
 genome=human_g1k_v37
 server=nginx#Can be nginx or apache
 server_suffix=_privateserver
 env_suffix=#Can be an empty string, _dev or _docker
 
-ifneq (,$(findstring ubuntu,$(distro)))
+ifneq (,$(findstring ubuntu,$(DISTRO)))
 	#distro=ubuntu2
 	WWWGROUP=www-data
 	WWWUSER=flask
@@ -55,13 +56,13 @@ endif
 # development installs (with mounted volume)
 all: install resources webservice
 
-essential: essential_${distro}
-very_essential: very_essential_${distro}
+essential: essential_${DISTRO}
+very_essential: very_essential_${DISTRO}
 install: essential bowtie zippy-install
-webservice: webservice_${distro}
+webservice: webservice_${DISTRO}
 stop: stop_${server}_service
-#webservice-docker: webservice-docker_${distro}
-webservice-dev: webservice-dev_${distro}
+#webservice-docker: webservice-docker_${DISTRO}
+webservice-dev: webservice-dev_${DISTRO}
 
 deploy: cleansoftware cleandb zippy-install webservice
 deploy-dev: cleansoftware cleandb zippy-install webservice-dev
@@ -70,7 +71,7 @@ deploy-dev: cleansoftware cleandb zippy-install webservice-dev
 
 # requirements
 essential_ubuntu:
-	echo Distro: ${distro}
+	echo Distro: ${DISTRO}
 	echo Zippy version: ${VERSION}
 	sudo apt-get -y update && sudo apt-get -y upgrade
 	sudo apt-get install -y sudo less make wget curl vim apt-utils firewalld
@@ -87,7 +88,7 @@ essential_ubuntu:
 	# install apache/wsgi
 	sudo apt-get install -y $(serving_packages)
 essential_centos:
-	echo Distro: ${distro}
+	echo Distro: ${DISTRO}
 	echo Zippy version: ${VERSION}
 	sudo yum -y install epel-release
 	sudo yum repolist
@@ -111,7 +112,7 @@ essential_centos:
 	# disable default site
 	#a2dissite 000-default
 print_flags:
-	@echo "Installing Zippy ${VERSION} for distro $(distro)"
+	@echo "Installing Zippy ${VERSION} for distro $(DISTRO)"
 	@echo "Installing for server $(server), location ${server_suffix} and enviromnent ${env_suffix}"
 
 
@@ -311,6 +312,10 @@ runp:
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate && python run.py"
 test:
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate && python -m zippy.unittest.test"
+exons:
+	#Example: make exons LOC=12:32895523-32895682 GENE=DNM1L
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && python -m zippy.unittest.find_exons $(LOC) $(GENE)"
+	#bash -c "$(ZIPPYPATH)/venv/bin/python -m zippy.unittest.find_exons $(LOC) $(GENE)"
 zippy:
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate && cd $(ZIPPYPATH)/zippy && python zippy.py $@"
 
@@ -388,6 +393,7 @@ refgene:
 archive:
 	rm -f $(SOURCE)_install_v*.bash
 	rm -f $(SOURCE)-*.tar.gz
+	echo $(VERSION)>version.dat
 	p=`pwd` && rm -f $$p/$(SOURCE)-$(VERSION).tar.gz && tar --transform="s@^@$(SOURCE)-$(VERSION)/@" -cvzf $$p/$(SOURCE)-$(VERSION).tar.gz *
 	cp -f $(SOURCE)_install.bash $(SOURCE)_install_v$(VERSION).bash
 	chmod +x $(SOURCE)_install_v$(VERSION).bash
@@ -408,12 +414,18 @@ gitarchive:
 		(cd $$path && git archive --prefix=$(SOURCE)-$(VERSION)/ HEAD > $$p/tmp.tar && tar --concatenate --file=$$p/$(SOURCE)-$(VERSION).tar $$p/tmp.tar && rm $$p/tmp.tar); \
 	done && gzip -f $$p/$(SOURCE)-$(VERSION).tar
 
-toroot: archive
-	sudo cp -f $(SOURCE)-$(VERSION).tar.gz /root/$(SOURCE)-$(VERSION).tar.gz
-	sudo cp -f $(SOURCE)_install.bash /root/$(SOURCE)_install_v$(VERSION).bash
-	sudo chmod +x /root/$(SOURCE)_install_v$(VERSION).bash
+toroot: archive cleanrootinstallers
+	sudo cp -f $(SOURCE)-$(VERSION).tar.gz $(ROOT)/$(SOURCE)-$(VERSION).tar.gz
+	sudo cp -f $(SOURCE)_install.bash $(ROOT)/$(SOURCE)_install_v$(VERSION).bash
+	sudo chmod +x $(ROOT)/$(SOURCE)_install_v$(VERSION).bash
+
 cleanrootinstallers:
-	sudo rm -rf /root/zippy*
+	sudo rm -rf $(ROOT)/zippy*
+
+bump:
+	echo ${VERSION}>version.dat
+version:
+	@echo ${VERSION}
 #sudo firewall-cmd --zone=public --list-all
 #sudo firewall-cmd --zone=public --add-port=5000/tcp
 #sudo firewall-cmd --zone=public --add-service=http

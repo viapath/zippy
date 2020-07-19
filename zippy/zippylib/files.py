@@ -131,7 +131,7 @@ class GenePred(IntervalList):
                                     print("cmb", j, e[j], stre0, e[0])
                         toadd = '_{}'.format(range_string(exonNumbers))
                         if e[0].name == name_to_dump:
-                            print("gene", toadd, i, e[0], e[0].strand, e[0].metadata, type(e), type(e[0]))
+                            print("gene", toadd, i, e[0], e[0].strand, e[0].metadata, e,  type(e), type(e[0]))
                         e[0].name += toadd
                         intervalindex[e[0].name].append(e[0])
                         i += len(e)

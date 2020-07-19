@@ -3,7 +3,8 @@
 __doc__=="""Zippy"""
 __author__ = "David Brawand"
 __license__ = "MIT"
-__version__ = "2.3.4"
+#__version__ = "2.3.4"
+from zippy import __version__
 __maintainer__ = "David Brawand"
 __email__ = "dbrawand@nhs.net"
 __status__ = "Production"
@@ -82,9 +83,11 @@ def _segment_str(segment):
         return str(segment[0])
     else:
         return f"{segment[0]}-{segment[1]}"
+
 def range_string(exon_numbers):
     #"_".join(sorted(exons))
     #assume exon_numbers is a sorted list of integers
+    exon_numbers = list(map(int, exon_numbers))
     if len(exon_numbers)==0:
         return ""
     elif len(exon_numbers)==1:

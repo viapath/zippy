@@ -11,7 +11,9 @@ __doc__ == """
 __author__ = "David Brawand"
 __credits__ = ['David Brawand', 'Christopher Wall']
 __license__ = "MIT"
-__version__ = "2.3.4"
+#__version__ = "2.3.4"
+with open("version.dat", "r") as opf:#reads the version from the file version.dat
+    __version__ = list(opf)[0].strip()
 __maintainer__ = "David Brawand"
 __email__ = "dbrawand@nhs.net"
 __status__ = "Production"
@@ -24,7 +26,7 @@ import tempfile
 import hashlib
 import csv
 import collections
-import time
+import time, logging
 from .zippylib.files import VCF, BED, GenePred, Interval, Data, readTargets, readBatch
 from .zippylib.primer import Genome, MultiFasta, Primer3, Primer, PrimerPair, Location, parsePrimerName
 from .zippylib.reports import Test
@@ -36,10 +38,12 @@ from argparse import ArgumentParser
 from copy import deepcopy
 from collections import defaultdict, Counter
 from urllib.parse import unquote
-import pickle
+import pickle, warnings
 sys.stderr=sys.stdout
 
-gplist=None #That global variable holds the GenePred object with all genes in refgene
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+gplist = None #That global variable holds the GenePred object with all genes in refgene
 random_gene_names_re = re.compile("LOC(\\d+)", re.IGNORECASE) #regular expresion for random gene names
 '''file MD5'''
 def fileMD5(fi, block_size=2**20):
@@ -235,11 +239,12 @@ def importPrimerPairs(inputfile, config, primer3=True):
     return validPairs
 
 '''get primers from intervals'''
-def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible=False, name_to_dump=None):
+def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible=False,
+    name_to_dump=None, noncoding=True, combine=True, getgenes=False):
     global gplist
-    combine = True
-    noncoding = True
-    getgenes = False
+    #combine = True
+    #noncoding = True
+    #getgenes = False
     initime = time.time()
     ivpairs = defaultdict(list)  # found/designed primer pairs (from database or design)
     flash_messages = []
@@ -357,6 +362,8 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                     sys.stderr.write('\r'+progress.show(i))
                     for p in pair:
                         p.snpCheckPrimer(config['snpcheck']['common'])
+                        #if len(p.snp)>0:
+                        #    assert 0, (p, p.snp)
                 sys.stderr.write('\r'+progress.show(len(pairs))+'\n')
 
                 # assign designed primer pairs to intervals (remove ranks and tag)
@@ -383,7 +390,6 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                                            (iv.chromStart <= pair[0].targetposition.offset <= iv.chromEnd) or (iv.chromStart <= targetend <= iv.chromEnd):
                                             matches.append(iv)
                                             #break
-                                #print("mitches", matches)
                                 if len(matches)==0:
                                     pass#assert 0
                                 elif len(matches) == 1:
@@ -411,9 +417,10 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                 # print failed primer designs
                 for k, v in intervalprimers.items():
                     if len(v)==0:
-                        print('WARNING: Target {} failed on designlimits'.format(k),  file=sys.stderr) 
-                        flash_messages.append(('WARNING: Target {} failed on designlimits'.format(k), 'warning'))
-        print("ending design")
+                        failmsg = 'WARNING: Target {} failed on designlimits in tier {}'.format(k, tier)
+                        print(failmsg,  file=sys.stderr) 
+                        flash_messages.append((failmsg, 'warning'))
+        logger.info("ending design")
 
     # save blacklist cache
     try:
@@ -459,9 +466,9 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
         # select by best pairs independently (always print database primers)
         for iv in sorted(ivpairs.keys()):
             nomers=set((ivpair.name, ivpair.original_name) for ivpair in ivpairs[iv])
-            print("IV", unquote(iv.name),  "name", [(ivpair.name, ivpair.designrank(), ivpair.original_name) for ivpair in ivpairs[iv]], file=sys.stderr) 
+            print("IV", unquote(iv.name),  "names", [(ivpair.name, ivpair.designrank(), ivpair.original_name) for ivpair in ivpairs[iv]], file=sys.stderr) 
             if not ivpairs[iv]:
-                print("missing", v, ivpairs[iv])
+                print("missing", iv, ivpairs[iv])
                 missedIntervals.append(iv)
             for i, p in enumerate(sorted(ivpairs[iv])):
                 if i == config['report']['pairs']:
@@ -573,7 +580,7 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
                 intervals += GenePred(fh,getgenes=fullgenes,**config['tiling'])
         # predesign and store
         if intervals:
-            primerTable, resultList, missedIntervals, more_flash_messages = getPrimers(intervals,db,predesign,config,tiers)
+            primerTable, resultList, missedIntervals, more_flash_messages = getPrimers(intervals,db,predesign,config,tiers, rename=shortHumanReadable)
             flash_messages.extend(more_flash_messages)
             if db:
                 db.addPair(*resultList)  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)

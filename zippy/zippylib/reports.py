@@ -5,7 +5,8 @@ from __future__ import print_function
 __doc__=="""Report Generator"""
 __author__ = "David Brawand"
 __license__ = "MIT"
-__version__ = "2.3.4"
+#__version__ = "2.3.4"
+from zippy import __version__
 __maintainer__ = "David Brawand"
 __email__ = "dbrawand@nhs.net"
 __status__ = "Production"

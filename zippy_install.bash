@@ -2,13 +2,11 @@
 #For modifications, work in the zoppi_install.bash script, because the versioned script
 # is overwritten automatically ewhen make archive is executed
 zippy_parent_folder=$(pwd)
-version=$(cat version.dat)
-zippy_folder_title=zippy-${version}
+versvar=${0##.*zippy_install_v}
+version=${versvar%%.bash} #to have this variable running, one have to execute only the versioned verison of this script
+zippy_folder_title=zippy-${version} # ie the script zippy-install_v8.2.bash
 zippy_folder=${zippy_parent_folder}/${zippy_folder_title}
 #Tests it it is centos or ubuntu
-#function get_distro(){
-#    yum --help&>/dev/null && echo centos || echo ubuntu;
-#}
 #distro=$(./get_distro.bash)
 yum --help&>/dev/null && distro=centos || distro=ubuntu
 function install(){
@@ -21,8 +19,7 @@ function install(){
         sudo yum -y install less make wget curl vim git sudo tar gzip #gunzip
     fi
     sudo chmod -R 777 ${zippy_folder}
-    #if [[ $1 = "--fast" ]]
-    #then
+    echo ${version}>version.dat
     make print_flags VERSION=${version}
     make clean VERSION=${version}
     make install VERSION=${version}

@@ -5,12 +5,13 @@ from __future__ import print_function
 __doc__=="""Primer3 Classes"""
 __author__ = "David Brawand"
 __license__ = "MIT"
-__version__ = "2.3.4"
+#__version__ = "2.3.4"
+from zippy import __version__
 __maintainer__ = "David Brawand"
 __email__ = "dbrawand@nhs.net"
 __status__ = "Production"
 
-import sys, os, re, datetime, pwd
+import sys, os, re, datetime, pwd, logging
 from hashlib import md5, sha1
 import primer3
 import pysam
@@ -21,6 +22,7 @@ from urllib.parse import unquote
 from Bio import Entrez
 import xmltodict
 
+logger = logging.getLogger(__name__)
 revcmp = str.maketrans('ACGTNacgtn','TGCANtgcan')
 class ChromosomeNotFoundError(KeyError):
     pass
@@ -374,6 +376,7 @@ class PrimerPair(list):
             except:
                 raise
             if x > v:
+                logger.info("whenfail {} {} {} {}".format(self.snpcount(), self.criticalsnp(), self.mispriming(), self.designrank()))
                 return False
         return True
 
@@ -463,6 +466,7 @@ class Primer(object):
 
     def snpCheckPrimer(self, vcf):
         self.snp = self.targetposition.snpCheck(vcf)
+        #print("lensnps", len(self.snp))
         return True if self.snp else False
 
     def checkTarget(self):
@@ -544,7 +548,7 @@ class Primer3(object):
         self.target=(strselftarget0,lowerlimit,upperlimit)#Assign the target after clipping to valid positions
         #self.designregion = ( str(self.target[0]), lowerlimit, upperlimit )
         self.designregion = ( self.target[0], lowerlimit, upperlimit )
-        print("dereg", self.designregion)
+        #print("dereg", self.designregion)
         try:
             self.sequence = fasta.fetch(*self.designregion)
             #self.sequence = fasta.fetch(self.designregion[0])

@@ -13,7 +13,7 @@ from flask import Flask, render_template, request, redirect, send_from_directory
 from celery import Celery
 from werkzeug.utils import secure_filename
 from . import app
-from .zippy import zippyBatchQuery, zippyPrimerQuery, updateLocation, searchByName, updatePrimerName, updatePrimerPairName, blacklistPair, deletePair, readprimerlocations
+from .zippy import zippyBatchQuery, zippyPrimerQuery, updateLocation, searchByName, updatePrimerName, updatePrimerPairName, blacklistPair, deletePair, readprimerlocations, __version__
 from .zippylib.primer import Location, ChromosomeNotFoundError
 from .zippylib.database import PrimerDB
 
@@ -55,7 +55,7 @@ def handle_chromosome_not_found(err):
 @app.route('/index')
 @login_required
 def index():
-    return render_template('index.html',designtiers=config['design']['tiers'])
+    return render_template('index.html',designtiers=config['design']['tiers'], version=__version__)
 
 
 # simple access control (login)
