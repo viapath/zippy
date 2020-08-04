@@ -242,8 +242,8 @@ def importPrimerPairs(inputfile, config, primer3=True):
 def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible=False,
     name_to_dump=None, noncoding=True, combine=True, getgenes=False):
     global gplist
-    #combine = True
     #noncoding = True
+    #combine = True
     #getgenes = False
     initime = time.time()
     ivpairs = defaultdict(list)  # found/designed primer pairs (from database or design)
@@ -361,9 +361,9 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                 for i, pair in enumerate(pairs):
                     sys.stderr.write('\r'+progress.show(i))
                     for p in pair:
-                        p.snpCheckPrimer(config['snpcheck']['common'])
-                        #if len(p.snp)>0:
-                        #    assert 0, (p, p.snp)
+                        p.snpCheckPrimer(config['snpcheck'][config['snpcheck']['used']])
+                        if len(p.snp)>0:
+                            assert 0, (p, p.snp)
                 sys.stderr.write('\r'+progress.show(len(pairs))+'\n')
 
                 # assign designed primer pairs to intervals (remove ranks and tag)
@@ -494,7 +494,8 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
 
 # query database / design primer for VCF,BED,GenePred or interval
 def zippyPrimerQuery(config, targets, design=True, outfile=None, db=None, store=False, tiers=[0],
-    gap=None, name_to_dump=None):
+    gap=None, name_to_dump=None, noncoding = True, combine = True, getgenes = False
+):
     flash_messages = []
     if isinstance(targets,tuple):
         intervalforlocus = readTargets(targets[1], config['tiling'])  # get intervals from file or commandline
@@ -519,7 +520,8 @@ def zippyPrimerQuery(config, targets, design=True, outfile=None, db=None, store=
         except:
             raise
     primerTable, resultList, missedIntervals, more_flash_messages = getPrimers(intervals,db,design,config,tiers,
-        compatible=True if gap else False, rename=shortHumanReadable, name_to_dump=name_to_dump)
+        compatible=True if gap else False, rename=shortHumanReadable, name_to_dump=name_to_dump,
+        noncoding = noncoding, combine = combine, getgenes = getgenes)
     flash_messages.extend(more_flash_messages)
     ## print primerTable
     if outfile:

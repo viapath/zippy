@@ -1,3 +1,4 @@
+
 # installation makefile
 
 ZIPPYPATH=/usr/local/zippy
@@ -11,6 +12,8 @@ ROOT=/root
 DISTRO := $(shell bash -c "yum --help&>/dev/null && echo centos || echo ubuntu")
 
 genome=human_g1k_v37
+ucsc_build=hg19
+refgene_filename=refGene
 server=nginx#Can be nginx or apache
 server_suffix=_privateserver
 env_suffix=#Can be an empty string, _dev or _docker
@@ -168,6 +171,7 @@ zippy-install:
 	#sudo touch $(ZIPPYVAR)/.blacklist.cache
 	sudo touch $(ZIPPYVAR)/zippy.bed
 	#sudo chmod 666 $(ZIPPYVAR)/zippy.sqlite $(ZIPPYVAR)/zippy.log $(ZIPPYVAR)/logs $(ZIPPYVAR)/.blacklist.cache $(ZIPPYVAR)/zippy.bed
+	sudo rsync -avPp resources $(ZIPPYVAR)
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)
 	sudo chmod -R 777 $(ZIPPYVAR)
 
@@ -379,8 +383,14 @@ annotation: variation-download refgene-download
 variation-download:
 	#The files specified by the following commands did not exist as of 30 th, July, 2018, so that were updated by the later version present: b151_GRCh37p13
 	sudo mkdir -p $(ZIPPYVAR)/resources
-	bash -c "ls $(ZIPPYVAR)/resources/00-common_all.vcf.gz &>/dev/null && echo $(ZIPPYVAR)/resources/00-common_all.vcf.gz already found || sudo -u $(WWWUSER) wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz -O $(ZIPPYVAR)/resources/00-common_all.vcf.gz"
+
+	#00-common_all.vcf.gz
+	cd $(ZIPPYVAR)/resources && bash -c "ls 00-common_all.vcf.gz &>/dev/null && echo $(ZIPPYVAR)/resources/00-common_all.vcf.gz already found || sudo -u $(WWWUSER) wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz"
 	cd $(ZIPPYVAR)/resources && sudo -u $(WWWUSER) wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
+
+	#00-All.vcf.gz
+	cd $(ZIPPYVAR)/resources && bash -c "ls 00-All.vcf.gz &>/dev/null && echo $(ZIPPYVAR)/resources/00-All.vcf.gz already found || sudo -u $(WWWUSER) wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-All.vcf.gz"
+	cd $(ZIPPYVAR)/resources && sudo -u $(WWWUSER) wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-All.vcf.gz.tbi
 	
 
 refgene-download:
@@ -388,7 +398,7 @@ refgene-download:
 	bash -c "ls $(ZIPPYVAR)/resources/refGene &>/dev/null && echo $(ZIPPYVAR)/resources/refGene file exists || make refgene"
 
 refgene:
-	mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -N -D hg19 -P 3306 -e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" | sudo -u $(WWWUSER) dd of=$(ZIPPYVAR)/resources/refGene
+	mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -N -D ${ucsc_build} -P 3306 -e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" | sudo -u $(WWWUSER) dd of=$(ZIPPYVAR)/resources/${refgene_filename}
 
 archive:
 	rm -f $(SOURCE)_install_v*.bash

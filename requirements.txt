@@ -79,3 +79,4 @@ requests
 biopython
 #xml2dict
 xmltodict
+gsutil

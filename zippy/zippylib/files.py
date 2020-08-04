@@ -12,6 +12,7 @@ __status__ = "Production"
 import sys
 import re
 import os
+import pysam
 from math import ceil
 from collections import Counter, defaultdict
 from hashlib import sha1
@@ -131,6 +132,7 @@ class GenePred(IntervalList):
                                     print("cmb", j, e[j], stre0, e[0])
                         toadd = '_{}'.format(range_string(exonNumbers))
                         if e[0].name == name_to_dump:
+                            print ("exnum", exonNumbers, toadd, g.strand)
                             print("gene", toadd, i, e[0], e[0].strand, e[0].metadata, e,  type(e), type(e[0]))
                         e[0].name += toadd
                         intervalindex[e[0].name].append(e[0])
@@ -139,8 +141,8 @@ class GenePred(IntervalList):
                     # append exon number
                     for i, e in enumerate(sorted(g.subintervals)):
                         exonNumber = len(g.subintervals) - i if g.strand < 0 else i + 1
-                        #print ("exnum", exonNumber)
                         if e.name == name_to_dump:
+                            print ("exnum2", exonNumber, g.strand)
                             print("gene_2", exonNumber, i, e, e.strand, e.metadata, type(e))
                         e.name += '_{}'.format(str(exonNumber))
                         if e.name=="1_1":
@@ -218,6 +220,31 @@ class VCF(IntervalList):  # no interval tiling as a variant has to be sequenced 
         for e in self:
             e.extend(flank)
         return
+
+    @classmethod
+    def create_stripped_vcf(cls, file_name, new_file_name):
+        """Created stripped versions of VCF file from databases like GNOMAD that have chromosome files of tens of GBs"""
+        vcf_in = pysam.VariantFile(file_name)#can be .vcf or, for instance .vcf.bgz
+        new_header = pysam.libcbcf.VariantHeader()
+        hc = vcf_in.header
+        for mapping in (hc.filters, hc.formats):
+            for value in mapping.values():
+                new_header.add_record(value.record) 
+        new_header.add_record(hc.info["AF"].record)
+        for (kcontig, contig) in hc.contigs.items():
+            new_header.add_record(contig.header_record) 
+        for sample in hc.samples:
+            new_header.add_sample(sample)
+        for alt in hc.alts.values():
+            new_header.add_alt(alt)
+        with pysam.VariantFile(new_file_name, "w", header=new_header) as vcf_out:
+            for rec in vcf_in.fetch():
+                for key in rec.info.keys():
+                    if key!="AF":
+                        del rec.info[key]
+                recd = new_header.new_record(contig=rec.contig, start=rec.start, stop=rec.stop, alleles=rec.alleles,
+                    id=rec.id, qual=rec.qual, filter=rec.filter, info=rec.info, samples=rec.samples)
+                vcf_out.write(recd)
 
 '''SNPpy result reader'''
 class SNPpy(IntervalList):

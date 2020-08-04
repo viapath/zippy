@@ -102,7 +102,9 @@
     },
     "snpcheck": {
         "common": "/var/local/zippy/resources/00-common_all.vcf.gz",
-        "all":"/var/local/zippy/resources/00-All.vcf.gz"
+        "all": "/var/local/zippy/resources/00-All.vcf.gz",
+        "used": "all",
+        "helpr": "used can be common or all to use the vcf files in the common or all VCF."
     },
     "designlimits": {
         "amplicons": 1,
