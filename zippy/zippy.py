@@ -518,6 +518,7 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
     primerTableConcat = []
     allMissedIntervals = {}
     missedIntervalNames = []
+    noCondList = []
     tests = [] # all tests
     tests_long = []
     tests_std = []
@@ -549,10 +550,15 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
                 tests_alpha_1.append(Test(primerpair,sample))
             if primerpair.cond == 'ALPHA_2':
                 tests_alpha_2.append(Test(primerpair,sample))
+            # if not primerpair.cond:
+            #     primerpair.cond = 'STD'
+            #     tests_std.append(Test(primerpair,sample))
             if primerpair.cond == 'STD':
+                print('I AM STD COND')
                 tests_std.append(Test(primerpair,sample))
             else:
                 print('failed to add {} to a batch'.format(primerpair))
+                noCondList.append(Test(primerpair,sample))
 
     ## print primerTable
     writtenFiles = []
@@ -583,7 +589,7 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             writtenFiles.append(outfile+'.ordersheet.csv')
             print >> sys.stderr, "Writing primer order list to {}...".format(writtenFiles[-1])
             ws.orderCsv(writtenFiles[-1], config=config['ordersheet'])
-        # Batch PCR worksheets long
+        # Batch PCR worksheets LONG
         if tests_long:
             writtenFiles.append(outfile+'_long.pdf')
             print >> sys.stderr, "Writing long batch worksheet to {}...".format(writtenFiles[-1])
@@ -600,8 +606,12 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             writtenFiles.append(outfile+'_long.tubelabels.txt')
             print >> sys.stderr, "Writing long batch tube labels to {}...".format(writtenFiles[-1])
             ws_long.tubeLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
+        # sample labels
+            writtenFiles.append(outfile+'_long.samplelabels.txt')
+            print >> sys.stderr, "Writing long batch sample labels to {}...".format(writtenFiles[-1])
+            ws_long.sampleLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
 
-        # Batch PCR worksheet beta
+        # Batch PCR worksheet BETA
         if tests_beta:
             writtenFiles.append(outfile+'_beta.pdf')
             print >> sys.stderr, "Writing worksheet to {}...".format(writtenFiles[-1])
@@ -620,18 +630,22 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             print >> sys.stderr, "Writing beta batch sample labels to {}...".format(writtenFiles[-1])
             ws_beta.sampleLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
 
-        # Batch PCR worksheet alpha
+        # Batch PCR worksheet ALPHA
         if tests_alpha_1:
             writtenFiles.append(outfile+'_alpha1.pdf')
             print >> sys.stderr, "Writing worksheet to {}...".format(writtenFiles[-1])
             ws_alpha1 = Worksheet(tests_alpha_1,name='HBA1 sequencing')
             ws_alpha1.addControls()
             ws_alpha1.fillPlates(size=config['alpha_report_1']['platesize'],randomize=True)
-            ws_alpha1.createWorkSheet(writtenFiles[-1], worklist=worksheetName, **config['alpha_report_1'])
+            ws_alpha1.createAlphaWorkSheet(writtenFiles[-1], worklist=worksheetName, **config['alpha_report_1'])
         # robot csv
             writtenFiles.append(outfile+'_alpha1.csv')
             print >> sys.stderr, "Writing alpha batch robot CSV to {}...".format(writtenFiles[-1])
             ws_alpha1.robotCsv(writtenFiles[-1], sep=',')
+        # sample labels
+            writtenFiles.append(outfile+'_alpha1.samplelabels.txt')
+            print >> sys.stderr, "Writing alpha1 batch sample labels to {}...".format(writtenFiles[-1])
+            ws_alpha1.sampleLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
 
         if tests_alpha_2:
             writtenFiles.append(outfile+'_alpha2.pdf')
@@ -639,11 +653,15 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             ws_alpha2 = Worksheet(tests_alpha_2,name='HBA2 sequencing')
             ws_alpha2.addControls()
             ws_alpha2.fillPlates(size=config['alpha_report_2']['platesize'],randomize=True)
-            ws_alpha2.createWorkSheet(writtenFiles[-1], worklist=worksheetName, **config['alpha_report_2'])
+            ws_alpha2.createAlphaWorkSheet(writtenFiles[-1], worklist=worksheetName, **config['alpha_report_2'])
         # robot csv
             writtenFiles.append(outfile+'_alpha2.csv')
             print >> sys.stderr, "Writing alpha batch robot CSV to {}...".format(writtenFiles[-1])
             ws_alpha2.robotCsv(writtenFiles[-1], sep=',')
+        # sample labels
+            writtenFiles.append(outfile+'_alpha2.samplelabels.txt')
+            print >> sys.stderr, "Writing alpha2 batch sample labels to {}...".format(writtenFiles[-1])
+            ws_alpha2.sampleLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
 
         # Batch PCR worksheet std
         if tests_std:
@@ -678,6 +696,14 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
                 print >> fh, '\t'.join(['sample','variant'])
                 for sample, missed in sorted(allMissedIntervals.items()):
                     print >> fh, '\n'.join([ '\t'.join([sample,unquote(i.name)]) for i in missed ])
+
+        # to catch condition application failures
+        # if noCondList:
+        #     writtenFiles.append(outfile+'.missed.txt')
+        #     print >> sys.stderr, "Writing missed samples to {}...".format(writtenFiles[-1])
+        #     with open(writtenFiles[-1],'w') as fh:
+        #         print >> fh, '\t'.join(['sample','primer'])
+        #         print >> fh, '\n'.join(noCondList)
     return writtenFiles, sorted(list(set(missedIntervalNames)))
 
 # update storage location for primer

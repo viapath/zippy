@@ -567,7 +567,7 @@ class Report(object):
             TABLE_STYLE = TableStyle([
                 ('ALIGN',(0,0),(-1,-1),'RIGHT'),
                 ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
-                ('FONTSIZE',(0,1),(-1,-1),8),
+                ('FONTSIZE',(0,1),(-1,-1),10),
                 ('BOX', (0,0), (-1,-1), 1, colors.black),
                 ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
                 ('LINEABOVE', (0,1), (-1,1), 1, colors.black),
@@ -611,7 +611,7 @@ class Report(object):
                 ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
                 ('ALIGN',(1,0),(-1,-1),'LEFT'),
                 ('ALIGN',(0,0), (0,-1),'RIGHT'),
-                ('FONTSIZE',(0,0),(-1,-1),9)
+                ('FONTSIZE',(0,0),(-1,-1),10)
             ]
             # set column width
             colWidths = [3*cm]
@@ -837,6 +837,68 @@ class Worksheet(list):
                 textLines={'Comments': 3})
         # build pdf
         r.build()
+    def createAlphaWorkSheet(self,fi,primertest=False,worklist='',**kwargs):
+        logo = kwargs['logo'] if 'logo' in kwargs.keys() and kwargs['logo'] else None
+        site = kwargs['site'] if 'site' in kwargs.keys() and kwargs['site'] else None
+        auth = kwargs['auth'] if 'auth' in kwargs.keys() and kwargs['auth'] else None
+        docid = kwargs['docid'] if 'docid' in kwargs.keys() and kwargs['docid'] else None
+        program = kwargs['volumes']['program'] if 'volumes' in kwargs.keys() and kwargs['volumes']['program'] else None
+        r = Report(fi,title=self.name,logo=logo,site=site,auth=auth,docid=docid,worklist=worklist,program=program)
+        # add plates
+        samples, primers, plates = [], [], []
+        for plate in self.plates:
+            s, p, m = plate.platemap()  # gets samples, (pairname, (primersuffixes), (locations)), platemap
+            samples += s
+            primers += p  # PrimerPair Objects
+            plates.append(m)
+        # sample list (similar to plate order)
+        sampleOrder = { s: self.plates[0]._bestRows(Test(PrimerPair([None,None],name='dummyprimer'),s),'sample')[0] \
+            for s in set(samples) }
+        orderedSamples = [ x[0] for x in sorted(sampleOrder.items(), key=lambda x: x[1]) ]
+        # primer list (similar to plate order)
+        primerOrder = { p: self.plates[0]._bestRows(Test(p,'dummy'),'primerpair')[0] \
+            for p in set(primers) }
+        orderedPrimers = [ (x[0].name, x[0].primerSuffixes(), tuple(x[0].locations())) for x in sorted(primerOrder.items(), key=lambda x: x[1]) ]
+        # store ordered list of sample (str) and primers (primername, primersuffixes, locations)
+        r.samplePrimerLists(orderedSamples,orderedPrimers,counts=self.reactionCount())
+        # primer dilution check
+        r.checkBoxes(title='Primer Dilution Check',table=['New dilution made','Previous dilution used'], tableHeader=['','(Tick)','Checker','Date of Dilution'])
+        #r.checkBoxes(title='',tickbox=['New dilution made'],tickboxNames=['YES'])
+        #r.checkBoxes(title='',tickbox=[''],tickboxNames=['NO'])
+        r.volumeLists(sum([len(p) for p in self.plates]),kwargs['volumes']['mastermix'],kwargs['volumes']['qsolution'],kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'])
+        # add checkboxes
+        checkTasks= ['New primers ordered', 'Plate orientation checked', 'Primer checked and storage assigned'] if primertest \
+    else ['Plate orientation and labelling', 'Correct Hamilton Method', 'Manual entry of PCR plate numbers','Transfer Check:', 'Dilution / External tube', 'H20 Lot#: __________________','','Labelling Check:', 'Failing Barcode / Barcode Override','','']
+        r.checkBoxes(title='',checktable=checkTasks)
+        r.pcrProgram(tableTitle='PCR Cycling Conditions',program=kwargs['volumes']['program'])
+        # plate layout
+        r.plateLayouts(plates)
+        # print result table
+        if primertest:
+            fields = [[ 'Primer Pair', 'Amplicon Size', 'Result']]
+            for i,t in enumerate([ x for x in sorted(self,key=lambda x: (x.sample,x.primerpair)) if not x.control ]):
+                fields += [[ t.primerpair, str(t.primerpairobject.targetLength(includePrimers=True))+' bp', '']]
+            # create result table
+            r.pageBreak()
+            r.genericTable(fields,tableTitle='Results',landscape=False, mergeColumnFields=[], relativeColWidth=[2,1,3])
+            # add checkboxes
+            checkTasks = ['Primer checked and storage assigned']
+            r.checkBoxes(title='',table=checkTasks)
+        else:
+            fields = [['DNA #', 'Primer Pair', 'Variant', 'Zygosity', 'Result', 'Check']]
+            for i,t in enumerate([ x for x in sorted(self,key=lambda x: (x.sample,x.primerpair)) if not x.control ]):
+                for v in t.primerpairobject.variants:
+                    fields += [[ t.sample, t.primerpair, ' '.join(unquote(v.name).split(',')[:-1]), unquote(v.name).split(',')[-1], '', '']]
+            # create result table
+            r.setNextPageTemplate('landscape')
+            r.pageBreak()
+            r.genericTable(fields,tableTitle='Results',landscape=True, mergeColumnFields=[0,-1],relativeColWidth=[0.8,1.0,3.0,0.5,2.3,0.4])
+            # add checkboxes
+            r.checkBoxes(title='',table=['Primary Reporter', 'Secondary Reporter'],tableHeader=['Reporter','Date','Initial'],
+                tickbox=['Unmatched Sample Check', 'Control Check'], tickboxNames=['YES','NO'],
+                textLines={'Comments': 3})
+        # build pdf
+        r.build()
 
     def createBetaWorkSheet(self,fi,primertest=False,worklist='',**kwargs):
         logo = kwargs['logo'] if 'logo' in kwargs.keys() and kwargs['logo'] else None
@@ -959,9 +1021,10 @@ class Worksheet(list):
                             #tagstring = '/'.join(set([ x.tag for x in cell.sample]))
                             print >> fh, "^XA"  # start label
                             print >> fh, "^PR1,A,A"  # slower print speed
-                            #print >> fh, "^FO20,50^AB^FD{}  {}^FS".format(self.date[:self.date.rfind('.')],locations)  # date and location
+                            print >> fh, "^FO20,20^AB,25^FD50ng/ul DILUTION^FS"
                             print >> fh, "^FO20,70^AB,25^FD{}^FS".format(cell.sample)  # sample id
-                            #print >> fh, "^FO20,100^BY1.5^BCN,80,Y,N,N^FD{}^FS".format(d)  # Barcode uniqueid
+                            print >> fh, "^FO20,100^BY1.5^BCN,80,N,N,N^FD{}^FS".format(d)  # Barcode uniqueid
+                            print >> fh, "^FO20,50^AB,25^FD{}^FS".format(self.date[:self.date.rfind('.')])  # date
                             print >> fh, "^XZ"  # end label
 
 class Plate(object):
