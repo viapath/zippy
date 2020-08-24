@@ -123,7 +123,8 @@
             "qsolution": 2,
             "water":0,
             "excess": 0.15,
-            "program": "ngsconfirm"
+            "program": "ngsconfirm",
+            "volume": 12.5
         }
     },
     "l_report": {
@@ -138,7 +139,8 @@
             "qsolution": 5,
             "water": 5.5,
             "excess": 0.15,
-            "program": "A1_TDZippy"
+            "program": "A1_TDZippy",
+            "volume": 25
         }
     },
     "alpha_report_1": {
@@ -153,7 +155,8 @@
             "qsolution": 10,
             "water": 11,
             "excess": 0.15,
-            "program": "A1_TD"
+            "program": "Alpha_A1TD",
+            "volume": 25
         }
       },
       "alpha_report_2": {
@@ -168,7 +171,8 @@
               "qsolution": 10,
               "water": 11,
               "excess": 0.15,
-              "program": "A2_TD"
+              "program": "Alpha_A2TD",
+              "volume": 25
           }
         },
       "beta_report": {
@@ -186,7 +190,8 @@
               "taq": 0.2,
               "water": 10.8,
               "excess": 0.15,
-              "program": "Beta_seq"
+              "program": "Beta_seq",
+              "volume": 25
           }
     },
     "ordersheet": {

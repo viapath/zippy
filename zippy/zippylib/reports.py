@@ -319,14 +319,14 @@ class Report(object):
         self.elements.append(t)
         self.elements.append(Spacer(1, 12))
 
-    def volumeLists(self,reactions,mastermix,qsolution,water,excess,program):
+    def volumeLists(self,reactions,mastermix,qsolution,water,excess,program,volume):
         # batch mix
         #add format here
         data = [['Reagent','Quantity','LOT','Expiry','','Reactions', str(reactions) ],
             ['MasterMix', str("{0:.0f}".format((1.+excess)*reactions*mastermix))+' µl', '', '', '', 'Excess', str((excess)*100)+' %' ],
             ['Q-Solution', str("{0:.0f}".format((1.+excess)*reactions*qsolution))+' µl', '', '', '', 'PCR Program', program ],
-            ['H2O', str("{0:.0f}".format((1.+excess)*reactions*water))+' µl', '', '', '', 'PCR Block', '' ],
-            ['TOTAL', str("{0:.0f}".format((1.+excess)*reactions*(mastermix+qsolution+water)))+' µl', '', '', '', '','']]
+            ['H2O', str("{0:.0f}".format((1.+excess)*reactions*water))+' µl', '', '', '', 'Reaction Vol.', volume ],
+            ['TOTAL', str("{0:.0f}".format((1.+excess)*reactions*(mastermix+qsolution+water)))+' µl', '', '', '', 'PCR Block', '']]
         t = Table(data, colWidths=[2.5*cm,2.5*cm,2.5*cm,2.5*cm,0.3*cm,2.7*cm,2.5*cm], rowHeights=0.6*cm)
         t.setStyle(TableStyle([
             ('FONTSIZE',(0,1),(0,-1),10),
@@ -339,7 +339,6 @@ class Report(object):
             ('LINEABOVE', (0,1),(3,1), 1, colors.black),
             ('BACKGROUND',(2,-1),(3,-1),colors.lightgrey),
             ('BACKGROUND', (0,0), (3,0), colors.bisque),
-            ('BACKGROUND',(5,-1),(6,-1),colors.lightgrey),
             ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
             ('ALIGN',(0,0),(-1,-1),'RIGHT'),
             ('BOX', (0,0), (3,-1), 1, colors.black),
@@ -350,14 +349,14 @@ class Report(object):
         self.elements.append(Spacer(1, 12))
 
     # volumelists config for beta mastermix
-    def volumeListsBeta(self,reactions,pcrbuffer,dNTPs,mgcl2,bsa,taq,water,excess,program):
+    def volumeListsBeta(self,reactions,pcrbuffer,dNTPs,mgcl2,bsa,taq,water,excess,program,volume):
         # batch mix
         #add format here
         data = [['Reagent','Quantity','LOT','Expiry','','Reactions', str(reactions) ],
             ['Buffer', str("{0:.0f}".format((1.+excess)*reactions*pcrbuffer))+' µl', '', '', '', 'Excess', str((excess)*100)+' %' ],
             ['dNTPs', str("{0:.0f}".format((1.+excess)*reactions*dNTPs))+' µl', '', '', '', 'PCR Program', program ],
-            ['MgCl2', str("{0:.0f}".format((1.+excess)*reactions*mgcl2))+' µl', '', '', '', 'PCR Block', '' ],
-            ['BSA', str("{0:.0f}".format((1.+excess)*reactions*bsa))+' µl', '', '', '', '', '' ],
+            ['MgCl2', str("{0:.0f}".format((1.+excess)*reactions*mgcl2))+' µl', '', '', '', 'Reaction Vol.', volume ],
+            ['BSA', str("{0:.0f}".format((1.+excess)*reactions*bsa))+' µl', '', '', '', 'PCR Block', '' ],
             ['Taq', str("{0:.0f}".format((1.+excess)*reactions*taq))+' µl', '', '', '', '', '' ],
             ['H20', str("{0:.0f}".format((1.+excess)*reactions*water))+' µl', '', '', '', ''],
             ['TOTAL', str("{0:.0f}".format((1.+excess)*reactions*(pcrbuffer+dNTPs+mgcl2+bsa+taq+water)))+' µl', '', '', '', '','']]
@@ -373,7 +372,7 @@ class Report(object):
             ('LINEABOVE', (0,1),(3,1), 1, colors.black),
             ('BACKGROUND',(2,-1),(3,-1),colors.lightgrey),
             ('BACKGROUND', (0,0), (3,0), colors.bisque),
-            ('BACKGROUND',(5,4),(6,-1),colors.lightgrey),
+            ('BACKGROUND',(5,5),(6,-1),colors.lightgrey),
             ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
             ('ALIGN',(0,0),(-1,-1),'RIGHT'),
             ('BOX', (0,0), (3,-1), 1, colors.black),
@@ -418,7 +417,7 @@ class Report(object):
             self.elements.append(KeepTogether(t))
             self.elements.append(Spacer(1, 12))
 
-        if program == 'A1_TD':
+        if program == 'A1_TDZippy':
             data = [['','Temp','Time','No. of Cycles'],
             ['Stage 1', '94', '14m', '1'],
             ['Stage 2', '95', '30s', '5'],
@@ -450,7 +449,39 @@ class Report(object):
             self.elements.append(KeepTogether(t))
             self.elements.append(Spacer(1, 12))
 
-        if program == 'A2_TD':
+        if program == 'Alpha_A1TD':
+            data = [['','Temp','Time','No. of Cycles'],
+            ['Stage 1', '94', '14m', '1'],
+            ['Stage 2', '95', '30s', '5'],
+            ['', '62', '30s', ''],
+            ['', '72', '1m 30s', ''],
+            ['Stage 3', '95', '30s', '5'],
+            ['', '60', '30s', ''],
+            ['', '72', '1m 30s', ''],
+            ['Stage 4', '95', '30s', '29'],
+            ['', '58', '30s', ''],
+            ['', '72', '1m 30s', ''],
+            ['Stage 5', '10', '10m', '1']]
+            t = Table(data, colWidths=[2.5*cm,2.0*cm,2.0*cm,3.0*cm], rowHeights=0.6*cm)
+            t.setStyle(TableStyle([
+                ('BOX', (0,0), (3,-1), 1, colors.black),
+                ('FONTSIZE', (0,0), (3,0), 10),
+                ('FONTSIZE', (0,1), (0,5), 10),
+                ('FONTSIZE', (1,1), (-1,-1), 8),
+                ('INNERGRID', (0,0), (3,1), 0.25, colors.black),
+                ('LINEABOVE', (0,2), (3,2), 0.25, colors.black),
+                ('LINEBEFORE', (1,2), (1,-1), 0.25, colors.black),
+                ('LINEBEFORE', (3,0), (3,-1), 0.25, colors.black),
+                ('INNERGRID', (1,2), (2,-1), 0.25, colors.black),
+                ('LINEABOVE', (0,5), (3,5), 0.25, colors.black),
+                ('LINEABOVE', (0,-4), (3,-4), 0.25, colors.black),
+                ('LINEABOVE', (0,-1), (3,-1), 0.25, colors.black),
+                ]))
+            self.elements.append(Spacer(1, 12))
+            self.elements.append(KeepTogether(t))
+            self.elements.append(Spacer(1, 12))
+
+        if program == 'Alpha_A2TD':
             data = [['','Temp','Time','No. of Cycles'],
             ['Stage 1', '94', '14m', '1'],
             ['Stage 2', '95', '30s', '5'],
@@ -486,7 +517,7 @@ class Report(object):
             data = [['','Temp','Time','No. of Cycles'],
             ['Stage 1', '94', '10m', '1'],
             ['Stage 2', '94', '30s', '32'],
-            ['', '56', '30s', ''],
+            ['', '57', '30s', ''],
             ['', '72', '30s', ''],
             ['Stage 3', '72', '5m', '1'],
             ['Stage 4', '10', '10m', '1']]
@@ -556,7 +587,7 @@ class Report(object):
 
     #def pcrProgram(self,title='Program',table=[],tableHeafer=['Stage','Temp','Time','No. of Cycles'],)
 
-    def checkBoxes(self,title='Checks',checktable=[],table=[],tableHeader=['Check','SampleID','Date','Operator','Checker'],tickbox=[],tickboxNames=['YES','NO'],textLines={}):
+    def checkBoxes(self,title='Checks',checktable=[],table=[],dilutioncheck=[],primercheck=[],tableHeader=['Check','SampleID','Date','Operator','Checker'],tickbox=[],tickboxNames=['YES','NO'],textLines={}):
         # title
         if title:
             self.elements.append(Paragraph(title, self.styles["Heading4"]))
@@ -571,7 +602,7 @@ class Report(object):
                 ('BOX', (0,0), (-1,-1), 1, colors.black),
                 ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
                 ('LINEABOVE', (0,1), (-1,1), 1, colors.black),
-                ('BACKGROUND', (0,0), (-1,0), colors.bisque)
+                ('BACKGROUND', (0,0), (-1,0), colors.bisque),
                 ])
             data = [tableHeader]
             for i in range(len(table)):
@@ -602,6 +633,48 @@ class Report(object):
             for i in range(len(checktable)):
                 data.append([ checktable[i], '', '', '', '' ])
             t = Table(data, colWidths=[6.8*cm,4.0*cm,3.0*cm,1.8*cm,1.8*cm], rowHeights=0.6*cm)
+            t.setStyle(TABLE_STYLE)
+            self.elements.append(KeepTogether(t))
+            self.elements.append(Spacer(1, 6))
+
+        if dilutioncheck:
+            # right justified checkboxes with appropriate names
+            TABLE_STYLE = TableStyle([
+                ('ALIGN',(0,0),(-1,-1),'LEFT'),
+                ('ALIGN',(0,2),(0,-2),'RIGHT'),
+                ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
+                ('FONTSIZE',(0,1),(-1,-1),10),
+                ('BOX', (0,0), (-1,-1), 1, colors.black),
+                ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
+                ('LINEABOVE', (0,1), (-1,1), 1, colors.black),
+                ('BACKGROUND', (0,0), (-1,0), colors.bisque),
+                ('BACKGROUND',(2,2), (3,3), colors.lightgrey),
+                ('BACKGROUND',(-1,-1), (-1,-1), colors.lightgrey)
+                ])
+            data = [tableHeader]
+            for i in range(len(dilutioncheck)):
+                data.append([ dilutioncheck[i], '', '' ])
+            t = Table(data, colWidths=[5.5*cm,3.5*cm,3.5*cm,2*cm,2*cm], rowHeights=0.6*cm)
+            t.setStyle(TABLE_STYLE)
+            self.elements.append(KeepTogether(t))
+            self.elements.append(Spacer(1, 6))
+
+        if primercheck:
+            # right justified checkboxes with appropriate names
+            TABLE_STYLE = TableStyle([
+                ('ALIGN',(0,0),(-1,-1),'LEFT'),
+                ('ALIGN',(0,2),(0,-2),'RIGHT'),
+                ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
+                ('FONTSIZE',(0,1),(-1,-1),10),
+                ('BOX', (0,0), (-1,-1), 1, colors.black),
+                ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
+                ('LINEABOVE', (0,1), (-1,1), 1, colors.black),
+                ('BACKGROUND', (0,0), (-1,0), colors.bisque)
+                ])
+            data = [tableHeader]
+            for i in range(len(primercheck)):
+                data.append([ primercheck[i], '', '' ])
+            t = Table(data, colWidths=[5.5*cm,3.5*cm,3.5*cm,2*cm,2*cm], rowHeights=0.6*cm)
             t.setStyle(TABLE_STYLE)
             self.elements.append(KeepTogether(t))
             self.elements.append(Spacer(1, 6))
@@ -803,7 +876,7 @@ class Worksheet(list):
         # store ordered list of sample (str) and primers (primername, primersuffixes, locations)
         r.samplePrimerLists(orderedSamples,orderedPrimers,counts=self.reactionCount())
         # reaction volume list
-        r.volumeLists(sum([len(p) for p in self.plates]),kwargs['volumes']['mastermix'],kwargs['volumes']['qsolution'],kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'])
+        r.volumeLists(sum([len(p) for p in self.plates]),kwargs['volumes']['mastermix'],kwargs['volumes']['qsolution'],kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'],kwargs['volumes']['volume'])
         # add checkboxes
         checkTasks= ['New primers ordered', 'Plate orientation checked', 'Primer checked and storage assigned'] if primertest \
     else ['Plate orientation and labelling', 'Correct Hamilton Method', 'Manual entry of PCR plate numbers','Transfer Check:', 'Dilution / External tube', 'H20 Lot#: __________________','','Labelling Check:', 'Failing Barcode / Barcode Override','','']
@@ -862,10 +935,10 @@ class Worksheet(list):
         # store ordered list of sample (str) and primers (primername, primersuffixes, locations)
         r.samplePrimerLists(orderedSamples,orderedPrimers,counts=self.reactionCount())
         # primer dilution check
-        r.checkBoxes(title='Primer Dilution Check',table=['New dilution made','Previous dilution used'], tableHeader=['','(Tick)','Checker','Date of Dilution'])
+        r.checkBoxes(title='Primer Dilution',dilutioncheck=['New dilution made','Forward primer Lot#/Exp.','Reverse primer Lot#/Exp.','Previous dilution used'], tableHeader=['','Tick / LOT #','Date of Dilution','Checker'])
         #r.checkBoxes(title='',tickbox=['New dilution made'],tickboxNames=['YES'])
         #r.checkBoxes(title='',tickbox=[''],tickboxNames=['NO'])
-        r.volumeLists(sum([len(p) for p in self.plates]),kwargs['volumes']['mastermix'],kwargs['volumes']['qsolution'],kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'])
+        r.volumeLists(sum([len(p) for p in self.plates]),kwargs['volumes']['mastermix'],kwargs['volumes']['qsolution'],kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'],kwargs['volumes']['volume'])
         # add checkboxes
         checkTasks= ['New primers ordered', 'Plate orientation checked', 'Primer checked and storage assigned'] if primertest \
     else ['Plate orientation and labelling', 'Correct Hamilton Method', 'Manual entry of PCR plate numbers','Transfer Check:', 'Dilution / External tube', 'H20 Lot#: __________________','','Labelling Check:', 'Failing Barcode / Barcode Override','','']
@@ -924,9 +997,10 @@ class Worksheet(list):
         orderedPrimers = [ (x[0].name, x[0].primerSuffixes(), tuple(x[0].locations())) for x in sorted(primerOrder.items(), key=lambda x: x[1]) ]
         # store ordered list of sample (str) and primers (primername, primersuffixes, locations)
         r.samplePrimerLists(orderedSamples,orderedPrimers,counts=self.reactionCount())
+        r.checkBoxes(title='Primer Dilution',primercheck=['Forward primer','Reverse primer',], tableHeader=['','LOT #','Expiry'])
         # reaction volume list
         r.volumeListsBeta(sum([len(p) for p in self.plates]),kwargs['volumes']['pcrbuffer'],kwargs['volumes']['dNTPs'],kwargs['volumes']['mgcl2'],kwargs['volumes']['bsa'],kwargs['volumes']['taq'],
-        kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'])
+        kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'],kwargs['volumes']['volume'])
         # add checkboxes
         checkTasks= ['New primers ordered', 'Plate orientation checked', 'Primer checked and storage assigned'] if primertest \
     else ['Plate orientation and labelling', 'Correct Hamilton Method', 'Manual entry of PCR plate numbers','Transfer Check:', 'Dilution / External tube', 'H20 Lot#: __________________','','Labelling Check:', 'Failing Barcode / Barcode Override','','']
