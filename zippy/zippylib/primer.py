@@ -179,7 +179,7 @@ class Location(object):
 
 '''primer pair (list)'''
 class PrimerPair(list):
-    def __init__(self, elements, length=2, name=None, reverse=False, cond=None):
+    def __init__(self, elements, length=2, name=None, reverse=False, cond='STD'):
         list.__init__(self, elements)
         self.length = length  # pair of primers by default
         self.reversed = reverse

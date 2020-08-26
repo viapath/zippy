@@ -550,14 +550,11 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
                 tests_alpha_1.append(Test(primerpair,sample))
             if primerpair.cond == 'ALPHA_2':
                 tests_alpha_2.append(Test(primerpair,sample))
-            # if not primerpair.cond:
-            #     primerpair.cond = 'STD'
-            #     tests_std.append(Test(primerpair,sample))
+            if not primerpair.cond:
+                primerpair.cond == 'STD'
             if primerpair.cond == 'STD':
-                print('I AM STD COND')
                 tests_std.append(Test(primerpair,sample))
-            else:
-                print('failed to add {} to a batch'.format(primerpair))
+            elif not primerpair.cond:
                 noCondList.append(Test(primerpair,sample))
 
     ## print primerTable
@@ -697,13 +694,13 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
                 for sample, missed in sorted(allMissedIntervals.items()):
                     print >> fh, '\n'.join([ '\t'.join([sample,unquote(i.name)]) for i in missed ])
 
-        # to catch condition application failures
-        # if noCondList:
-        #     writtenFiles.append(outfile+'.missed.txt')
-        #     print >> sys.stderr, "Writing missed samples to {}...".format(writtenFiles[-1])
-        #     with open(writtenFiles[-1],'w') as fh:
-        #         print >> fh, '\t'.join(['sample','primer'])
-        #         print >> fh, '\n'.join(noCondList)
+        #to catch condition application failures
+        if noCondList:
+            writtenFiles.append(outfile+'.missed.txt')
+            print >> sys.stderr, "Writing missed samples to {}...".format(writtenFiles[-1])
+            with open(writtenFiles[-1],'w') as fh:
+                print >> fh, '\n'.join([ '\t'.join([(i.sample),(i.primerpair)]) for i in noCondList ])
+
     return writtenFiles, sorted(list(set(missedIntervalNames)))
 
 # update storage location for primer
