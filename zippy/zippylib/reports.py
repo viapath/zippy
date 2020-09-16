@@ -307,7 +307,7 @@ class Report(object):
     def volumeLists(self,reactions,mastermix,qsolution,excess,program):
         # batch mix
         data = [['Reagent','Quantity','LOT','Expiry','','Reactions', str(reactions) ],
-            ['MasterMix', str((1.+excess)*reactions*mastermix)+' µl', '', '', '', 'Excess', str((excess)*100)+' %' ],
+            ['MasterMix', str((1.+excess)*reactions*mastermix) +' µl', '', '', '', 'Excess', str(excess * 100) + ' %'],
             ['Q-Solution', str((1.+excess)*reactions*qsolution)+' µl', '', '', '', 'PCR Program', program ],
             ['TOTAL', str((1.+excess)*reactions*(mastermix+qsolution))+' µl', '', '', '', 'PCR Block','']]
         t = Table(data, colWidths=[2.5*cm,2.5*cm,2.5*cm,2.5*cm,0.3*cm,2.7*cm,2.5*cm], rowHeights=0.6*cm)

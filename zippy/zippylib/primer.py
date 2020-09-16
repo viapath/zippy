@@ -337,7 +337,7 @@ class PrimerPair(list):
             for n in self[1].loci:
                 if m.chrom == n.chrom:
                     amplen = n.offset + n.length - m.offset
-                    if (not sizeRange) or (amplen >= sizeRange[0] and amplen <= sizeRange[1]):
+                    if (not sizeRange) or (sizeRange[0] <= amplen <= sizeRange[1]):
                         amp = (m, n, Interval(m.chrom,m.offset,n.offset + n.length,self.name))
                         amplicons.append(amp)
         if autoreverse and not amplicons:  # reverse if and find amplicons if one direction doesnt yield any
@@ -345,7 +345,7 @@ class PrimerPair(list):
                 for n in self[0].loci:
                     if m.chrom == n.chrom:
                         amplen = n.offset + n.length - m.offset
-                        if (not sizeRange) or (amplen >= sizeRange[0] and amplen <= sizeRange[1]):
+                        if (not sizeRange) or (sizeRange[0] <= amplen <= sizeRange[1]):
                             amp = (m, n, Interval(m.chrom,m.offset,n.offset + n.length,self.name))
                             amplicons.append(amp)
             if amplicons:

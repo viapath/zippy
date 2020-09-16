@@ -92,10 +92,12 @@ def range_string(exon_numbers):
         return ""
     elif len(exon_numbers)==1:
         return str(exon_numbers[0])
+    lastnum = None
     for (inumber, number) in enumerate(exon_numbers):
         if inumber == 0:
             chunks = [[number, number]]
-        elif inumber == (len(exon_numbers) + 1) or number == (lastnum + 1):
+        elif inumber == (len(exon_numbers) + 1) or (lastnum is not \
+           None and number == (lastnum + 1)):
             chunks[-1][1] = number
         else:
             #print("refill", lastnum, number)
