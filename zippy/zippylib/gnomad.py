@@ -10,12 +10,13 @@ class GnomadChromosomeInfo:
         self.vcf_found = False
         self.tbi_found = False
 
-    def gather_file(self, gs_folder, file_basename, dest_folder):
+    @staticmethod
+    def gather_file(gs_folder, file_basename, dest_folder):
         filefullpath = os.path.join(dest_folder, file_basename)
         if os.path.exists(filefullpath):
             pass  # TODO make a checksum
         else:
-            file_uri = os.path_join(gs_folder, file_basename)
+            file_uri = os.path.join(gs_folder, file_basename)
             logger.info(f"Getting file {file_uri}")
             dest_folder_norm = os.path.normpath(dest_folder)
             rsync_cmd = f"gsutil cp {file_uri} {dest_folder_norm}/"
@@ -86,7 +87,7 @@ class GnomadChromosomeInfo:
 
 def get_files(gnomad_version, info_type, resources_folder):
     chromosomes_infos = {}
-    gs_folder = f"gs://gnomad-public/release/{gnomad_version}/vcf/{info_type}"
+    #gs_folder = f"gs://gnomad-public/release/{gnomad_version}/vcf/{info_type}"
     #sp = subprocess.Popen(f"gsutil ls {gs_folder}", shell=True,
     #    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     #statuscode = sp.wait()
@@ -115,6 +116,7 @@ def get_files(gnomad_version, info_type, resources_folder):
     for (chromid, chromobj) in chromosomes_infos.items():
         chromobj.gather_data(resources_folder)
     return chromosomes_infos
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

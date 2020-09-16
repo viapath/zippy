@@ -160,7 +160,7 @@ class PrimerDB(object):
             SELECT right FROM pairs AS pp WHERE pp.right = p.name);''')
             orphans = cursor.fetchall()
             cursor.executemany('''DELETE FROM primer
-                WHERE name = ?''', (orphans))
+                WHERE name = ?''', orphans)
             self.db.commit()
             return [ x[0] for x in orphans ]
         finally:
