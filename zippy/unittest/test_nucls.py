@@ -5,10 +5,10 @@ from zippy import zippy
 from zippy.zippylib import range_string
 from zippy.zippylib.database import PrimerDB
 logger = logging.getLogger(__name__)
-#This script is prepared to be run run from the zippy root folder as python -m zippy.unittest.test
+# This script is prepared to be run run from the zippy root folder as python -m zippy.unittest.test
 
 
-#@unittest.skip("accelerate the testing")
+# @unittest.skip("accelerate the testing")
 class TestRanges:
     def test_range1(self):
         rs = range_string([1, 2, 3, 4, 5, 7, 8, 9, 11, 14])
@@ -19,7 +19,7 @@ class TestRanges:
         assert rs == "1,3-5,7-9,11,14"
 
 
-#@unittest.skip("accelerate the testing")
+# @unittest.skip("accelerate the testing")
 class TestPrimers:
 
     #def setUp(self):
@@ -92,7 +92,7 @@ class TestGenome:
                 getgenes=None)
             logger.info("ress0 {}".format(results0))
             logger.info("ress1 {}".format(results1))
-            assert 0, (results0[0], results1[0])
+            assert 0, (results0, results1)
 
     @pytest.mark.skip("fastening tests")
     def test_primerexonname50(self):
@@ -114,7 +114,7 @@ class TestGenome:
                 None, [0, 1, 2], name_to_dump="DNM1L")
             assert 0, results
 
-    @pytest.mark.skip("fastening tests")
+    # @pytest.mark.skip("fastening tests")
     def test_primerexonname1(self):
         with open("zippy/zippy.json") as conf:
             config = json.load(conf)
@@ -124,12 +124,12 @@ class TestGenome:
                 None, [0, 1, 2], name_to_dump=None)
             assert 0, results
 
-    @pytest.mark.skip("fastening tests")
+    # @pytest.mark.skip("fastening tests")
     def test_snplimits(self):
         with open("zippy/zippy.json") as conf:
             config = json.load(conf)
             config["blacklistcache"]="/dev/null"
-            db = PrimerDB(config['database'],dump=config['ampliconbed'])
+            db = PrimerDB(config['database'], dump=config['ampliconbed'])
             zippy.gplist = None
             config["designlimits"]["criticalsnp"] == 20
             config["designlimits"]["snpcount"] == 20

@@ -315,7 +315,7 @@ run:
 runp:
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate && python run.py"
 test:
-	bash -c "source $(ZIPPYPATH)/venv/bin/activate && python -m zippy.unittest.test"
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && python -m pytest"
 exons:
 	#Example: make exons LOC=12:32895523-32895682 GENE=DNM1L
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate && python -m zippy.unittest.find_exons $(LOC) $(GENE)"
@@ -434,6 +434,7 @@ cleanrootinstallers:
 
 bump:
 	echo ${VERSION}>version.dat
+
 version:
 	@echo ${VERSION}
 #sudo firewall-cmd --zone=public --list-all

@@ -28,7 +28,7 @@ class TestVcf:
                     #assert 0, "www"
                     break
 
-    @pytest.markskip("Now the compressed files are not used")
+    @pytest.mark.skip("Now the compressed files are not used")
     def test_gnomad_vcf_pysam(self):
         files.VCF.create_stripped_vcf("/var/local/zippy/resources/gnomad.exomes.r2.1.1.sites.Y.vcf.bgz", "/var/local/zippy/resources/gnomad.exomes.r2.1.1.sites.Y.onlyAFmetadata.vcf")
         original_vcf = pysam.VariantFile("/var/local/zippy/resources/gnomad.exomes.r2.1.1.sites.Y.vcf.bgz")
