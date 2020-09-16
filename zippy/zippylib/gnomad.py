@@ -117,6 +117,7 @@ def get_files(gnomad_version, info_type, resources_folder):
         chromobj.gather_data(resources_folder)
     return chromosomes_infos
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--version", default="2.1.1")
