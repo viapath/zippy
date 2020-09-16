@@ -406,6 +406,7 @@ def getPrimers(
                 combine=combine,
                 noncoding=noncoding,
                 name_to_dump=name_to_dump,
+                exon_numbering_base=config["exon_numbering_base"],
                 **config["tiling"]
             )
             # print("endgpl", time.time(), gplist)
@@ -763,13 +764,13 @@ def zippyPrimerQuery(
         getgenes=getgenes,
     )
     flash_messages.extend(more_flash_messages)
-    ## print primerTable
+    # print primerTable
     if outfile:
         with open(outfile, "w") as fh:
             print("\n".join(["\t".join(map(str, l)) for l in primerTable]), file=fh)
     else:
         print("\n".join(["\t".join(map(str, l)) for l in primerTable]), file=sys.stdout)
-    ## print and store primer pairs
+    # print and store primer pairs
     # if db:
     if store and db and design:
         db.addPair(
@@ -824,7 +825,8 @@ def zippyBatchQuery(
         if designVariants:
             with open(config["design"]["annotation"], "r", encoding="utf-8") as fh:
                 for iv in GenePred(
-                    fh, getgenes=selectedgeneexons, **config["tiling"]
+                    fh, getgenes=selectedgeneexons, exon_numbering_base=config["exon_numbering_base"],
+                    **config["tiling"]
                 ):  # get intervals from file or commandline
                     found = False
                     for dv in designVariants:
@@ -838,7 +840,8 @@ def zippyBatchQuery(
         # add full genes
         if fullgenes:
             with open(config["design"]["annotation"]) as fh:
-                intervals += GenePred(fh, getgenes=fullgenes, **config["tiling"])
+                intervals += GenePred(fh, getgenes=fullgenes,
+                    exon_numbering_base=config["exon_numbering_base"], **config["tiling"])
         # predesign and store
         if intervals:
             primerTable, resultList, missedIntervals, more_flash_messages = getPrimers(

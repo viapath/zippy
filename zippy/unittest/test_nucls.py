@@ -80,6 +80,7 @@ class TestGenome:
             zippy.gplist = None
             name_to_dump = "DNM1L"
             #name_to_dump = None
+            config["exon_numbering_base"] = 0
             results0 = zippy.zippyPrimerQuery(
                 config, "12:32895523-32895682", True, None, db, None, [0],
                 name_to_dump=name_to_dump, noncoding=False, combine=True,
@@ -114,7 +115,7 @@ class TestGenome:
                 None, [0, 1, 2], name_to_dump="DNM1L")
             assert 0, results
 
-    # @pytest.mark.skip("fastening tests")
+    @pytest.mark.skip("fastening tests")
     def test_primerexonname1(self):
         with open("zippy/zippy.json") as conf:
             config = json.load(conf)
@@ -124,7 +125,7 @@ class TestGenome:
                 None, [0, 1, 2], name_to_dump=None)
             assert 0, results
 
-    # @pytest.mark.skip("fastening tests")
+    @pytest.mark.skip("fastening tests")
     def test_snplimits(self):
         with open("zippy/zippy.json") as conf:
             config = json.load(conf)
