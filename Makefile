@@ -298,7 +298,8 @@ start_nginx_service_docker:
 	sudo cp install/zippy.socket /etc/systemd/system/zippy.socket
 
 stop_apache_service:
-	/etc/init.d/apache2 stop
+	#/etc/init.d/apache2 stop
+	sudo systemctl stop apache2
 
 stop_nginx_service:
 	sudo systemctl stop nginx
@@ -364,16 +365,15 @@ resources: genome annotation
 genome: genome-download genome-index
 
 genome-download:
-	cd $(ZIPPYPATH) && $(ZIPPYPATH)/venv/bin/python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz
-	cd $(ZIPPYPATH) && $(ZIPPYPATH)/venv/bin/python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta.fai http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai
+	cd $(ZIPPYPATH) && sudo -u $(WWWUSER) $(ZIPPYPATH)/venv/bin/python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz
+	cd $(ZIPPYPATH) && sudo -u $(WWWUSER) $(ZIPPYPATH)/venv/bin/python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta.fai http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai
+	#sudo -u $(WWWUSER) gunzip $(ZIPPYVAR)/resources/${genome}.fasta.gz
 	sudo chmod 644 $(ZIPPYVAR)/resources/*
 	sudo chmod 755 $(ZIPPYVAR)/resources
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 genome-index:
-	ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 && \
-		( echo bowtie file $(ZIPPYVAR)/resources/${genome}.bowtie exists, thus not running bowtie command ) || ( \
-		cd $(ZIPPYVAR)/resources; echo running bowtie; sudo -u $(WWWUSER) /usr/local/bin/bowtie2-build ${genome}.fasta ${genome}.bowtie )
+	bash -c "ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null && ( echo bowtie file $(ZIPPYVAR)/resources/${genome}.bowtie exists, thus not running bowtie command ) || ( cd $(ZIPPYVAR)/resources; echo running bowtie; source $(ZIPPYPATH)/venv/bin/activate; sudo -u $(WWWUSER) /usr/local/zippy/venv/bin/python /usr/local/bin/bowtie2-build $(ZIPPYVAR)/resources/${genome}.fasta $(ZIPPYVAR)/resources/${genome}.bowtie )"
 	sudo chmod 644 $(ZIPPYVAR)/resources/*
 	sudo chmod 755 $(ZIPPYVAR)/resources
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources

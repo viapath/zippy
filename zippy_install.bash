@@ -1,5 +1,5 @@
 #!/bin/bash
-#For modifications, work in the zoppi_install.bash script, because the versioned script
+#For modifications, work in the zippy_install.bash script, because the versioned script
 # is overwritten automatically ewhen make archive is executed
 zippy_parent_folder=$(pwd)
 versvar=${0##.*zippy_install_v}
