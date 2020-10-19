@@ -367,7 +367,6 @@ genome: genome-download genome-index
 genome-download:
 	cd $(ZIPPYPATH) && sudo -u $(WWWUSER) $(ZIPPYPATH)/venv/bin/python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.gz
 	cd $(ZIPPYPATH) && sudo -u $(WWWUSER) $(ZIPPYPATH)/venv/bin/python download_resources.py $(ZIPPYVAR)/resources/${genome}.fasta.fai http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/${genome}.fasta.fai
-	#sudo -u $(WWWUSER) gunzip $(ZIPPYVAR)/resources/${genome}.fasta.gz
 	sudo chmod 644 $(ZIPPYVAR)/resources/*
 	sudo chmod 755 $(ZIPPYVAR)/resources
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
