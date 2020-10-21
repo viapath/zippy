@@ -403,7 +403,7 @@ variation-download:
 	
 
 refgene-download:
-	sudo firewall-cmd --zone=public --add-port=3306/tcp &&sudo firewall-cmd --reload||echo "You didn't have the port 3306 blocked"
+	sudo firewall-cmd --zone=public --add-port=3306/tcp && sudo firewall-cmd --reload||echo "You didn't have the port 3306 blocked"
 	bash -c "ls $(ZIPPYVAR)/resources/refGene &>/dev/null && echo $(ZIPPYVAR)/resources/refGene file exists || make refgene"
 
 refgene:
@@ -411,7 +411,7 @@ refgene:
 
 gnomad:
 	echo "Downloading chromosome files for GNOMAD..."
-	bash -c "cd $(ZIPPYPATH) && source ./venv/bin/activate && ./venv/bin/python -m zippy.zippylib.gnomad"
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && sudo -u $(WWWUSER) -H $(ZIPPYPATH)/venv/bin/python -m zippy.zippylib.gnomad"
 
 archive:
 	rm -f $(SOURCE)_install_v*.bash
