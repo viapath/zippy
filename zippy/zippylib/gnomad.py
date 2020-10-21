@@ -19,6 +19,7 @@ class GnomadChromosomeInfo:
             file_uri = os.path.join(gs_folder, file_basename)
             logger.info(f"Getting file {file_uri}")
             dest_folder_norm = os.path.normpath(dest_folder)
+            logger.info(f"Getting file {file_uri} to {dest_folder_norm}")
             rsync_cmd = f"gsutil cp {file_uri} {dest_folder_norm}/"
             sp = subprocess.Popen(rsync_cmd, shell=True)
             statuscode = sp.wait()
@@ -85,14 +86,18 @@ class GnomadChromosomeInfo:
             #        outvcffileobj.write(record)
 
 
+def list_files():
+    gs_folder = f"gs://gnomad-public/release/{gnomad_version}/vcf/{info_type}"
+    sp = subprocess.Popen(f"gsutil ls {gs_folder}", shell=True,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    statuscode = sp.wait()
+    files = list(sp.stdout)
+    errors = list(sp.stderr)
+    return (statuscode, files, errors)
+
 def get_files(gnomad_version, info_type, resources_folder):
     chromosomes_infos = {}
     #gs_folder = f"gs://gnomad-public/release/{gnomad_version}/vcf/{info_type}"
-    #sp = subprocess.Popen(f"gsutil ls {gs_folder}", shell=True,
-    #    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    #statuscode = sp.wait()
-    #errors = list(sp.stderr)
-    #files = list(sp.stdout)
     #filepartsre = re.compile(f"{gs_folder}/gnomad.{info_type}.r{gnomad_version}.sites.(.*).vcf.bgz(.tbi)?")
     nums = list(range(1, 23))
     nums.append("X")

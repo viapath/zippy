@@ -27,6 +27,7 @@ function install(){
     #make import-shipped-refgene VERSION=${version}
     make annotation VERSION=${version}
     make genome VERSION=${version}
+    make gnomad VERSION=${version}
     #make unstash-resources VERSION=${version} distro=${distro}
     #else
         #make cleanall recover-resources install webservice resources distro=${distro}
