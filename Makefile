@@ -240,7 +240,8 @@ start_apache_service:
 	sudo a2dissite 000-default
 	#sudo echo "ServerName localhost" > /etc/httpd/conf.d/zippy_servernameconf.conf
 	#/etc/init.d/apache2 start
-	/etc/init.d/apache2 restart
+	#/etc/init.d/apache2 restart
+	sudo systemctl start nginx
 	#Opens the port 80 in the firewall in the system, for public access
 	#Disable SELINUX, this disabling is full while we don't know how to open only the sippy directories to SELINUX.
 	sudo firewall-cmd --zone=public --add-service=http --permanent&&sudo firewall-cmd --reload||echo "You don't have a firewall running"
@@ -257,6 +258,15 @@ start_apache_service_docker:
 
 enable_nginx_service:
 	sudo systemctl enable nginx
+
+disable_nginx_service:
+	sudo systemctl disable nginx
+
+enable_apache_service:
+	sudo systemctl enable apache2
+
+disable_apache_service:
+	sudo systemctl disable apache2
 
 enable_zippy_service:
 	sudo systemctl enable zippy
@@ -298,7 +308,8 @@ start_nginx_service_docker:
 	sudo cp install/zippy.socket /etc/systemd/system/zippy.socket
 
 stop_apache_service:
-	/etc/init.d/apache2 stop
+	#/etc/init.d/apache2 stop
+	sudo systemctl stop apache2
 
 stop_nginx_service:
 	sudo systemctl stop nginx
@@ -359,7 +370,7 @@ recover-resources:
 	#sudo mv /srv/zippy_resources/* $(ZIPPYVAR)/resources/
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
-resources: genome annotation
+resources: genome annotation gnomad
 
 genome: genome-download genome-index
 
@@ -371,9 +382,9 @@ genome-download:
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 genome-index:
-	ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 && \
+	bash -c "ls $(ZIPPYVAR)/resources/${genome}.bowtie.rev.2.bt2 &>/dev/null && \
 		( echo bowtie file $(ZIPPYVAR)/resources/${genome}.bowtie exists, thus not running bowtie command ) || ( \
-		cd $(ZIPPYVAR)/resources; echo running bowtie; sudo -u $(WWWUSER) /usr/local/bin/bowtie2-build ${genome}.fasta ${genome}.bowtie )
+		cd $(ZIPPYVAR)/resources; echo running bowtie; sudo -u $(WWWUSER) $(ZIPPYPATH)/venv/bin/python /usr/local/bin/bowtie2-build ${genome}.fasta ${genome}.bowtie )"
 	sudo chmod 644 $(ZIPPYVAR)/resources/*
 	sudo chmod 755 $(ZIPPYVAR)/resources
 	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
@@ -399,6 +410,10 @@ refgene-download:
 
 refgene:
 	mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -N -D ${ucsc_build} -P 3306 -e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" | sudo -u $(WWWUSER) dd of=$(ZIPPYVAR)/resources/${refgene_filename}
+
+gnomad:
+	echo "Downloading chromosome files for GNOMAD..."
+	bash -c "cd $(ZIPPYPATH) && source ./venv/bin/activate && ./venv/bin/python -m zippy.zippylib.gnomad"
 
 archive:
 	rm -f $(SOURCE)_install_v*.bash
@@ -434,6 +449,7 @@ cleanrootinstallers:
 
 bump:
 	echo ${VERSION}>version.dat
+
 version:
 	@echo ${VERSION}
 #sudo firewall-cmd --zone=public --list-all
