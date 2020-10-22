@@ -13,19 +13,25 @@ class GnomadChromosomeInfo:
     @staticmethod
     def gather_file(gs_folder, file_basename, dest_folder):
         filefullpath = os.path.join(dest_folder, file_basename)
+        dest_folder_norm = os.path.normpath(dest_folder)
         if os.path.exists(filefullpath):
-            pass  # TODO make a checksum
+            # TODO make a checksum
+            print(f"skipped {filefullpath}")
+            sp = subprocess.run(f"sudo chown {args.user_and_group_string} " +\
+                os.path.join(dest_folder_norm, file_basename), check=True, shell=True)
         else:
             file_uri = os.path.join(gs_folder, file_basename)
-            logger.info(f"Getting file {file_uri}")
-            dest_folder_norm = os.path.normpath(dest_folder)
-            logger.info(f"Getting file {file_uri} to {dest_folder_norm}")
-            rsync_cmd = f"gsutil cp {file_uri} {dest_folder_norm}/"
+            gsutil_fullpath = os.path.join(args.zippypath, 'venv', 'bin', 'gsutil')
+            rsync_cmd = f"{gsutil_fullpath} cp {file_uri} {dest_folder_norm}/"
+            logger.info(f"Getting file with command {rsync_cmd}")
             sp = subprocess.Popen(rsync_cmd, shell=True)
             statuscode = sp.wait()
             if statuscode > 0:
                 raise Exception("The last gsutil command raised a non-zero status " +
                                 f"code of {statuscode}.")
+            if args.user_and_group_string is not None:
+                sp = subprocess.run(f"sudo chown {args.user_and_group_string} " +\
+                    os.path.join(dest_folder_norm, file_basename), check=True, shell=True)
 
     def gather_data(self, resources_folder):
         from . import files  # import until here to avoid circular importing
@@ -74,16 +80,6 @@ class GnomadChromosomeInfo:
         shutil.copy2(self.stripped_file_fullpath, self.stripped_file_fullpath_text)
         with gzip.open(self.stripped_file_fullpath, "wb") as gzipout, open(self.stripped_file_fullpath_text, "rb") as gzipin:
             shutil.copyfileobj(gzipin, gzipout)
-        #shutil.copy2(self.index_file_txt_fullpath, self.stripped_index_file_txt_fullpath)
-        if False:
-            #with pysam.VariantFile(self.stripped_file_fullpath_text, "r") as invcffileobj:
-            with pysam.VariantFile(self.stripped_file_fullpath, "r") as invcffileobj:
-                for record in invcffileobj.fetch():
-                    assert 0, str(record)
-            #with pysam.VariantFile(self.stripped_file_fullpath, "wb") as outvcffileobj, \
-            #   pysam.VariantFile(self.stripped_file_fullpath_text, "r") as invcffileobj:
-            #    for record in invcffileobj.fetch():
-            #        outvcffileobj.write(record)
 
 
 def list_files():
@@ -127,5 +123,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "--version", default="2.1.1")
     parser.add_argument("-r", "--resources_folder", default="/var/local/zippy/resources")
+    parser.add_argument("-u", "--user_and_group_string", default=None, type=str)
+    parser.add_argument("-z", "--zippypath", default=None, type=str)
     args = parser.parse_args()
     get_files(args.version, "genomes", args.resources_folder)

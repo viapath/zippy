@@ -411,7 +411,7 @@ refgene:
 
 gnomad:
 	echo "Downloading chromosome files for GNOMAD..."
-	bash -c "source $(ZIPPYPATH)/venv/bin/activate && sudo -u $(WWWUSER) -H $(ZIPPYPATH)/venv/bin/python -m zippy.zippylib.gnomad"
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && $(ZIPPYPATH)/venv/bin/python -m zippy.zippylib.gnomad -r $(ZIPPYVAR)/resources -u $(WWWUSER):$(WWWGROUP) -z $(ZIPPYPATH)"
 
 archive:
 	rm -f $(SOURCE)_install_v*.bash
