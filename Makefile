@@ -4,6 +4,7 @@
 ZIPPYPATH=/usr/local/zippy
 ZIPPYVAR=/var/local/zippy
 ZIPPYWWW=/var/www/zippy
+ZIPPYTMP=/tmp/zippy
 SOURCE=zippy
 VERSION := $(shell cat version.dat)
 ROOT=/root
@@ -187,6 +188,7 @@ cleansoftware:
 	sudo rm -f /etc/nginx/sites-enabled/zippy
 	sudo rm -f /etc/nginx/sites-available/zippy
 cleandata:
+	sudo rm -rf $(ZIPPYTMP)
 	sudo rm -rf $(ZIPPYVAR)
 cleandb:
 	sudo rm -f $(ZIPPYVAR)/zippy.sqlite
@@ -407,11 +409,19 @@ refgene-download:
 	bash -c "ls $(ZIPPYVAR)/resources/refGene &>/dev/null && echo $(ZIPPYVAR)/resources/refGene file exists || make refgene"
 
 refgene:
-	mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -N -D ${ucsc_build} -P 3306 -e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" | sudo -u $(WWWUSER) dd of=$(ZIPPYVAR)/resources/${refgene_filename}
+	mysql --user=genome --host=genome-mysql.cse.ucsc.educ -A -N -D ${ucsc_build} -P 3306 -e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" | sudo -u $(WWWUSER) dd of=$(ZIPPYVAR)/resources/${refgene_filename}
+	#sudo -u $(WWWUSER) bash -c "if [ -s $(ZIPPYVAR)/resources/${refgene_filename} ]; then echo file $(ZIPPYVAR)/resources/${refgene_filename}/${refgene_filename} is not empty; else cp $(ZIPPYPATH)/resources/${refgene_filename} $(ZIPPYVAR)/resources/${refgene_filename}; echo File $(ZIPPYVAR)/resources/${refgene_filename} got from bundle; fi"
+	sudo -u $(WWWUSER) bash -c "if [ -s $(ZIPPYVAR)/resources/${refgene_filename} ]; then echo file $(ZIPPYVAR)/resources/${refgene_filename}/${refgene_filename} is not empty; else cp ./resources/${refgene_filename} $(ZIPPYVAR)/resources/${refgene_filename}; echo File $(ZIPPYVAR)/resources/${refgene_filename} got from bundle; fi"
+
+refgene_under_this_dir:
+	mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -N -D ${ucsc_build} -P 3306 -e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" | sudo -u $(WWWUSER) dd of=resources/${refgene_filename}
 
 gnomad:
 	echo "Downloading chromosome files for GNOMAD..."
-	bash -c "source $(ZIPPYPATH)/venv/bin/activate && $(ZIPPYPATH)/venv/bin/python -m zippy.zippylib.gnomad -r $(ZIPPYVAR)/resources -u $(WWWUSER):$(WWWGROUP) -z $(ZIPPYPATH)"
+	mkdir -p $(ZIPPYTMP)
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYTMP)
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && sudo $(ZIPPYPATH)/venv/bin/python -m zippy.zippylib.gnomad -r $(ZIPPYVAR)/resources -u $(WWWUSER):$(WWWGROUP) -z $(ZIPPYPATH) -t $(ZIPPYTMP)"
+	sudo chown -R $(WWWUSER):$(WWWGROUP) $(ZIPPYVAR)/resources
 
 archive:
 	rm -f $(SOURCE)_install_v*.bash

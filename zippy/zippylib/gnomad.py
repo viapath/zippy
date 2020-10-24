@@ -17,21 +17,21 @@ class GnomadChromosomeInfo:
         if os.path.exists(filefullpath):
             # TODO make a checksum
             print(f"skipped {filefullpath}")
-            sp = subprocess.run(f"sudo chown {args.user_and_group_string} " +\
-                os.path.join(dest_folder_norm, file_basename), check=True, shell=True)
+            #sp = subprocess.run(f"sudo chown {args.user_and_group_string} " +\
+            #    os.path.join(dest_folder_norm, file_basename), check=True, shell=True)
         else:
             file_uri = os.path.join(gs_folder, file_basename)
             gsutil_fullpath = os.path.join(args.zippypath, 'venv', 'bin', 'gsutil')
-            rsync_cmd = f"{gsutil_fullpath} cp {file_uri} {dest_folder_norm}/"
+            rsync_cmd = f"TMPDIR={args.zippytmp} {gsutil_fullpath} cp {file_uri} {dest_folder_norm}/"
             logger.info(f"Getting file with command {rsync_cmd}")
             sp = subprocess.Popen(rsync_cmd, shell=True)
             statuscode = sp.wait()
             if statuscode > 0:
                 raise Exception("The last gsutil command raised a non-zero status " +
                                 f"code of {statuscode}.")
-            if args.user_and_group_string is not None:
-                sp = subprocess.run(f"sudo chown {args.user_and_group_string} " +\
-                    os.path.join(dest_folder_norm, file_basename), check=True, shell=True)
+            #if args.user_and_group_string is not None:
+            #    sp = subprocess.run(f"sudo chown {args.user_and_group_string} " +\
+            #        os.path.join(dest_folder_norm, file_basename), check=True, shell=True)
 
     def gather_data(self, resources_folder):
         from . import files  # import until here to avoid circular importing
@@ -125,5 +125,6 @@ if __name__ == "__main__":
     parser.add_argument("-r", "--resources_folder", default="/var/local/zippy/resources")
     parser.add_argument("-u", "--user_and_group_string", default=None, type=str)
     parser.add_argument("-z", "--zippypath", default=None, type=str)
+    parser.add_argument("-t", "--zippytmp", default="/tmp/zippy", type=str)
     args = parser.parse_args()
     get_files(args.version, "genomes", args.resources_folder)
