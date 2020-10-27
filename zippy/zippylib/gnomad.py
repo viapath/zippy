@@ -60,20 +60,6 @@ class GnomadChromosomeInfo:
             #                              self.stripped_file_fullpath)
         #self.compress_data(resources_folder, deambiguate=False)
         #self.test_compressed_data(resources_folder)
-
-    def test_compressed_data(self, resources_folder):
-        assert 0, self.stripped_file_fullpath_text
-        #with pysam.VariantFile(self.stripped_file_fullpath_text, "r", index_filename=self.index_file_txt_fullpath) as invcffileobj:
-        with pysam.VariantFile(self.stripped_file_fullpath_text, "r") as invcffileobj:
-        #with pysam.VariantFile(self.stripped_file_fullpath, "rb", index_filename=self.index_file_txt_fullpath) as invcffileobj:
-        #with pysam.VariantFile(self.stripped_file_fullpath, "rb") as invcffileobj:
-            for record in invcffileobj:
-                print("record", record)
-        #with pysam.TabixFile(self.stripped_file_fullpath, "r", index=self.stripped_index_file_txt_fullpath) as invcffileobj:
-        #    for record in invcffileobj.fetch():
-        #        print("record", record)
-        #        break
-
     def compress_data(self, resources_folder, deambiguate=False):
         if deambiguate:
             shutil.move(self.stripped_file_fullpath, self.stripped_file_fullpath_txt)
@@ -97,18 +83,6 @@ def get_files(gnomad_version, info_type, resources_folder):
     #filepartsre = re.compile(f"{gs_folder}/gnomad.{info_type}.r{gnomad_version}.sites.(.*).vcf.bgz(.tbi)?")
     nums = list(range(1, 23))
     nums.append("X")
-    if False:
-        for file in files:
-            file = file.strip().decode("UTF-8")
-            match = filepartsre.match(file)
-            if match:
-                mg = match.groups()
-                if mg[0] not in chromosomes_infos:
-                    chromosomes_infos[mg[0]] = GnomadChromosomeInfo(gnomad_version, info_type, mg[0])
-                if mg[1] is None:
-                    chromosomes_infos[mg[0]].vcf_found = True
-                else:
-                    chromosomes_infos[mg[0]].tbi_found = True
     for num in nums:
         numstr = str(num)
         chromosomes_infos[numstr] = GnomadChromosomeInfo(gnomad_version, info_type, numstr)

@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 # This script is prepared to be run run from the zippy root folder as python -m zippy.unittest.test
 
 
-# @unittest.skip("accelerate the testing")
+@pytest.mark.skip("accelerate the testing")
 class TestRanges:
     def test_range1(self):
         rs = range_string([1, 2, 3, 4, 5, 7, 8, 9, 11, 14])
@@ -19,7 +19,7 @@ class TestRanges:
         assert rs == "1,3-5,7-9,11,14"
 
 
-# @unittest.skip("accelerate the testing")
+@pytest.mark.skip("accelerate the testing")
 class TestPrimers:
 
     #def setUp(self):
@@ -51,6 +51,7 @@ class TestPrimers:
 
 
 class TestGenome:
+    @pytest.mark.skip("featening tests")
     def test_chr10(self):
         pfile = pysam.FastaFile("/var/local/zippy/resources/human_g1k_v37.fasta")
         args = ('10', 43613278, 43614409)
@@ -71,7 +72,7 @@ class TestGenome:
                 name_to_dump=name_to_dump, noncoding=False, combine=True,
                 getgenes=None)
 
-    #@pytest.mark.skip("fastening tests")
+    @pytest.mark.skip("fastening tests")
     def test_base0_vs_base1(self):
         with open("zippy/zippy.json") as conf:
             config = json.load(conf)
@@ -94,6 +95,18 @@ class TestGenome:
             logger.info("ress0 {}".format(results0))
             logger.info("ress1 {}".format(results1))
             assert 0, (results0, results1)
+
+    def test_primerexonname208(self):
+        with open("zippy/zippy.json") as conf:
+            config = json.load(conf)
+            config["exon_numbering_base"] = 1
+            config["blacklistcache"] = "/dev/null"
+            db = PrimerDB(config['database'], dump=config['ampliconbed'])
+            zippy.gplist = None
+            #results = zippy.zippyPrimerQuery(config, "5:25398208-25398318", True, None, db,
+            results = zippy.zippyPrimerQuery(config, "12:25398208-25398318", True, None, db,
+                                             None, [0, 1, 2], name_to_dump="KRAS")
+            assert 0, results
 
     @pytest.mark.skip("fastening tests")
     def test_primerexonname50(self):
