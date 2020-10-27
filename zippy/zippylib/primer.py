@@ -474,7 +474,7 @@ class PrimerPair(list):
 
     def check(self, limits):
         for k, v in limits.items():
-            x = getattr(self, k)()
+            x0 = x = getattr(self, k)()
             try:
                 x = int(x)
             except TypeError:
@@ -483,8 +483,9 @@ class PrimerPair(list):
                 raise
             if x > v:
                 logger.debug(
-                    "whenfail {} {} {} {}".format(
-                        self.snpcount(), self.criticalsnp(), self.mispriming(), self.designrank()
+                    "whenfail {} {} {} {} {}".format(
+                        self.snpcount(), self.criticalsnp(), self.mispriming(),
+                        self.designrank(), f"{x=} {x0=} {v=} {k=} {limits=}"
                     )
                 )
                 return False
@@ -611,9 +612,14 @@ class Primer(object):
         self.loci.append(Locus(chrom, pos, len(self), reverse, tm))
         return
 
-    def snpCheckPrimer(self, vcf):
-        self.snp = self.targetposition.snpCheck(vcf)
-        # print("lensnps", len(self.snp))
+    def snpCheckPrimer(self, config):
+        snpcheck_used = config["snpcheck"]["used"]
+        if isinstance(snpcheck_used, str):
+            vcf = config["snpcheck"][snpcheck_used]
+            self.snp = self.targetposition.snpCheck(vcf)
+        else:
+            vcf = f"/var/local/zippy/resources/gnomad.genomes.r2.1.1.sites.{self.targetposition.chrom}.vcf.bgz"
+            self.snp = self.targetposition.snpCheck(vcf, AF_cutoff=snpcheck_used)
         return True if self.snp else False
 
     def checkTarget(self):
@@ -657,7 +663,7 @@ class Locus(object):
     def __hash__(self):
         return hash((self.chrom, self.offset, self.length, self.reverse))
 
-    def snpCheck(self, database):
+    def snpCheck(self, database, AF_cutoff=None):
         db = pysam.TabixFile(database)
         try:
             snps = db.fetch(self.chrom, self.offset, self.offset + self.length)
@@ -667,11 +673,28 @@ class Locus(object):
             raise
         # query database and translate to primer positions
         snp_positions = []
-        for v in snps:
-            f = v.split()
-            snpOffset = (int(f[1]) - 1) - self.offset  # convert to 0-based
-            snpLength = max(map(len, [f[3]] + f[4].split(",")))
-            snp_positions.append((f[0], snpOffset, snpLength, f[2]))
+        if AF_cutoff is not None:
+            AF_cutoff_fraction = AF_cutoff/100.0
+            for v in snps:
+                f = v.split()
+                vinfos = f[7].split(";")
+                vinfo = dict(vinfo.split("=", 1) for vinfo in vinfos if "=" in vinfo)
+                AF = vinfo.get("AF", None)
+                if AF is None:
+                    assert 0
+                else:
+                    AFf = float(AF)
+                    if AFf < AF_cutoff_fraction:
+                        continue  # skips low frequency mutation
+                snpOffset = (int(f[1]) - 1) - self.offset  # convert to 0-based
+                snpLength = max(map(len, [f[3]] + f[4].split(",")))
+                snp_positions.append((f[0], snpOffset, snpLength, f[2]))
+        else:
+            for v in snps:
+                f = v.split()
+                snpOffset = (int(f[1]) - 1) - self.offset  # convert to 0-based
+                snpLength = max(map(len, [f[3]] + f[4].split(",")))
+                snp_positions.append((f[0], snpOffset, snpLength, f[2]))
         return snp_positions
 
 

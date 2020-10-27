@@ -91,6 +91,7 @@ essential_ubuntu:
 	sudo adduser $(WWWUSER) $(WWWGROUP)
 	# install apache/wsgi
 	sudo apt-get install -y $(serving_packages)
+
 essential_centos:
 	echo Distro: ${DISTRO}
 	echo Zippy version: ${VERSION}
@@ -115,16 +116,17 @@ essential_centos:
 	sudo usermod -L $(WWWUSER)
 	# disable default site
 	#a2dissite 000-default
+
 print_flags:
 	@echo "Installing Zippy ${VERSION} for distro $(DISTRO)"
 	@echo "Installing for server $(server), location ${server_suffix} and enviromnent ${env_suffix}"
-
 
 very_essential_ubuntu:
 	apt-get -y update
 	apt-get -y upgrade
 	apt-get install -y sudo
 	sudo apt-get install -y sudo less make wget curl vim apt-utils rsync
+
 very_essential_centos:
 	yum -y update --skip-broken
 	yum -y upgrade --skip-broken
@@ -196,6 +198,9 @@ cleandb:
 	sudo rm -f $(ZIPPYVAR)/.blacklist.cache
 	sudo rm -rf $(ZIPPYVAR)/uploads
 	sudo rm -rf $(ZIPPYVAR)/results
+
+clean_blacklist_cache:
+	sudo $(ZIPPYPATH)/venv/bin/python -c "import pickle; pickle.dump([],open('$(ZIPPYVAR)/.blacklist.cache','wb'))"
 
 # webservice install (production)
 webservice_ubuntu:
@@ -411,7 +416,7 @@ refgene-download:
 refgene:
 	mysql --user=genome --host=genome-mysql.cse.ucsc.educ -A -N -D ${ucsc_build} -P 3306 -e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" | sudo -u $(WWWUSER) dd of=$(ZIPPYVAR)/resources/${refgene_filename}
 	#sudo -u $(WWWUSER) bash -c "if [ -s $(ZIPPYVAR)/resources/${refgene_filename} ]; then echo file $(ZIPPYVAR)/resources/${refgene_filename}/${refgene_filename} is not empty; else cp $(ZIPPYPATH)/resources/${refgene_filename} $(ZIPPYVAR)/resources/${refgene_filename}; echo File $(ZIPPYVAR)/resources/${refgene_filename} got from bundle; fi"
-	sudo -u $(WWWUSER) bash -c "if [ -s $(ZIPPYVAR)/resources/${refgene_filename} ]; then echo file $(ZIPPYVAR)/resources/${refgene_filename}/${refgene_filename} is not empty; else cp ./resources/${refgene_filename} $(ZIPPYVAR)/resources/${refgene_filename}; echo File $(ZIPPYVAR)/resources/${refgene_filename} got from bundle; fi"
+	sudo -u $(WWWUSER) bash -c "if [ -s $(ZIPPYVAR)/resources/${refgene_filename} ]; then echo file $(ZIPPYVAR)/resources/${refgene_filename} is not empty; else cp ./resources/${refgene_filename} $(ZIPPYVAR)/resources/${refgene_filename}; echo File $(ZIPPYVAR)/resources/${refgene_filename} got from bundle; fi"
 
 refgene_under_this_dir:
 	mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -N -D ${ucsc_build} -P 3306 -e "SELECT DISTINCT r.bin,CONCAT(r.name,'.',i.version),c.ensembl,r.strand, r.txStart,r.txEnd,r.cdsStart,r.cdsEnd,r.exonCount,r.exonStarts,r.exonEnds,r.score,r.name2,r.cdsStartStat,r.cdsEndStat,r.exonFrames FROM refGene as r, hgFixed.gbCdnaInfo as i, ucscToEnsembl as c WHERE r.name=i.acc AND c.ucsc = r.chrom ORDER BY r.bin;" | sudo -u $(WWWUSER) dd of=resources/${refgene_filename}

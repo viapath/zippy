@@ -503,8 +503,9 @@ def getPrimers(
                 for i, pair in enumerate(pairs):
                     sys.stderr.write("\r" + progress.show(i))
                     for p in pair:
-                        p.snpCheckPrimer(config["snpcheck"][config["snpcheck"]["used"]])
-                        # if len(p.snp)>0:
+                        #p.snpCheckPrimer(config["snpcheck"][config["snpcheck"]["used"]])
+                        p.snpCheckPrimer(config)
+                        #if len(p.snp)>0:
                         #    assert 0, (p, p.snp)
                 sys.stderr.write("\r" + progress.show(len(pairs)) + "\n")
 
