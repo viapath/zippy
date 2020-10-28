@@ -103,10 +103,9 @@ class TestGenome:
             config["blacklistcache"] = "/dev/null"
             db = PrimerDB(config['database'], dump=config['ampliconbed'])
             zippy.gplist = None
-            #results = zippy.zippyPrimerQuery(config, "5:25398208-25398318", True, None, db,
             results = zippy.zippyPrimerQuery(config, "12:25398208-25398318", True, None, db,
                                              None, [0, 1, 2], name_to_dump="KRAS")
-            assert 0, results
+            assert len(results[0])>0, results
 
     @pytest.mark.skip("fastening tests")
     def test_primerexonname50(self):

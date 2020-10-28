@@ -485,7 +485,7 @@ class PrimerPair(list):
                 logger.debug(
                     "whenfail {} {} {} {} {}".format(
                         self.snpcount(), self.criticalsnp(), self.mispriming(),
-                        self.designrank(), f"{x=} {x0=} {v=} {k=} {limits=}"
+                        self.designrank(), f"x={x} x0={x0} v={v} k={k} limits={limits}"
                     )
                 )
                 return False

@@ -50,7 +50,8 @@ primer3-py==0.6.0
 #primer3-py==0.5.0
 #psycopg2==2.6.1
 psycopg2
-py==1.4.31
+#py==1.4.31
+py
 pycparser==2.14
 pyflakes==1.0.0
 #pysam==0.15
@@ -82,3 +83,4 @@ biopython
 #xml2dict
 xmltodict
 gsutil
+tox
