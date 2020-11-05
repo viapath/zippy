@@ -685,7 +685,7 @@ class Locus(object):
                 else:
                     AFf = float(AF)
                     if AFf > AF_cutoff_fraction:
-                        continue  # skips low frequency mutation
+                        continue  # skips high frequency mutation
                 snpOffset = (int(f[1]) - 1) - self.offset  # convert to 0-based
                 snpLength = max(map(len, [f[3]] + f[4].split(",")))
                 snp_positions.append((f[0], snpOffset, snpLength, f[2]))

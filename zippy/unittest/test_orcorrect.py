@@ -11,7 +11,7 @@ class TestVcf:
                     break
 
     def test_commoner_vcf_lines(self):
-        with open("/var/local/zippy/resources/00-common_all.vcf", "rb") as opf:
+        with open("/var/local/zippy/resources/00-common_all.vcf.gz", "rb") as opf:
             for (iline, line) in enumerate(opf):
                 print("lineb", line)
                 if iline == 10:

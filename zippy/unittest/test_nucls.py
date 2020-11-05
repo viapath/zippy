@@ -96,15 +96,43 @@ class TestGenome:
             logger.info("ress1 {}".format(results1))
             assert 0, (results0, results1)
 
+    #@pytest.mark.skip("fastening tests")
     def test_primerexonname208(self):
         with open("zippy/zippy.json") as conf:
             config = json.load(conf)
-            config["exon_numbering_base"] = 1
             config["blacklistcache"] = "/dev/null"
+            config["snpcheck"]["used"] = "common"
             db = PrimerDB(config['database'], dump=config['ampliconbed'])
             zippy.gplist = None
             results = zippy.zippyPrimerQuery(config, "12:25398208-25398318", True, None, db,
                                              None, [0, 1, 2], name_to_dump="KRAS")
+            assert len(results[0])>0, results
+
+    def test_primerexonname_ever_erroring(self):
+        with open("zippy/zippy.json") as conf:
+            config = json.load(conf)
+            config["snpcheck"]["used"] = 0.001
+            config["snpcheck"]["used"] = "common"
+            #config["exon_numbering_base"] = 1
+            config["blacklistcache"] = "/dev/null"
+            db = PrimerDB(config['database'], dump=config['ampliconbed'])
+            zippy.gplist = None
+            results = zippy.zippyPrimerQuery(config, "12:32895523-32895682", True, None, db,
+                                             None, [0, 1, 2], name_to_dump=None)
+            #assert 0, results
+            assert len(results[0])>0, results
+
+    def test_chr11(self):
+        with open("zippy/zippy.json") as conf:
+            config = json.load(conf)
+            config["snpcheck"]["used"] = "all"
+            config["exon_numbering_base"] = 0
+            config["blacklistcache"] = "/dev/null"
+            db = PrimerDB(config['database'], dump=config['ampliconbed'])
+            zippy.gplist = None
+            results = zippy.zippyPrimerQuery(config, "Chr12:115115461-115116484", True, None, db,
+                                             None, [0, 1, 2], name_to_dump=None)
+            #assert 0, results
             assert len(results[0])>0, results
 
     @pytest.mark.skip("fastening tests")

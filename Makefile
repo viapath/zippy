@@ -330,6 +330,8 @@ gunicorn:
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate && gunicorn --bind 0.0.0.0:8000 wsgi:app"
 run:
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate && export FLASK_DEBUG=1 && export FLASK_ENV=development && export FLASK_APP=zippy && /usr/local/zippy/venv/bin/python run.py"
+activate:
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate"
 runp:
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate && python run.py"
 test:
