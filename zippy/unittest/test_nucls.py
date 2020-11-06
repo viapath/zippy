@@ -134,7 +134,7 @@ class TestGenome:
             results = zippy.zippyPrimerQuery(config, "11:118343121-118343321", True, None, db,
                                              None, [0, 1, 2], name_to_dump=None)
             logging.info(f"chr11 {results}")
-            assert 0, results
+            #assert 0, results
             assert len(results[0])>0, results
 
     def test_chr12_2missing(self):
