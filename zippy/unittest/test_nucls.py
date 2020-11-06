@@ -133,7 +133,8 @@ class TestGenome:
             zippy.gplist = None
             results = zippy.zippyPrimerQuery(config, "11:118343121-118343321", True, None, db,
                                              None, [0, 1, 2], name_to_dump=None)
-            #assert 0, results
+            logging.info(f"chr11 {results}")
+            assert 0, results
             assert len(results[0])>0, results
 
     def test_chr12_2missing(self):
@@ -146,7 +147,6 @@ class TestGenome:
             zippy.gplist = None
             results = zippy.zippyPrimerQuery(config, "12:115115461-115116484", True, None, db,
                                              None, [0, 1, 2], name_to_dump=None)
-            #assert 0, results
             assert len(results[0])==0, results
 
     @pytest.mark.skip("fastening tests")
