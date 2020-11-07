@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import unittest, pysam, json, pytest, logging
+import unittest, pysam, json, pytest, logging, os
 from zippy import zippy
 from zippy.zippylib import range_string
 from zippy.zippylib.database import PrimerDB
@@ -51,7 +51,9 @@ class TestPrimers:
 
 
 class TestGenome:
-    @pytest.mark.skip("featening tests")
+    config_json = os.environ.get("CONFIG_FILE", "zippy/zippy.json")
+    #config_json = os.environ.get("CONFIG_FILE", "zippy/extra_configs/zippy_v7.6.json")
+    @pytest.mark.skip("fastening tests")
     def test_chr10(self):
         pfile = pysam.FastaFile("/var/local/zippy/resources/human_g1k_v37.fasta")
         args = ('10', 43613278, 43614409)
@@ -60,7 +62,7 @@ class TestGenome:
 
     @pytest.mark.skip("fastening tests")
     def test_primerexonname2(self):
-        with open("zippy/zippy.json") as conf:
+        with open(self.config_json) as conf:
             config = json.load(conf)
             config["blacklistcache"] = "/dev/null"
             db = PrimerDB(config['database'], dump=config['ampliconbed'])
@@ -74,7 +76,7 @@ class TestGenome:
 
     @pytest.mark.skip("fastening tests")
     def test_base0_vs_base1(self):
-        with open("zippy/zippy.json") as conf:
+        with open(self.config_json) as conf:
             config = json.load(conf)
             config["blacklistcache"] = "/dev/null"
             db = PrimerDB(config['database'], dump=config['ampliconbed'])
@@ -98,50 +100,42 @@ class TestGenome:
 
     #@pytest.mark.skip("fastening tests")
     def test_primerexonname208(self):
-        with open("zippy/zippy.json") as conf:
+        with open(self.config_json) as conf:
             config = json.load(conf)
             config["blacklistcache"] = "/dev/null"
-            config["snpcheck"]["used"] = "common"
-            config["exon_numbering_base"] = 1
+            #config["snpcheck"]["used"] = "common"
+            #config["exon_numbering_base"] = 1
             db = PrimerDB(config['database'], dump=config['ampliconbed'])
             zippy.gplist = None
             results = zippy.zippyPrimerQuery(config, "12:25398208-25398318", True, None, db,
                                              None, [0, 1, 2], name_to_dump="KRAS")
-            assert len(results[0])>0, results
+            assert results[0][0][0:2] == ['12:25398208-25398318', 'KRAS_1'], results
 
     def test_primerexonname_ever_erroring(self):
-        with open("zippy/zippy.json") as conf:
+        with open(self.config_json) as conf:
             config = json.load(conf)
-            config["snpcheck"]["used"] = 0.001
-            config["snpcheck"]["used"] = "common"
-            config["exon_numbering_base"] = 1
             config["blacklistcache"] = "/dev/null"
             db = PrimerDB(config['database'], dump=config['ampliconbed'])
             zippy.gplist = None
             results = zippy.zippyPrimerQuery(config, "12:32895523-32895682", True, None, db,
                                              None, [0, 1, 2], name_to_dump=None)
-            #assert 0, results
-            assert len(results[0])>0, results
+            assert results[0][0][0:2] == ['12:32895523-32895682', 'DNM1L_19'], results
+            #assert len(results[0])>0, results
 
     def test_chr11(self):
-        with open("zippy/zippy.json") as conf:
+        with open(self.config_json) as conf:
             config = json.load(conf)
-            config["snpcheck"]["used"] = "common"
-            config["exon_numbering_base"] = 1
             config["blacklistcache"] = "/dev/null"
             db = PrimerDB(config['database'], dump=config['ampliconbed'])
             zippy.gplist = None
             results = zippy.zippyPrimerQuery(config, "11:118343121-118343321", True, None, db,
                                              None, [0, 1, 2], name_to_dump=None)
             logging.info(f"chr11 {results}")
-            #assert 0, results
-            assert len(results[0])>0, results
+            assert results[0][0][0:2] == ['11:118343121-118343321', 'KMT2A_2_2-3'], results
 
     def test_chr12_2missing(self):
-        with open("zippy/zippy.json") as conf:
+        with open(self.config_json) as conf:
             config = json.load(conf)
-            config["snpcheck"]["used"] = "common"
-            config["exon_numbering_base"] = 1
             config["blacklistcache"] = "/dev/null"
             db = PrimerDB(config['database'], dump=config['ampliconbed'])
             zippy.gplist = None
@@ -151,7 +145,7 @@ class TestGenome:
 
     @pytest.mark.skip("fastening tests")
     def test_primerexonname50(self):
-        with open("zippy/zippy.json") as conf:
+        with open(self.config_json) as conf:
             config = json.load(conf)
             db = PrimerDB(config['database'], dump=config['ampliconbed'])
             zippy.gplist = None
@@ -161,7 +155,7 @@ class TestGenome:
 
     @pytest.mark.skip("fastening tests")
     def test_primerexonname3(self):
-        with open("zippy/zippy.json") as conf:
+        with open(self.config_json) as conf:
             config = json.load(conf)
             db = PrimerDB(config['database'], dump=config['ampliconbed'])
             zippy.gplist = None
@@ -171,7 +165,7 @@ class TestGenome:
 
     @pytest.mark.skip("fastening tests")
     def test_primerexonname1(self):
-        with open("zippy/zippy.json") as conf:
+        with open(self.config_json) as conf:
             config = json.load(conf)
             db = PrimerDB(config['database'], dump=config['ampliconbed'])
             zippy.gplist = None
@@ -181,7 +175,7 @@ class TestGenome:
 
     @pytest.mark.skip("fastening tests")
     def test_snplimits(self):
-        with open("zippy/zippy.json") as conf:
+        with open(self.config_json) as conf:
             config = json.load(conf)
             config["blacklistcache"]="/dev/null"
             db = PrimerDB(config['database'], dump=config['ampliconbed'])

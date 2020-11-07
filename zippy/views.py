@@ -17,17 +17,6 @@ from .zippy import zippyBatchQuery, zippyPrimerQuery, updateLocation, searchByNa
 from .zippylib.primer import Location, ChromosomeNotFoundError
 from .zippylib.database import PrimerDB
 
-app.config['ALLOWED_EXTENSIONS'] = set(['txt', 'batch', 'vcf', 'bed', 'csv', 'tsv'])
-app.secret_key = 'Zippy is the best handpuppet out there'
-app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['DOWNLOAD_FOLDER'] = 'results'
-app.config['CONFIG_FILE'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'zippy.json')
-# read password (SHA1 hash, not the safest)
-with open(app.config['CONFIG_FILE']) as conf:
-    #config = json.load(conf, object_hook=ascii_encode_dict)
-    config = json.load(conf)
-    app.config['PASSWORD'] = config['password']
-
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']

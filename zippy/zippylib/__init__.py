@@ -3,14 +3,13 @@
 __doc__ == """Zippy"""
 __author__ = "David Brawand"
 __license__ = "MIT"
-# __version__ = "2.3.4"
-from zippy import __version__
 
 __maintainer__ = "David Brawand"
 __email__ = "dbrawand@nhs.net"
 __status__ = "Production"
+# __version__ = "2.3.4"
+#from zippy import __version__
 
-from .primer import Primer, PrimerPair
 import time
 import os
 import subprocess
@@ -55,7 +54,7 @@ imageDir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../static")
 """read configuration (convert unicode to ascii string)"""
 
 
-def ww_ascii_encode_dict(data):
+def ascii_encode_dict(data):
     ascii_encode = lambda x: x.encode("ascii") if type(x) is str else x
     return dict(map(ascii_encode, pair) for pair in data.items())
 
@@ -79,6 +78,7 @@ def banner(versionstring=""):
 
 
 def flatten(container):
+    from .primer import PrimerPair
     # put in a list if it isn't
     if (
         type(container) is not list
@@ -185,3 +185,4 @@ class Progressbar(object):
             done=str(i) + "/" + str(self.total),
             eta=eta,
         )
+

@@ -1,5 +1,6 @@
 #!/usr/local/zippy/venv/bin/python
 from __future__ import print_function
+import os, pathlib
 
 __doc__ == """
 ################################################################
@@ -12,13 +13,13 @@ __author__ = "David Brawand"
 __credits__ = ["David Brawand", "Christopher Wall"]
 __license__ = "MIT"
 # __version__ = "2.3.4"
-with open("version.dat", "r") as opf:  # reads the version from the file version.dat
+#assert 0, os.path.abspath(__file__)
+with open(pathlib.Path(os.path.abspath(__file__)).parent.parent/"version.dat", "r") as opf:  # reads the version from the file version.dat
     __version__ = list(opf)[0].strip()
 __maintainer__ = "David Brawand"
 __email__ = "dbrawand@nhs.net"
 __status__ = "Production"
 
-import os
 import re
 import sys
 import json
@@ -132,7 +133,7 @@ def importPrimerPairs(inputfile, config, primer3=True):
                             print(
                                 "ERROR: Missing columns (%s)"
                                 % ",".join(list(minimalHeader.difference(set(header)))),
-                                file=sys_stderr,
+                                file=sys.stderr,
                             )
                             raise Exception("FileHeaderError")
                     else:
@@ -1059,8 +1060,7 @@ def readprimerlocations(locationfile):
 # === CLI ======================================================================
 # ==============================================================================
 def main():
-    from .zippylib import ascii_encode_dict
-    from .zippylib import banner
+    from .zippylib import ascii_encode_dict, banner
 
     print(banner(__version__), file=sys.stderr)
 
@@ -1239,8 +1239,8 @@ def main():
     options = parser.parse_args()
 
     # read config and open database
-    with open(options.config) as conf:
-        config = json.load(conf, object_hook=ascii_encode_dict)
+    with open(options.config, "rt") as conf:
+        config = json.load(conf)#, object_hook=ascii_encode_dict)
     # here = config['primerbed'] if 'primerbed' in config.keys() and config['primerbed'] else None
     # here = config['ampliconbed'] if 'ampliconbed' in config.keys() and config['ampliconbed'] else None
     here = getattr(options, "outfile", "")

@@ -8,6 +8,8 @@ ZIPPYTMP=/tmp/zippy
 SOURCE=zippy
 VERSION := $(shell cat version.dat)
 ROOT=/root
+CONFIG_FILE="zippy/zippy.json"
+#CONFIG_FILE="zippy/extra_configs/zippy_v7.6.json"
 #See which distro does the host have
 #distro can be centos or ubuntu
 DISTRO := $(shell bash -c "yum --help&>/dev/null && echo centos || echo ubuntu")
@@ -329,19 +331,22 @@ stop_zippy_service:
 gunicorn:
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate && gunicorn --bind 0.0.0.0:8000 wsgi:app"
 run:
-	bash -c "source $(ZIPPYPATH)/venv/bin/activate && export FLASK_DEBUG=1 && export FLASK_ENV=development && export FLASK_APP=zippy && /usr/local/zippy/venv/bin/python run.py"
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && FLASK_DEBUG=1 FLASK_ENV=development FLASK_APP=zippy CONFIG_FILE=$(CONFIG_FILE) $(ZIPPYPATH)/venv/bin/python run.py"
 activate:
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate"
 runp:
-	bash -c "source $(ZIPPYPATH)/venv/bin/activate && python run.py"
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && CONFIG_FILE=$(CONFIG_FILE) python run.py"
 test:
-	bash -c "source $(ZIPPYPATH)/venv/bin/activate && python -m pytest"
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && CONFIG_FILE=$(CONFIG_FILE) python -m pytest"
 exons:
 	#Example: make exons LOC=12:32895523-32895682 GENE=DNM1L
-	bash -c "source $(ZIPPYPATH)/venv/bin/activate && python -m zippy.unittest.find_exons $(LOC) $(GENE)"
-	#bash -c "$(ZIPPYPATH)/venv/bin/python -m zippy.unittest.find_exons $(LOC) $(GENE)"
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && CONFIG_FILE=$(CONFIG_FILE) python -m zippy.unittest.find_exons $(LOC) $(GENE)"
 zippy:
-	bash -c "source $(ZIPPYPATH)/venv/bin/activate && cd $(ZIPPYPATH)/zippy && python zippy.py $@"
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && cd $(ZIPPYPATH)/zippy && python -m zippy.zippy -c $(CONFIG_FILE) ${@:2}"
+pzippy:
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && cd $(ZIPPYPATH)/zippy && python -m zippy.zippy -c $(CONFIG_FILE) ${@:2}"
+dzippy:
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && python -m zippy.zippy -c $(CONFIG_FILE) ${@:2}"
 
 requirements:
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate && pip install -U pip"

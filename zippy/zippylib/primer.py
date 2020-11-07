@@ -7,7 +7,7 @@ __doc__ == """Primer3 Classes"""
 __author__ = "David Brawand"
 __license__ = "MIT"
 # __version__ = "2.3.4"
-from zippy import __version__
+#from zippy import __version__
 
 __maintainer__ = "David Brawand"
 __email__ = "dbrawand@nhs.net"
@@ -612,15 +612,25 @@ class Primer(object):
         self.loci.append(Locus(chrom, pos, len(self), reverse, tm))
         return
 
-    def snpCheckPrimer(self, config):
-        snpcheck_used = config["snpcheck"]["used"]
-        if isinstance(snpcheck_used, str):
-            vcf = config["snpcheck"][snpcheck_used]
-            self.snp = self.targetposition.snpCheck(vcf)
+    def snpCheckPrimer(self, config, snpcheck_used=None):
+        if snpcheck_used is None:
+            snpcheck_used = config["snpcheck"]["used"]
+        if isinstance(snpcheck_used, list):
+            for snpc in snpcheck_used:
+                if not self.snpCheckPrimer(config, snpcheck_used=snpc):
+                    return False
+            else:
+                return True
         else:
-            vcf = f"/var/local/zippy/resources/gnomad.genomes.r2.1.1.sites.{self.targetposition.chrom}.vcf.bgz"
-            self.snp = self.targetposition.snpCheck(vcf, AF_cutoff=snpcheck_used)
-        return True if self.snp else False
+            if isinstance(snpcheck_used, str) and snpcheck_used.startswith("gnomad:"):
+                snpcheck_used = float(snpcheck_used[7:])
+            if isinstance(snpcheck_used, str):
+                vcf = config["snpcheck"][snpcheck_used]
+                self.snp = self.targetposition.snpCheck(vcf)
+            else:
+                vcf = f"/var/local/zippy/resources/gnomad.genomes.r2.1.1.sites.{self.targetposition.chrom}.vcf.bgz"
+                self.snp = self.targetposition.snpCheck(vcf, AF_cutoff=snpcheck_used)
+            return True if self.snp else False
 
     def checkTarget(self):
         if self.targetposition is not None:
@@ -674,7 +684,7 @@ class Locus(object):
         # query database and translate to primer positions
         snp_positions = []
         if AF_cutoff is not None:
-            AF_cutoff_fraction = AF_cutoff/100.0
+            AF_cutoff_fraction = AF_cutoff / 100.0
             for v in snps:
                 f = v.split()
                 vinfos = f[7].split(";")

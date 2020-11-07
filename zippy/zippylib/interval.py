@@ -3,8 +3,8 @@
 __doc__ == """Interval Lists"""
 __author__ = "David Brawand"
 __license__ = "MIT"
-# __version__ = "2.3.4"
-from zippy import __version__
+__version__ = "2.3.4"
+#from zippy import __version__
 
 __maintainer__ = "David Brawand"
 __email__ = "dbrawand@nhs.net"
@@ -76,19 +76,8 @@ class Interval(object):
 
     def __repr__(self):
         return (
-            "<Interval ("
-            + self.name
-            + ") "
-            + self.chrom
-            + ":"
-            + str(self.chromStart)
-            + "-"
-            + str(self.chromEnd)
-            + " ["
-            + str(self.strand)
-            + "] len:"
-            + str(len(self))
-            + ">"
+            f"<Interval ({self.name}) {self.chrom}:{self.chromStart!s})"
+            f"-{self.chromEnd!s}) [{self.strand!s})] len:{len(self)!s}>"
         )
 
     def __str__(self):
