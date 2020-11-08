@@ -12,7 +12,7 @@ from functools import wraps
 from flask import Flask, render_template, request, redirect, send_from_directory, session, flash, url_for
 from celery import Celery
 from werkzeug.utils import secure_filename
-from . import app
+from . import app, config
 from .zippy import zippyBatchQuery, zippyPrimerQuery, updateLocation, searchByName, updatePrimerName, updatePrimerPairName, blacklistPair, deletePair, readprimerlocations, __version__
 from .zippylib.primer import Location, ChromosomeNotFoundError
 from .zippylib.database import PrimerDB
@@ -118,7 +118,7 @@ def upload():
             db = PrimerDB(config['database'], dump=config['ampliconbed'])
 
         # create output folder
-        filehash = hashlib.sha1(b''.join([open(uf,"rb").read() for uf in uploadedFiles ])).hexdigest()
+        filehash = hashlib.sha1(b''.join([open(uf,"rb").read() for uf in uploadedFiles])).hexdigest()
         downloadFolder = os.path.join(app.config['DOWNLOAD_FOLDER'], filehash)
         subprocess.check_call(['mkdir', '-p', downloadFolder], shell=False)
 
