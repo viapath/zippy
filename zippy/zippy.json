@@ -104,8 +104,8 @@
     "snpcheck": {
         "common": "/var/local/zippy/resources/00-common_all.vcf.gz",
         "all": "/var/local/zippy/resources/00-All.vcf.gz",
-        "usedx": ["common", "all", 0.0001],
-        "used": ["common", "all", 0.1],
+        "used": ["common", "all", 0.0001],
+        "useda": ["common", "all", 0.1],
         "usede": ["common", "all"],
         "help": "If used 'common' or 'all' to use common mutations VCF or the all mutations VCF. If gmonad:n or a number then we use gnomad, and the number is the frequency cutoff."
     },

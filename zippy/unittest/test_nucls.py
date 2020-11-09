@@ -72,7 +72,7 @@ class TestGenome:
     @pytest.mark.skip("fastening tests")
     def test_primerexonname2(self, config):
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
-        zippy.gplist = None
+        #zippy.gplist = None
         name_to_dump = "DNM1L"
         results = zippy.zippyPrimerQuery(
             config, "12:32895523-32895682", True, None, db, None, [0],
@@ -97,41 +97,42 @@ class TestGenome:
             getgenes=None)
         logger.info("ress0 {}".format(results0))
         logger.info("ress1 {}".format(results1))
+        zippy.gplist = None
         assert 0, (results0, results1)
 
     #@pytest.mark.skip("otheere type of test")
     def test_gnomad_cutout(self, config):
         config["snpcheck"]["used"] = ["common", "all", 0.0001]
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
-        zippy.gplist = None
+        #zippy.gplist = None
         results = zippy.zippyPrimerQuery(config, "6:26092913-26093188", True, None, db,
                                          None, [0, 1, 2], name_to_dump=None)
         exon_number = 1 + config["exon_numbering_base"]
         assert len(results[0])==0, results
 
-    #@pytest.mark.skip("fastening tests")
+    @pytest.mark.skip("fastening tests")
     def test_primerexonname208(self, config):
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
-        zippy.gplist = None
+        #zippy.gplist = None
         results = zippy.zippyPrimerQuery(config, "12:25398208-25398318", True, None, db,
                                          None, [0, 1, 2], name_to_dump="KRAS")
         exon_number = 1 + config["exon_numbering_base"]
         assert results[0][0][0:2] == ['12:25398208-25398318', f'KRAS_{exon_number}'], results
 
-    #@pytest.mark.skip("fastening tests")
+    @pytest.mark.skip("fastening tests")
     def test_primerexonname_always_erroring(self, config):
         config["snpcheck"]["used"] = ["common", "all", 0.0001]
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
-        zippy.gplist = None
+        #zippy.gplist = None
         results = zippy.zippyPrimerQuery(config, "12:32895523-32895682", True, None, db,
                                          None, [0, 1, 2], name_to_dump=None)
         exon_number = 19 + config["exon_numbering_base"]
         assert results[0][0][0:2] == ['12:32895523-32895682', f'DNM1L_{exon_number}'], results
 
-    #@pytest.mark.skip("fastening tests")
+    @pytest.mark.skip("fastening tests")
     def test_chr11(self, config):
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
-        zippy.gplist = None
+        #zippy.gplist = None
         results = zippy.zippyPrimerQuery(config, "11:118343121-118343321", True, None, db,
                                          None, [0, 1, 2], name_to_dump=None)
         logging.info(f"chr11 {results}")
@@ -142,7 +143,7 @@ class TestGenome:
     @pytest.mark.skip("fastening tests")
     def test_chr12_2missing(self, config):
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
-        zippy.gplist = None
+        #zippy.gplist = None
         results = zippy.zippyPrimerQuery(config, "12:115115461-115116484", True, None, db,
                                          None, [0, 1, 2], name_to_dump=None)
         assert len(results[0]) == 0, results
@@ -150,7 +151,7 @@ class TestGenome:
     @pytest.mark.skip("fastening tests")
     def test_primerexonname50(self, config):
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
-        zippy.gplist = None
+        #zippy.gplist = None
         results = zippy.zippyPrimerQuery(config, "12:32892997-32893452", True, None, db,
                                          None, [0, 1, 2], name_to_dump="DNM1L")
         assert 0, results
@@ -158,20 +159,20 @@ class TestGenome:
     @pytest.mark.skip("fastening tests")
     def test_primerexonname3(self, config):
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
-        zippy.gplist = None
+        #zippy.gplist = None
         results = zippy.zippyPrimerQuery(config, "12:32895351-32895785", True, None, db,
                                          None, [0, 1, 2], name_to_dump="DNM1L")
         assert 0, results
 
-    @pytest.mark.skip("fastening tests")
-    def test_primerexonname1(self, config):
+    #@pytest.mark.skip("fastening tests")
+    def test_primerexonname6(self, config):
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
-        zippy.gplist = None
+        #zippy.gplist = None
         results = zippy.zippyPrimerQuery(config, "6:26091069-26091332", True, None, db,
                                          None, [0, 1, 2], name_to_dump=None)
         assert 0, results
 
-    #@pytest.mark.skip("fastening tests")
+    @pytest.mark.skip("fastening tests")
     def test_snplimits(self, config):
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
         zippy.gplist = None
@@ -184,6 +185,7 @@ class TestGenome:
         config["designlimits"]["snpcount"] == 0
         results2 = zippy.zippyPrimerQuery(config, "uploads/NEB_S2.smCounter.anno.vcf", True,
                                           None, db, None, [0, 1, 2], name_to_dump=None)
+        zippy.gplist = None
         assert results == results2, (results, results2)
 
 #if __name__ == '__main__':
