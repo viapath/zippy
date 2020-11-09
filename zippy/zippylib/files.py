@@ -292,10 +292,17 @@ class VCF(IntervalList):  # no interval tiling as a variant has to be sequenced 
         for alt in hc.alts.values():
             new_header.add_alt(alt)
         with pysam.VariantFile(new_file_name, "w", header=new_header) as vcf_out:
+            recnewinfo = None
             for rec in vcf_in.fetch():
-                for key in rec.info.keys():
-                    if key != "AF":
-                        del rec.info[key]
+                if recnewinfo is None:
+                    for key in rec.info.keys():
+                        if key != "AF":
+                            del rec.info[key]
+                    recnewinfo = rec.info
+                elif "AF" in rec.info:
+                    recnewinfo["AF"] = rec.info["AF"]
+                elif "AF" in recnewinfo:
+                    del recnewinfo["AF"]
                 recd = new_header.new_record(
                     contig=rec.contig,
                     start=rec.start,
@@ -304,7 +311,7 @@ class VCF(IntervalList):  # no interval tiling as a variant has to be sequenced 
                     id=rec.id,
                     qual=rec.qual,
                     filter=rec.filter,
-                    info=rec.info,
+                    info=recnewinfo,
                     samples=rec.samples,
                 )
                 vcf_out.write(recd)

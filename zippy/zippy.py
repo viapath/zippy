@@ -57,10 +57,10 @@ gplist = None  # That global variable holds the GenePred object with all genes i
 random_gene_names_re = re.compile(
     "LOC(\\d+)", re.IGNORECASE
 )  # regular expresion for random gene names
-"""file MD5"""
 
 
 def fileMD5(fi, block_size=2 ** 20):
+    """file MD5"""
     md5 = hashlib.md5()
     with open(fi, "rb") as fh:
         while True:
@@ -503,11 +503,16 @@ def getPrimers(
                 progress = Progressbar(len(pairs), "SNPcheck")
                 for i, pair in enumerate(pairs):
                     sys.stderr.write("\r" + progress.show(i))
+                    ep = 0
                     for p in pair:
-                        #p.snpCheckPrimer(config["snpcheck"][config["snpcheck"]["used"]])
-                        p.snpCheckPrimer(config)
+                        r=p.snpCheckPrimer(config)
+                        assert r is (len(p.snp)>0)
+                        assert ep<2
+                        ep += 1
                         #if len(p.snp)>0:
-                        #    assert 0, (p, p.snp)
+                        #    assert 0, (p, p.snp, r)
+                        #else:
+                        #    assert 0, (p, p.snp, r)
                 sys.stderr.write("\r" + progress.show(len(pairs)) + "\n")
 
                 # assign designed primer pairs to intervals (remove ranks and tag)
@@ -516,12 +521,19 @@ def getPrimers(
                     iv.name: set([p.uniqueid() for p in ivpairs[iv]]) for iv in intervals
                 }
                 failCount = 0
-                for pair in pairs:
+                progress = Progressbar(len(pairs), "SNPcheck")
+                for (i, pair) in enumerate(pairs):
                     if pair.uniqueid() not in intervalprimers[pair.name]:
                         if pair.check(config["designlimits"]):
                             # add default tag
+                            if pair.snpcount()==0:
+                                #assert 0
+                                continue
                             for primer in pair:
+                                #assert len(primer.snp)>0, [p.snp for p in pair]
                                 primer.tag = config["design"]["tag"]
+                                #assert ep<2
+                                #ep += 1
                             # assign to interval
                             ivpairs[intervalindex[pair.name]].append(pair)
                             intervalprimers[pair.name].add(pair.uniqueid())

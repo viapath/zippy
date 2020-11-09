@@ -20,9 +20,9 @@ import pysam
 import subprocess
 from collections import defaultdict, OrderedDict, Counter
 from .interval import Interval
+from . import gnomad
 from urllib.parse import unquote
 from Bio import Entrez
-import xmltodict
 
 logger = logging.getLogger(__name__)
 revcmp = str.maketrans("ACGTNacgtn", "TGCANtgcan")
@@ -482,12 +482,12 @@ class PrimerPair(list):
             except:
                 raise
             if x > v:
-                logger.debug(
-                    "whenfail {} {} {} {} {}".format(
-                        self.snpcount(), self.criticalsnp(), self.mispriming(),
-                        self.designrank(), f"x={x} x0={x0} v={v} k={k} limits={limits}"
-                    )
-                )
+                #logger.debug(
+                #    "whenfail {} {} {} {} {}".format(
+                #        self.snpcount(), self.criticalsnp(), self.mispriming(),
+                #        self.designrank(), f"x={x} x0={x0} v={v} k={k} limits={limits}"
+                #    )
+                #)
                 return False
         return True
 
@@ -598,29 +598,37 @@ class Primer(object):
             seqname = self.name
         if "POSITION" in self.meta.keys():  # append locus
             strand = "-" if self.name.endswith("RIGHT") else "+"
-            seqname += (
-                "|"
-                + self.meta["POSITION"][0]
-                + ":"
-                + "-".join(map(str, self.meta["POSITION"][1:]))
-                + ":"
-                + strand
-            )
+            seqname += "|{0}:{1}:{2}".format(self.meta["POSITION"][0],
+                "-".join(map(str, self.meta["POSITION"][1:])), strand)
         return "\n".join([">" + seqname, self.seq])
 
     def addTarget(self, chrom, pos, reverse, tm=None):
         self.loci.append(Locus(chrom, pos, len(self), reverse, tm))
         return
 
-    def snpCheckPrimer(self, config, snpcheck_used=None):
-        if snpcheck_used is None:
+    def snpCheckPrimer(self, config, snpcheck_element_used=None):
+        if snpcheck_element_used is None:
             snpcheck_used = config["snpcheck"]["used"]
+        else:
+            snpcheck_used = snpcheck_element_used
         if isinstance(snpcheck_used, list):
+            snpccs = []
+            snpccs_all = None
             for snpc in snpcheck_used:
-                if not self.snpCheckPrimer(config, snpcheck_used=snpc):
+                snpcc = self.snpCheckPrimer(config, snpcheck_element_used=snpc)
+                if snpccs_all is None:
+                    snpccs_all = set(snpcc)
+                else:
+                    snpccs_all &= set(snpcc)
+                snpccs.append(snpcc)
+                #logger.info(f"snpccs_all turned {self} {snpccs_all} in {snpccs}")
+                if len(snpcc) == 0:
+                    self.snp = []
                     return False
             else:
-                return True
+                #logger.info(f"elsed {self}")
+                self.snp = list(snpccs_all)
+                return len(self.snp) > 0
         else:
             if isinstance(snpcheck_used, str) and snpcheck_used.startswith("gnomad:"):
                 snpcheck_used = float(snpcheck_used[7:])
@@ -628,9 +636,21 @@ class Primer(object):
                 vcf = config["snpcheck"][snpcheck_used]
                 self.snp = self.targetposition.snpCheck(vcf)
             else:
-                vcf = f"/var/local/zippy/resources/gnomad.genomes.r2.1.1.sites.{self.targetposition.chrom}.vcf.bgz"
-                self.snp = self.targetposition.snpCheck(vcf, AF_cutoff=snpcheck_used)
-            return True if self.snp else False
+
+                gnomadobj = gnomad.GnomadChromosomeInfo("2.1.1", "genomes",
+                    self.targetposition.chrom, "/var/local/zippy/resources")
+                if os.path.exists(gnomadobj.stripped_file_fullpath):
+                    assert 0, gnomadobj.stripped_file_fullpath
+                    self.snp = self.targetposition.snpCheck(gnomadobj.stripped_file_fullpath, AF_cutoff=snpcheck_used)
+                elif os.path.exists(gnomadobj.file_fullpath):
+                    self.snp = self.targetposition.snpCheck(gnomadobj.file_fullpath, AF_cutoff=snpcheck_used)
+                else:
+                    assert bool(self.snp), self.snp
+                    return self.snp
+            if snpcheck_element_used is None:
+                return bool(self.snp)
+            else:
+                return self.snp
 
     def checkTarget(self):
         if self.targetposition is not None:
@@ -694,7 +714,9 @@ class Locus(object):
                     assert 0
                 else:
                     AFf = float(AF)
+                    #assert 0, (AFf, AF_cutoff_fraction)
                     if AFf > AF_cutoff_fraction:
+                        #logger.info(f"AFreject {AFf} > {AF_cutoff_fraction} in {self}")
                         continue  # skips high frequency mutation
                 snpOffset = (int(f[1]) - 1) - self.offset  # convert to 0-based
                 snpLength = max(map(len, [f[3]] + f[4].split(",")))
