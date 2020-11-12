@@ -116,16 +116,22 @@ def _segment_str(segment):
 def range_string(exon_numbers):
     # "_".join(sorted(exons))
     # assume exon_numbers is a sorted list of integers
-    exon_numbers = list(map(int, exon_numbers))
-    if len(exon_numbers) == 0:
+    #exon_numbers = list(map(int, exon_numbers))
+    exon_numbers_2 = []
+    for element in exon_numbers:
+        if isinstance(element, str) and "-" in element:
+            exon_numbers_2.extend(map(int, element.split("-")))
+        else:
+            exon_numbers_2.append(int(element))
+    if len(exon_numbers_2) == 0:
         return ""
-    elif len(exon_numbers) == 1:
-        return str(exon_numbers[0])
+    elif len(exon_numbers_2) == 1:
+        return str(exon_numbers_2[0])
     lastnum = None
-    for (inumber, number) in enumerate(exon_numbers):
+    for (inumber, number) in enumerate(exon_numbers_2):
         if inumber == 0:
             chunks = [[number, number]]
-        elif inumber == (len(exon_numbers) + 1) or (
+        elif inumber == (len(exon_numbers_2) + 1) or (
             lastnum is not None and number == (lastnum + 1)
         ):
             chunks[-1][1] = number

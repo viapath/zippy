@@ -607,6 +607,7 @@ class Primer(object):
         return
 
     def snpCheckPrimer(self, config, snpcheck_element_used=None):
+        accept = True
         if snpcheck_element_used is None:
             snpcheck_used = config["snpcheck"]["used"]
         else:
@@ -615,20 +616,31 @@ class Primer(object):
             snpccs = []
             snpccs_all = None
             for snpc in snpcheck_used:
-                snpcc = self.snpCheckPrimer(config, snpcheck_element_used=snpc)
+                acceptparticular = self.snpCheckPrimer(config, snpcheck_element_used=snpc)
+                accept = accept and acceptparticular
+                setsnpcc = set(self.snp)
                 if snpccs_all is None:
-                    snpccs_all = set(snpcc)
+                    snpccs_all = setsnpcc
                 else:
-                    snpccs_all &= set(snpcc)
-                snpccs.append(snpcc)
-                #logger.info(f"snpccs_all turned {self} {snpccs_all} in {snpccs}")
-                if len(snpcc) == 0:
-                    self.snp = []
-                    return False
+                    news0 = setsnpcc - snpccs_all
+                    newsI = snpccs_all - setsnpcc
+                    #logger.info(f"nwqs0 {news0} {newsI} {len(snpccs)}")
+                    if len(snpccs) < 2:
+                        snpccs_all &= setsnpcc
+                    #if len(snpccs)==1:
+                    #    assert len(newsI)==0, (snpccs_all, newsI, snpcc, len(snpccs))
+                    #else:
+                    #    assert len(news0)==0, (snpccs_all, news0, newsI, snpcc, snpccs)
+                snpccs.append(self.snp)
+                #logger.info(f"snpccs_all turned {self} {snpccs_all} in {len(snpccs)}: {snpccs}")
+                #if len(snpcc) == 0:
+                #    self.snp = []
+                #    return False
+                #self.snp = list()
             else:
-                #logger.info(f"elsed {self}")
                 self.snp = list(snpccs_all)
-                return len(self.snp) > 0
+                logger.info(f"elsed {accept} {self.targetposition!r} {self.snp}")
+                return accept
         else:
             if isinstance(snpcheck_used, str) and snpcheck_used.startswith("gnomad:"):
                 snpcheck_used = float(snpcheck_used[7:])
@@ -637,20 +649,21 @@ class Primer(object):
                 self.snp = self.targetposition.snpCheck(vcf)
             else:
 
-                gnomadobj = gnomad.GnomadChromosomeInfo("2.1.1", "genomes",
-                    self.targetposition.chrom, "/var/local/zippy/resources")
+                gnomadobj = gnomad.GnomadChromosomeInfo("2.1.1", "genomes", self.targetposition.chrom, "/var/local/zippy/resources")
                 if os.path.exists(gnomadobj.stripped_file_fullpath):
-                    assert 0, gnomadobj.stripped_file_fullpath
-                    self.snp = self.targetposition.snpCheck(gnomadobj.stripped_file_fullpath, AF_cutoff=snpcheck_used)
+                    (self.snp, gnomad_outliers) = self.targetposition.snpCheck(gnomadobj.stripped_file_fullpath, AF_cutoff=snpcheck_used)
+                    accept = len(gnomad_outliers) == 0
                 elif os.path.exists(gnomadobj.file_fullpath):
-                    self.snp = self.targetposition.snpCheck(gnomadobj.file_fullpath, AF_cutoff=snpcheck_used)
-                else:
-                    assert bool(self.snp), self.snp
-                    return self.snp
+                    (self.snp, gnomad_outliers) = self.targetposition.snpCheck(gnomadobj.file_fullpath, AF_cutoff=snpcheck_used)
+                    accept = len(gnomad_outliers) == 0
+                #assert accept, (accept, self.targetposition)
+                #else:
+                #    assert bool(self.snp), self.snp
+                #    return (self.snp, True)
             if snpcheck_element_used is None:
-                return bool(self.snp)
+                return accept
             else:
-                return self.snp
+                return accept
 
     def checkTarget(self):
         if self.targetposition is not None:
@@ -679,6 +692,10 @@ class Locus(object):
         strand = "-" if self.reverse else "+"
         return self.chrom + ":" + str(self.offset) + ":" + strand
 
+    def __repr__(self):
+        strand = "-" if self.reverse else "+"
+        return f"<{self.__class__.__name__} ({self.chrom}:{self.offset}-{self.offset+self.length}:{strand}>"
+
     def __lt__(self, other):
         return (self.chrom, self.offset) < (other.chrom, other.offset)
 
@@ -702,32 +719,39 @@ class Locus(object):
         except:
             raise
         # query database and translate to primer positions
+        #dirty = False
         snp_positions = []
-        if AF_cutoff is not None:
+        if AF_cutoff is None:
+            #not a Gnomad assessment
+            for v in snps:
+                f = v.split()
+                snpOffset = (int(f[1]) - 1) - self.offset  # convert to 0-based
+                snpLength = max(map(len, [f[3]] + f[4].split(",")))
+                snp_positions.append((f[0], snpOffset, snpLength, f[2]))
+            return snp_positions
+        else:
+            #A Gnomad assessment
             AF_cutoff_fraction = AF_cutoff / 100.0
+            gnomad_outliers = []
             for v in snps:
                 f = v.split()
                 vinfos = f[7].split(";")
                 vinfo = dict(vinfo.split("=", 1) for vinfo in vinfos if "=" in vinfo)
                 AF = vinfo.get("AF", None)
+                snpOffset = (int(f[1]) - 1) - self.offset  # convert to 0-based
+                snpLength = max(map(len, [f[3]] + f[4].split(",")))
+                snp_tuple = (f[0], snpOffset, snpLength, f[2])
+                snp_positions.append(snp_tuple)
                 if AF is None:
                     assert 0
                 else:
                     AFf = float(AF)
-                    #assert 0, (AFf, AF_cutoff_fraction)
                     if AFf > AF_cutoff_fraction:
-                        #logger.info(f"AFreject {AFf} > {AF_cutoff_fraction} in {self}")
-                        continue  # skips high frequency mutation
-                snpOffset = (int(f[1]) - 1) - self.offset  # convert to 0-based
-                snpLength = max(map(len, [f[3]] + f[4].split(",")))
-                snp_positions.append((f[0], snpOffset, snpLength, f[2]))
-        else:
-            for v in snps:
-                f = v.split()
-                snpOffset = (int(f[1]) - 1) - self.offset  # convert to 0-based
-                snpLength = max(map(len, [f[3]] + f[4].split(",")))
-                snp_positions.append((f[0], snpOffset, snpLength, f[2]))
-        return snp_positions
+                        logger.debug(f"rejct {AFf} vs {AF_cutoff_fraction} in {snp_tuple}")
+                        gnomad_outliers.append(snp_tuple)  # tags high frequency mutation
+                    else:
+                        logger.debug(f"acpt {AFf} vs {AF_cutoff_fraction} in {snp_tuple}")
+            return (snp_positions, gnomad_outliers)
 
 
 """primer3 wrapper class"""

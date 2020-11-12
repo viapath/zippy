@@ -503,16 +503,11 @@ def getPrimers(
                 progress = Progressbar(len(pairs), "SNPcheck")
                 for i, pair in enumerate(pairs):
                     sys.stderr.write("\r" + progress.show(i))
-                    ep = 0
-                    for p in pair:
-                        r=p.snpCheckPrimer(config)
-                        assert r is (len(p.snp)>0)
-                        assert ep<2
-                        ep += 1
-                        #if len(p.snp)>0:
-                        #    assert 0, (p, p.snp, r)
-                        #else:
-                        #    assert 0, (p, p.snp, r)
+                    #ep = 0
+                    for (ip, p) in enumerate(pair):
+                        accept = p.snpCheckPrimer(config)
+                        if not accept:
+                            pair.name = False
                 sys.stderr.write("\r" + progress.show(len(pairs)) + "\n")
 
                 # assign designed primer pairs to intervals (remove ranks and tag)
@@ -523,17 +518,13 @@ def getPrimers(
                 failCount = 0
                 progress = Progressbar(len(pairs), "SNPcheck")
                 for (i, pair) in enumerate(pairs):
-                    if pair.uniqueid() not in intervalprimers[pair.name]:
+                    if pair.name is False:
+                        # add to blacklist if design limits fail
+                        blacklist.append(pair.uniqueid())
+                        failCount += 1
+                    elif pair.uniqueid() not in intervalprimers[pair.name]:
                         if pair.check(config["designlimits"]):
                             # add default tag
-                            if pair.snpcount()==0:
-                                #assert 0
-                                continue
-                            for primer in pair:
-                                #assert len(primer.snp)>0, [p.snp for p in pair]
-                                primer.tag = config["design"]["tag"]
-                                #assert ep<2
-                                #ep += 1
                             # assign to interval
                             ivpairs[intervalindex[pair.name]].append(pair)
                             intervalprimers[pair.name].add(pair.uniqueid())

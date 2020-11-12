@@ -337,7 +337,7 @@ activate:
 runp:
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate && CONFIG_FILE=$(CONFIG_FILE) python run.py"
 test:
-	bash -c "source $(ZIPPYPATH)/venv/bin/activate && CONFIG_FILE=$(CONFIG_FILE) python -m pytest"
+	bash -c "source $(ZIPPYPATH)/venv/bin/activate && CONFIG_FILE=$(CONFIG_FILE) python -m pytest zippy/unittest"
 exons:
 	#Example: make exons LOC=12:32895523-32895682 GENE=DNM1L
 	bash -c "source $(ZIPPYPATH)/venv/bin/activate && CONFIG_FILE=$(CONFIG_FILE) python -m zippy.unittest.find_exons $(LOC) $(GENE)"
