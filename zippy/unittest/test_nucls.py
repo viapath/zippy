@@ -20,7 +20,6 @@ def config():
         config["blacklistcache"] = "/dev/null"
         return config
 
-@pytest.mark.skip("accelerate the testing")
 class TestRanges:
     def test_range1(self):
         rs = range_string([1, 2, 3, 4, 5, 7, 8, 9, 11, 14])
@@ -64,7 +63,7 @@ class TestPrimers:
 
 #@pytest.mark.skip("accelerate the testing")
 class TestGnomad:
-    @pytest.mark.skip("gone")
+    #@pytest.mark.skip("gone")
     def test_chr6(self, config):
         config["snpcheck"]["used"] = ["common", "all", 0.000001]
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
@@ -81,7 +80,7 @@ class TestGnomad:
         logger.debug(f"ress {results}")
         assert len(results[0]) > 0, results
 
-    @pytest.mark.skip("well")
+    #@pytest.mark.skip("well")
     def test_chr12(self, config):
         config["snpcheck"]["used"] = ["common", "all", 0.001]
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
@@ -99,7 +98,7 @@ class TestGnomad:
             getgenes=None)
         assert len(results[0]) > 0, results
 
-    @pytest.mark.skip("well")
+    #@pytest.mark.skip("well")
     def test_chr12_2(self, config):
         config["snpcheck"]["used"] = ["common", "all", 0.0001]
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
@@ -217,7 +216,7 @@ class TestGenome:
                                          None, [0, 1, 2], name_to_dump=None)
         assert len(results[0]) == 0, results
 
-    @pytest.mark.skip("fastening tests")
+    @pytest.mark.skip("expect fail")
     def test_primerexonname50(self, config):
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
         zippy.gplist = None
@@ -225,7 +224,7 @@ class TestGenome:
                                          None, [0, 1, 2], name_to_dump="DNM1L")
         assert 0, results
 
-    @pytest.mark.skip("fastening tests")
+    @pytest.mark.skip("expact fail")
     def test_primerexonname3(self, config):
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
         zippy.gplist = None
@@ -233,7 +232,7 @@ class TestGenome:
                                          None, [0, 1, 2], name_to_dump="DNM1L")
         assert 0, results
 
-    @pytest.mark.skip("fastening tests")
+    @pytest.mark.skip("expect fail")
     def test_primerexonname6(self, config):
         db = PrimerDB(config['database'], dump=config['ampliconbed'])
         zippy.gplist = None

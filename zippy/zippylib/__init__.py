@@ -164,6 +164,8 @@ class PlateError(Exception):
     def __str__(self):
         return "[!] PLATE ERROR \n\t", repr(self.value)
 
+class PrimerNameChangeError(Exception):
+    pass
 
 """simple progress bar with time estimation"""
 

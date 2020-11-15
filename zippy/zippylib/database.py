@@ -18,7 +18,7 @@ import fnmatch
 import primer3
 from copy import deepcopy
 from collections import defaultdict
-from . import flatten
+from . import flatten, PrimerNameChangeError
 from .primer import Primer, Locus, PrimerPair, Location, parsePrimerName
 
 def username():
@@ -26,17 +26,27 @@ def username():
 # changes conflicting name
 def changeConflictingName(n):
     f = n.split('_')
+    print("serr", (f, '_'.join(f[:3]+['1']+f[3:])), file=sys.stderr)
     # find suffix to increment
-    if len(f)==4:  # try to increase suffix
+    if len(f) == 5:  # try to increase suffix
+        try:
+            f[3] = str(int(f[3])+1)
+            newname = '_'.join(f)
+        except:
+            #return '_'.join(f[:3]+['1']+f[3:])
+            raise PrimerNameChangeError('3: proposed name parts are {0}'.format(f))
+        return newname
+    elif len(f) == 4:  # try to increase suffix
         try:
             f[2] = str(int(f[2])+1)
             newname = '_'.join(f)
         except:
-            raise Exception('PrimerNameChangeError')
+            return '_'.join(f[:3]+['1']+f[3:])
+            #raise PrimerNameChangeError('2: proposed name parts are {0}'.format(f))
         return newname
-    elif len(f)==3:  # add number suffix after exon
-        return '_'.join(f[:2]+[str(1)]+f[2:])
-    raise Exception('PrimerNameChangeError')
+    elif len(f) == 3:  # add number suffix after exon
+        return '_'.join(f[:2]+['1']+f[2:])
+    raise PrimerNameChangeError('proposed name parts are {0}'.format(f))
 
 # Primer Database
 class PrimerDB(object):
@@ -213,6 +223,7 @@ class PrimerDB(object):
 
     '''adds list of primers to database and automatically renames'''
     def addPrimer(self, *primers):
+        messages = []
         try:
             self.db = sqlite3.connect(self.sqlite)
         except:
@@ -230,13 +241,17 @@ class PrimerDB(object):
                     except sqlite3.IntegrityError:
                         try:
                             p.name = changeConflictingName(p.name)
+                            #messages.append(('new name {} vs {}'.format(p.name, originalName), 'warning'))
                         except Exception as e:
                             raise e
+                        else:
+                            if originalName != p.name:
+                                warning_str = "renamed primer {} -> {} in database".format(originalName, p.name)
+                                print("WARNING: {0}".format(warning_str), file=sys.stderr)
+                                messages.append((warning_str, 'warning'))
                     except:
                         raise
                     else:
-                        if originalName != p.name:
-                            print("WARNING: renamed primer {} -> {} in database".format(originalName, p.name), file=sys.stderr)
                         break  # sucessfully stored
                 # store mapping loci
                 for l in p.loci:
@@ -246,7 +261,7 @@ class PrimerDB(object):
         finally:
             self.db.close()
             self.writeAmpliconDump()
-        return
+        return messages
 
     def addPair(self, *pairs):
         '''adds primer pairs (and individual primers)'''
@@ -255,7 +270,7 @@ class PrimerDB(object):
         for p in pairs:
             flat.append(p[0])
             flat.append(p[1])
-        self.addPrimer(*flat)
+        messages = self.addPrimer(*flat)
         # add pairs
         try:
             self.db = sqlite3.connect(self.sqlite)
@@ -266,7 +281,7 @@ class PrimerDB(object):
             cursor = self.db.cursor()
             # add pairs
             for p in pairs:
-                p.fixName()  # changes name if there is a longer common name (catches primer renaming)
+                messages.extend(p.fixName())  # changes name if there is a longer common name (catches primer renaming)
                 # find common substring in name for automatic naming
                 chrom = p[0].targetposition.chrom
                 start = p[0].targetposition.offset
@@ -277,11 +292,12 @@ class PrimerDB(object):
         finally:
             self.db.close()
             self.writeAmpliconDump()
-        return
+        return messages
 
     '''query for interval or name'''
     def query(self, query,opendb=None):
         '''returns suitable primer pairs for the specified interval'''
+        messages = []
         try:
             self.db = opendb if opendb else sqlite3.connect(self.sqlite)
         except:
@@ -341,9 +357,11 @@ class PrimerDB(object):
             orientations = [ x[1] for x in map(parsePrimerName,row[5:7]) ]
             if not any(orientations) or len(set(orientations))==1:
 
-                print('\rWARNING: {} orientation is ambiguous ({},{}){}\r'.format(row[0],\
+                msg = 'WARNING: {} orientation is ambiguous ({},{}){}\r'.format(row[0],\
                     '???' if orientations[0]==0 else 'rev' if orientations[0]<0 else 'fwd', \
-                    '???' if orientations[0]==0 else 'rev' if orientations[1]<0 else 'fwd'," "*20), file=sys.stderr)
+                    '???' if orientations[0]==0 else 'rev' if orientations[1]<0 else 'fwd'," "*20)
+                print('\r{}'.format(msg), file=sys.stderr)
+                messages.append((msg, 'warning'))
                 reverse = False
             elif orientations[0]>0 or orientations[1]<0:
                 reverse = False
@@ -354,7 +372,7 @@ class PrimerDB(object):
             # Build pair
             primerPairs.append(PrimerPair([leftPrimer, rightPrimer], name=row[0], reverse=reverse,
                                           comments=row[15]))
-        return primerPairs  # ordered by midpoint distance
+        return (primerPairs, messages)  # ordered by midpoint distance
 
     def getLocation(self, loc):
         '''returns whats stored at location'''

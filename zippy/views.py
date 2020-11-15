@@ -203,7 +203,7 @@ def adhocdesign():
         profiler.runcall(zippyPrimerQuery, config, args, design, None, db, store, tiers, gap)
         profiler.print_stats()
         assert 0"""
-        print("parguments", config, args, design, None, db, store, tiers, gap)
+        #print("parguments", config, args, design, None, db, store, tiers, gap)
         primerTable, resultList, missedIntervals, flash_messages = zippyPrimerQuery(config, args, design, None, db, store, tiers, gap)
 
         for flash_message in flash_messages:

@@ -515,15 +515,19 @@ class PrimerPair(list):
     """changes name to any longer common primer name prefix"""
 
     def fixName(self):
+        messages = []
         firstDifferent = min(
             [i for i, x in enumerate(zip(self[0].name, self[1].name)) if len(set(x)) != 1]
         )
         newName = self[0].name[:firstDifferent].rstrip("_-")
         if newName != self.name and len(newName) >= len(self.name):
-            print("INFO: Renamed PrimerPair {} -> {}".format(self.name, newName), file=sys.stderr)
+            msg = "Renamed PrimerPair {} -> {}".format(self.name, newName)
+            print("INFO: {}".format(msg), file=sys.stderr)
+            messages.append((msg, 'info'))
             self.name = newName
-            return True
-        return False
+            #return True
+        #return False
+        return messages
 
     def rename(self, renamer):
         oldname = self.name

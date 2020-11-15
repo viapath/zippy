@@ -381,7 +381,8 @@ def getPrimers(
         for i, iv in enumerate(intervals):
             sys.stderr.write("\r" + progress.show(i))
             ivpairs[iv] = []
-            primerpairs = db.query(iv)
+            (primerpairs, query_messages) = db.query(iv)
+            flash_messages.extend(query_messages)
             if primerpairs:
                 for pair in primerpairs:
                     ivpairs[iv].append(pair)
@@ -778,10 +779,11 @@ def zippyPrimerQuery(
     # print and store primer pairs
     # if db:
     if store and db and design:
-        db.addPair(
+        flash_messages.extend(db.addPair(
             *resultList
-        )  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
+        ))  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
         print("Primer designs stored in database", file=sys.stderr)
+        flash_messages.append(("Primer designs stored in database", "sucess"))
     return primerTable, resultList, missedIntervals, flash_messages
 
 
@@ -807,11 +809,12 @@ def zippyBatchQuery(
                 sampleVariants[k] = v
         genes = list(set(genes) | set(g))
         fullgenes = list(set(fullgenes) | set(f))
+    sorted_sample_variants = sorted(sampleVariants.items(), key=lambda x: x[0])
     print(
         "\n".join(
             [
                 "{:<20} {:>2d}".format(sample, len(variants))
-                for sample, variants in sorted(sampleVariants.items(), key=lambda x: x[0])
+                for sample, variants in sorted_sample_variants
             ]
         ),
         file=sys.stderr,
@@ -819,45 +822,56 @@ def zippyBatchQuery(
 
     # predesign
     if predesign and db and genes:
-        designVariants = [var for var in variants if not db.query(var)]
-        selectedgeneexons = list(set(genes) - set(fullgenes))
-        print(
-            "Designing exon primers for {} variants..".format(str(len(designVariants))),
-            file=sys.stderr,
-        )
-        # get variants with no overlapping amplicon -> get variants which need new primer designs
-        intervals = IntervalList([], source="GenePred")
-        if designVariants:
-            with open(config["design"]["annotation"], "r", encoding="utf-8") as fh:
-                for iv in GenePred(
-                    fh, getgenes=selectedgeneexons, exon_numbering_base=config["exon_numbering_base"],
-                    **config["tiling"]
-                ):  # get intervals from file or commandline
-                    found = False
-                    for dv in designVariants:
-                        if not found and iv.overlap(dv):
-                            intervals.append(iv)
-                            found = True
+        #(query, messages_while_querying) = db.query(var)
+        #designVariants = [var for var in variants if not db.query(var)]
+        # TODO Error, big error, present in dbrawrand repo, 'variants' is a byprodiuct
+        # of a line above, containing the last value of an iteration. the corect name
+        # very probably is samplevariants
+        print("parvariants")
+        #for (sample, variants) in sorted_sample_variants:
+        for (sample, variants) in sorted_sample_variants[-1:]:
+            designVariants0 = filter(lambda x: x[0], map(db.query, variants))
+            (designVariants, messages_while_querying) = zip(designVariants0)
+            for messs_step in messages_while_querying:
+                flash_messages.extend(messs_step)
+            selectedgeneexons = list(set(genes) - set(fullgenes))
+            print(
+                "Designing exon primers for {} variants..".format(str(len(designVariants))),
+                file=sys.stderr,
+            )
+            # get variants with no overlapping amplicon -> get variants which need new primer designs
+            intervals = IntervalList([], source="GenePred")
+            if designVariants:
+                with open(config["design"]["annotation"], "r", encoding="utf-8") as fh:
+                    for iv in GenePred(
+                        fh, getgenes=selectedgeneexons, exon_numbering_base=config["exon_numbering_base"],
+                        **config["tiling"]
+                    ):  # get intervals from file or commandline
+                        found = False
+                        for dv in designVariants:
+                            if not found and iv.overlap(dv):
+                                intervals.append(iv)
+                                found = True
+                            if found:
+                                break
                         if found:
                             break
-                    if found:
-                        break
-        # add full genes
-        if fullgenes:
-            with open(config["design"]["annotation"]) as fh:
-                intervals += GenePred(fh, getgenes=fullgenes,
-                    exon_numbering_base=config["exon_numbering_base"], **config["tiling"])
-        # predesign and store
-        if intervals:
-            primerTable, resultList, missedIntervals, more_flash_messages = getPrimers(
-                intervals, db, predesign, config, tiers, rename=shortHumanReadable
-            )
-            flash_messages.extend(more_flash_messages)
-            if db:
-                db.addPair(
-                    *resultList
-                )  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
-        # reload query files ()
+            # add full genes
+            if fullgenes:
+                with open(config["design"]["annotation"]) as fh:
+                    intervals += GenePred(fh, getgenes=fullgenes,
+                        exon_numbering_base=config["exon_numbering_base"], **config["tiling"])
+            # predesign and store
+            if intervals:
+                primerTable, resultList, missedIntervals, more_flash_messages = getPrimers(
+                    intervals, db, predesign, config, tiers, rename=shortHumanReadable
+                )
+                flash_messages.extend(more_flash_messages)
+                if db:
+                    flash_messages.extend(db.addPair(
+                        *resultList
+                    ))  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
+            # reload query files ()
         print("Updating query table...", file=sys.stderr)
         sampleVariants = readBatch(targets[0], config["tiling"], database=db)[0]
         for t in range(1, len(targets)):  # read additional files
@@ -891,9 +905,9 @@ def zippyBatchQuery(
         primerTableConcat += [[sample] + l for l in primerTable]
         # store primers
         if db:
-            db.addPair(
+            flash_messages.extend(db.addPair(
                 *resultList
-            )  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
+            ))  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
         # Build Tests
         for primerpair in resultList:
             tests.append(Test(primerpair, sample))
@@ -990,7 +1004,8 @@ def updateLocation(primername, location, database, force=False):
 
 # search primer pair by name substring matching
 def searchByName(searchName, db):
-    primersInDB = db.query(searchName)
+    (primersInDB, query_messages) = db.query(searchName)
+    #TODO publish these messages
     print(
         'Found {} primer pairs with string "{}"'.format(len(primersInDB), searchName),
         file=sys.stderr,
