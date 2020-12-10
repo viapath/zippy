@@ -72,7 +72,7 @@ genome-index: human_g1k_v37.bowtie.MANIFEST
 
 human_g1k_v37.bowtie.MANIFEST:
 	cd $(ZIPPYRESOURCES) && \
-	bowtie2-build --threads 8 human_g1k_v37.fasta human_g1k_v37.bowtie && \
+	bowtie2-build human_g1k_v37.fasta human_g1k_v37.bowtie && \
 	ls -l human_g1k_v37.bowtie.* > human_g1k_v37.bowtie.MANIFEST
 
 genome-index-blat: human_g1k_v37.2bit
