@@ -19,7 +19,17 @@ from .zippylib.database import PrimerDB
 
 app.config['ALLOWED_EXTENSIONS'] = set(['txt', 'batch', 'vcf', 'bed', 'csv', 'tsv'])
 app.secret_key = 'Zippy is the best handpuppet out there'
-app.config['CONFIG_FILE'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'zippy.json')
+
+# read zippy configuration file
+try:
+    assert os.environ['ZIPPY_CONFIG']
+except KeyError, AssertionError:
+    app.config['CONFIG_FILE'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'zippy.json')
+except:
+    raise
+else:
+    print >> sys.stderr, "WARNING: Using CONFIG from ENV (overriding default configuration)"
+    app.config['CONFIG_FILE'] = os.environ['ZIPPY_CONFIG']
 
 # configure flask app
 with open(app.config['CONFIG_FILE']) as conf:
