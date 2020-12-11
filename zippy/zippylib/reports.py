@@ -197,7 +197,7 @@ class Report(object):
         self.elements.append(NextPageTemplate(template))
 
     # generic dataframe style table (relative column width, pagesize dependent, full width)
-    def genericTable(self, data, landscape=False, rowShading=False, header=True, tableTitle=None, relativeColWidth=None, rowHeight=0.5*cm, mergeColumnFields=None):
+    def genericTable(self, data, landscape=False, rowShading=False, betaHeader=False, header=True, tableTitle=None, relativeColWidth=None, rowHeight=0.5*cm, mergeColumnFields=None):
         # global stylesheet
         stylesheet = [
             ('ALIGN',(0,0),(-1,-1),'LEFT')
@@ -210,8 +210,22 @@ class Report(object):
                 ('INNERGRID', (0,0), (-1,0), 0.25, colors.black), # header inner grid
                 ('BOX', (0,0), (-1,0), 1, colors.black)  # header box
             ]
+        #formatting for beta worksheet
+        if betaHeader:
+            stylesheet += [
+                ('FONTSIZE',(0,0),(-1,1),9),
+                ('BACKGROUND', (0,0), (-1,1), colors.bisque),  # header color
+                ('INNERGRID', (0,0), (-1,1), 0.25, colors.black),# header inner grid
+                ('BOX', (0,0), (-1,1), 1, colors.black)  # header box
+            ]
         # Data cell styles
-        firstData = (0,1) if header else (0,0)
+        if header:
+            firstData = (0,1)
+        if betaHeader:
+            firstData = (0,2)
+        else:
+            firstData = (0,0)
+
         stylesheet += [
             ('FONTSIZE',firstData, (-1,-1),8),
             ('VALIGN', firstData, (-1,-1), 'MIDDLE') # middle cell alignment for data rows
@@ -315,6 +329,40 @@ class Report(object):
                 ([ counts[p[i][0]] if counts else '', p[i][0], Paragraph('<br/>'.join(p[i][1]),doubleLine), locationParagraph ] if i<len(p) else ['','','','']))
         self.elements.append(Spacer(1, 2))
         t = Table(data, colWidths=[0.6*cm,1.0*cm,0.6*cm,0.6*cm,2.3*cm,2.0*cm,1.3*cm,0.3*cm,0.6*cm,5.3*cm,1.6*cm,1.8*cm,0.8*cm], rowHeights=0.6*cm)
+        t.setStyle(TABLE_STYLE)
+        self.elements.append(t)
+        self.elements.append(Spacer(1, 12))
+
+    def samplePrimerListsBeta(self,s,p,counts=Counter()):
+#Beta batch specific
+        TABLE_STYLE = TableStyle([
+            ('FONTSIZE',(0,1),(-1,-1),8),  # body
+            ('FONTSIZE',(0,0),(-1,0),10),  # title line
+            ('VALIGN',(0,0),(-1,-1),'TOP'),
+            ('ALIGN',(0,0),(-1,-1),'LEFT'),
+            ('INNERGRID', (0,1),(5,len(s)), 0.25, colors.black),
+            ('LINEABOVE', (0,1),(5,1),1,colors.black),
+            ('LINEBEFORE', (3,0),(3,len(s)),1,colors.black),
+            ('BOX', (0,0), (5,len(s)), 1, colors.black),
+            ('INNERGRID', (7,1), (-1,len(p)), 0.25, colors.black),
+            ('LINEABOVE', (7,1),(-1,1),1,colors.black),
+            ('BOX', (7,0), (-1,len(p)), 1, colors.black),
+            ])
+        doubleLine = ParagraphStyle('suffixes', fontSize=5, leading=5)  # suffix column
+        centered = ParagraphStyle('locations', fontSize=8, leading=5, alignment=1)  # Location column
+        centeredsmall = ParagraphStyle('locations', fontSize=6, leading=6, alignment=1)  # Location column
+        data = [['','','',str(len(s)),'Samples','Empty','',str(len(p)),'Primer Pairs', 'Suffixes','Locations','ND','Dilution Date/Lot #']]
+        for i in range(max(len(s),len(p))):
+            if i<len(p):
+                if any(p[i][2]):
+                    locationString = ' '.join(map(str,p[i][2]))
+                    locationParagraph = Paragraph(locationString, centered if len(locationString) < 10 else centeredsmall)
+                else:
+                    locationParagraph = Paragraph(' ',centered)
+            data.append((['W','LowV','B'] if i<len(s) else ['','','']) + ([ counts[s[i]] if counts else '', s[i] ] if i<len(s) else ['','']) + ['',''] + \
+                ([ counts[p[i][0]] if counts else '', p[i][0], Paragraph('<br/>'.join(p[i][1]),doubleLine), locationParagraph ] if i<len(p) else ['','','','','']))
+        self.elements.append(Spacer(1, 2))
+        t = Table(data, colWidths=[0.6*cm,1.0*cm,0.6*cm,0.6*cm,2.3*cm,1.3*cm,0.3*cm,0.6*cm,2.3*cm,1.6*cm,1.8*cm,0.8*cm,4.0*cm], rowHeights=1.0*cm)
         t.setStyle(TABLE_STYLE)
         self.elements.append(t)
         self.elements.append(Spacer(1, 12))
@@ -934,8 +982,8 @@ class Worksheet(list):
         orderedPrimers = [ (x[0].name, x[0].primerSuffixes(), tuple(x[0].locations())) for x in sorted(primerOrder.items(), key=lambda x: x[1]) ]
         # store ordered list of sample (str) and primers (primername, primersuffixes, locations)
         r.samplePrimerLists(orderedSamples,orderedPrimers,counts=self.reactionCount())
-        # primer dilution check
-        r.checkBoxes(title='Primer Dilution',dilutioncheck=['New dilution made','Forward primer Lot#/Exp.','Reverse primer Lot#/Exp.','Previous dilution used'], tableHeader=['','Tick / LOT #','Date of Dilution','Checker'])
+        #  check
+        r.checkBoxes(title='Primer Dilution Check',dilutioncheck=['New dilution made','Forward primer Lot#/Exp.','Reverse primer Lot#/Exp.','Previous dilution used'], tableHeader=['','Tick / LOT #','Date of Dilution','Checker'])
         #r.checkBoxes(title='',tickbox=['New dilution made'],tickboxNames=['YES'])
         #r.checkBoxes(title='',tickbox=[''],tickboxNames=['NO'])
         r.volumeLists(sum([len(p) for p in self.plates]),kwargs['volumes']['mastermix'],kwargs['volumes']['qsolution'],kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'],kwargs['volumes']['volume'])
@@ -996,9 +1044,7 @@ class Worksheet(list):
             for p in set(primers) }
         orderedPrimers = [ (x[0].name, x[0].primerSuffixes(), tuple(x[0].locations())) for x in sorted(primerOrder.items(), key=lambda x: x[1]) ]
         # store ordered list of sample (str) and primers (primername, primersuffixes, locations)
-        r.samplePrimerLists(orderedSamples,orderedPrimers,counts=self.reactionCount())
-        r.checkBoxes(title='Primer Dilution',primercheck=['Forward primer','Reverse primer',], tableHeader=['','LOT #','Expiry'])
-        # reaction volume list
+        r.samplePrimerListsBeta(orderedSamples,orderedPrimers,counts=self.reactionCount())
         r.volumeListsBeta(sum([len(p) for p in self.plates]),kwargs['volumes']['pcrbuffer'],kwargs['volumes']['dNTPs'],kwargs['volumes']['mgcl2'],kwargs['volumes']['bsa'],kwargs['volumes']['taq'],
         kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'],kwargs['volumes']['volume'])
         # add checkboxes
@@ -1095,10 +1141,10 @@ class Worksheet(list):
                             #tagstring = '/'.join(set([ x.tag for x in cell.sample]))
                             print >> fh, "^XA"  # start label
                             print >> fh, "^PR1,A,A"  # slower print speed
-                            print >> fh, "^FO20,20^AB,25^FD50ng/ul DILUTION^FS"
-                            print >> fh, "^FO20,70^AB,25^FD{}^FS".format(cell.sample)  # sample id
-                            print >> fh, "^FO20,100^BY1.5^BCN,80,N,N,N^FD{}^FS".format(d)  # Barcode uniqueid
-                            print >> fh, "^FO20,50^AB,25^FD{}^FS".format(self.date[:self.date.rfind('.')])  # date
+                            print >> fh, "^FO50,20^AB,25^FD{}^FS".format(cell.sample)
+                            print >> fh, "^FO50,50^AB,10^FD50ng/ul DILUTION^FS"
+                            print >> fh, "^FO50,70^AB,10^FD{}^FS".format(self.date[:self.date.rfind('.')])  # date
+                            print >> fh, "^FO50,100^BY1.5^BCN,80,Y,N,N^FD{}^FS".format(d)  # Barcode uniqueid
                             print >> fh, "^XZ"  # end label
 
 class Plate(object):

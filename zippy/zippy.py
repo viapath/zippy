@@ -616,16 +616,19 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             ws_beta.addControls()
             ws_beta.fillPlates(size=config['report']['platesize'],randomize=True)
             ws_beta.createBetaWorkSheet(writtenFiles[-1], worklist=worksheetName, **config['beta_report'])
-
+            ws_beta.tubeLabels()
         # robot csv
             writtenFiles.append(outfile+'_beta.csv')
             print >> sys.stderr, "Writing beta batch robot CSV to {}...".format(writtenFiles[-1])
             ws_beta.robotCsv(writtenFiles[-1], sep=',')
-
         # sample labels
             writtenFiles.append(outfile+'_beta.samplelabels.txt')
             print >> sys.stderr, "Writing beta batch sample labels to {}...".format(writtenFiles[-1])
             ws_beta.sampleLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
+        # tube labels
+            writtenFiles.append(outfile+'_beta.tubelabels.txt')
+            print >> sys.stderr, "Writing beta batch tube labels to {}...".format(writtenFiles[-1])
+            ws_beta.tubeLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
 
         # Batch PCR worksheet ALPHA
         if tests_alpha_1:
@@ -635,6 +638,7 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             ws_alpha1.addControls()
             ws_alpha1.fillPlates(size=config['alpha_report_1']['platesize'],randomize=True)
             ws_alpha1.createAlphaWorkSheet(writtenFiles[-1], worklist=worksheetName, **config['alpha_report_1'])
+            ws_alpha1.tubeLabels()
         # robot csv
             writtenFiles.append(outfile+'_alpha1.csv')
             print >> sys.stderr, "Writing alpha batch robot CSV to {}...".format(writtenFiles[-1])
@@ -643,6 +647,10 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             writtenFiles.append(outfile+'_alpha1.samplelabels.txt')
             print >> sys.stderr, "Writing alpha1 batch sample labels to {}...".format(writtenFiles[-1])
             ws_alpha1.sampleLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
+        # tube labels
+            writtenFiles.append(outfile+'_alpha1.tubelabels.txt')
+            print >> sys.stderr, "Writing alpha1 batch tube labels to {}...".format(writtenFiles[-1])
+            ws_alpha1.tubeLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
 
         if tests_alpha_2:
             writtenFiles.append(outfile+'_alpha2.pdf')
@@ -651,6 +659,7 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             ws_alpha2.addControls()
             ws_alpha2.fillPlates(size=config['alpha_report_2']['platesize'],randomize=True)
             ws_alpha2.createAlphaWorkSheet(writtenFiles[-1], worklist=worksheetName, **config['alpha_report_2'])
+            ws_alpha2.tubeLabels()
         # robot csv
             writtenFiles.append(outfile+'_alpha2.csv')
             print >> sys.stderr, "Writing alpha batch robot CSV to {}...".format(writtenFiles[-1])
@@ -659,6 +668,10 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             writtenFiles.append(outfile+'_alpha2.samplelabels.txt')
             print >> sys.stderr, "Writing alpha2 batch sample labels to {}...".format(writtenFiles[-1])
             ws_alpha2.sampleLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
+        # tube labels
+            writtenFiles.append(outfile+'_alpha2.tubelabels.txt')
+            print >> sys.stderr, "Writing alpha2 batch tube labels to {}...".format(writtenFiles[-1])
+            ws_alpha2.tubeLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
 
         # Batch PCR worksheet std
         if tests_std:
@@ -672,18 +685,17 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             ws_std.tubeLabels()
         # robot csv
             writtenFiles.append(outfile+'.csv')
-            print >> sys.stderr, "Writing robot CSV to {}...".format(writtenFiles[-1])
+            print >> sys.stderr, "Writing standard robot CSV to {}...".format(writtenFiles[-1])
             ws_std.robotCsv(writtenFiles[-1], sep=',')
-        # writtenFiles.append(outfile+'.long.csv')
-        # print >> sys.stderr, "Writing long batch robot CSV to {}...".format(writtenFiles[-1])
-        # ws_long.robotCsv(writtenFiles[-1], sep=',')
+        # sample labels
+            writtenFiles.append(outfile+'.samplelabels.txt')
+            print >> sys.stderr, "Writing standard batch sample labels to {}...".format(writtenFiles[-1])
+            ws_std.sampleLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
         # tube labels
             writtenFiles.append(outfile+'.tubelabels.txt')
             print >> sys.stderr, "Writing tube labels to {}...".format(writtenFiles[-1])
             ws_std.tubeLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
-        #writtenFiles.append(outfile+'.long.tubelabels.txt')
-        #print >> sys.stderr, "Writing long batch tube labels to {}...".format(writtenFiles[-1])
-        #ws_long.tubeLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
+
         # write missed intervals
         missedIntervalNames = []
         if allMissedIntervals:
