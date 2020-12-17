@@ -103,15 +103,17 @@
         "tag": "M13"
     },
     "snpcheck": {
+        "COMMENT": "must be dbSNP VCF with INFO/CAF field",
         "common": "/var/local/zippy/resources/00-common_all.vcf.gz",
-        "all":"/var/local/zippy/resources/00-All.vcf.gz"
+        "maf": 0.01
     },
     "designlimits": {
         "amplicons": 1,
         "criticalsnp": 0,
-        "mispriming": 10,
+        "mispriming": 9,
         "snpcount": 0,
-        "designrank": 100
+        "designrank": 100,
+        "taggedthermo": 47.0
     },
     "report": {
         "auth": "AUTHORISER_NOT_DEFINED",

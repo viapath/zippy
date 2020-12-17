@@ -18,5 +18,5 @@ CMD ["gunicorn","zippy:app"]
 
 ## monolithic image with all genome resources
 FROM bare as mono
-ADD prebuilt_resources/* /var/local/zippy/resources
+ADD prebuilt_resources/* /var/local/zippy/resources/
 RUN make resources

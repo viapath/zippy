@@ -41,6 +41,13 @@ div.right {
 	text-align: center;
 }
 
+div.third {
+	float: left;
+	width: 33%;
+	height: 300px;
+	text-align: center;
+}
+
 #left60 {
 	float: left;
 	width: 60%;
@@ -108,6 +115,14 @@ table.primer {
 	border-spacing: 0px;
 }
 
+table.failed {
+	margin-left:auto;
+	margin-right:auto;
+	font-size: 12px;
+	text-align: left;
+	border-spacing: 0px;
+}
+
 table.regions {
 	float:right;
 	width:35%;
@@ -130,6 +145,20 @@ td.primer {
 	font-size: 12px;
 	padding: 5px;
 	background-color: #005EB8;
+	color: white;
+	font-weight: bold;
+}
+th.failed {
+	padding: 5px;
+	background-color: #FF0038;
+	color: white;
+	height: 20px;
+}
+
+td.failed {
+	font-size: 12px;
+	padding: 5px;
+	background-color: #FF0038;
 	color: white;
 	font-weight: bold;
 }
@@ -185,6 +214,11 @@ input[type=submit]:active {
 }
 
 #revSubmit {
+	background-color: white;
+	color: #005EB8;
+}
+
+.colorButton {
 	background-color: white;
 	color: #005EB8;
 }

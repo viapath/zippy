@@ -14,7 +14,7 @@ from hashlib import md5, sha1
 import primer3
 import pysam
 import subprocess
-from collections import defaultdict, OrderedDict, Counter
+from collections import defaultdict, OrderedDict, Counter, deque
 from .interval import Interval
 from string import maketrans
 from urllib import unquote
@@ -43,6 +43,17 @@ def parsePrimerName(x):
         elif suf in rev_suffix or re.match(r'r\d+',suf):
             return (pre, -1)
     return (x,0)
+
+'''checks if text block are primer pairs in fasta format'''
+def checkPrimerFormat(textblock):
+    validation = deque([r'>\S+_fwd$', r'[ACGTacgt]+$', r'>\S+_rev$',r'[ACGTacgt]+$'])
+    for i, line in enumerate(textblock.split()):
+        if line:
+            if re.match(validation[0], line):
+                validation.rotate(-1)
+            else:
+                return False
+    return True
 
 class Genome(object):
     def __init__(self,fi):
@@ -81,7 +92,7 @@ class MultiFasta(object):
             proc = subprocess.check_call( \
                 [bowtie, '-f', '--end-to-end', '-p 2', \
                 '-k '+str(maxAln), '-L 10', '-N 1', '-D 20', '-R 3', \
-                '-x', db, '-U', self.file, '>', mapfile ])
+                '-x', db, '-U', self.file, '-S', mapfile ])
         # Read fasta file (Create Primer)
         primers = {}
         with pysam.FastaFile(self.file) as fasta:
@@ -186,6 +197,7 @@ class PrimerPair(list):
         self.name = name
         self.cond = cond
         self.variants = []  # list of intervals with metadata from input table
+        self._amplicons = None  # the calculated amplicons
         if not name and all(self):
             commonPrefix(self[0].name, self[1].name)
 
@@ -264,7 +276,8 @@ class PrimerPair(list):
             self.cond)
 
     def sequencingTarget(self):
-        return (self[0].targetposition.chrom if self[0] and self[1] and self[0].targetposition else None, \
+        if self[0].targetposition and self[1].targetposition:
+            return (self[0].targetposition.chrom if self[0] and self[1] and self[0].targetposition else None, \
                 self[0].targetposition.offset+self[0].targetposition.length if self[0] and self[1] and self[0].targetposition else None,
                 self[1].targetposition.offset if self[0] and self[1] and self[1].targetposition else None,
                 self.reversed)
@@ -340,6 +353,8 @@ class PrimerPair(list):
                             amplicons.append(amp)
             if amplicons:
                 self.reverse()
+        # save calculated amplicons
+        self._amplicons = amplicons
         return amplicons
 
     def snpcount(self):
@@ -349,16 +364,34 @@ class PrimerPair(list):
         return max(max(len(self[0].loci), len(self[1].loci))-1,0)
 
     def criticalsnp(self):
-        return len([ s for s in self[0].snp if s[1] >= 2*len(self[0])/3 ]) + \
-            len([ s for s in self[1].snp if s[1]+s[2] <= len(self[1])/3 ])
+        return len([ s for s in self[0].snp if s.offset >= 2*len(self[0])/3 ]) + \
+            len([ s for s in self[1].snp if s.offset+s.length <= len(self[1])/3 ])
 
     def designrank(self):
         assert self[0].rank == self[1].rank
         return int(self[0].rank)
 
-    def check(self, limits):
+    def taggedthermo(self):
+        # calculate primer dimer when tagged
+        # TODO:
+        left, right = self[0].seq, self[1].seq
+
+         
+        tm = [
+            primer3.calcHomodimer(left).tm,
+            primer3.calcHomodimer(right).tm,
+            primer3.calcHairpin(left).tm,
+            primer3.calcHairpin(right).tm,
+            primer3.calcHeterodimer(left,right).tm
+        ]
+        print >> sys.stderr, tm
+        return max(tm)
+
+    # checks designlimits returns array of failed checks
+    def check(self, limits, params={}):
+        failed = []
         for k,v in limits.items():
-            x = getattr(self,k)()
+            x = getattr(self,k)(*params[k]) if k in params.keys() else getattr(self,k)()
             try:
                 x = int(x)
             except TypeError:
@@ -366,8 +399,8 @@ class PrimerPair(list):
             except:
                 raise
             if x > v:
-                return False
-        return True
+                failed.append(k)  # fails check
+        return failed
 
     def uniqueid(self):
         return sha1(','.join([str(self[0].tag)+'-'+self[0].seq,str(self[1].tag)+'-'+self[1].seq])).hexdigest()
@@ -401,6 +434,25 @@ class PrimerPair(list):
         for i in range(len(self)):
             self[i].name = re.sub('^'+oldname,newname,self[i].name)
         return
+
+    def display(self):
+        left = self[0].display(False)
+        right = self[1].display(True)
+        # create middle section (amplicon count) 
+        target_count = len(self._amplicons)
+        target = self.sequencingTarget()
+        target_str = '- {}:{}-{} -'.format(*target) if target else '- NO TARGET -'
+        middle = ['','',target_str, "("+str(target_count)+")"]
+
+        # assemble and return
+        result = []
+        for i in range(max(len(left),len(middle),len(right))):
+            result.append('')
+            for j in [left,middle,right]:
+                max_len = max(map(len,j))
+                result[i] += ("{:^"+str(max_len)+"}").format(j[i]) if i < len(j) else " " * max_len
+        return "\n".join(result)
+
 
 '''fasta/primer'''
 class Primer(object):
@@ -450,9 +502,39 @@ class Primer(object):
         self.loci.append(Locus(chrom,pos,len(self),reverse,tm))
         return
 
-    def snpCheckPrimer(self,vcf):
-        self.snp = self.targetposition.snpCheck(vcf)
+    def snpCheckPrimer(self,vcf,mincaf=None):
+        self.mincaf = mincaf
+        snps = self.targetposition.snpCheck(vcf)
+        if self.mincaf:
+            # remove SNP with MAF below mincaf (CAF field)        
+            snps = list(filter(lambda x: x.maf() >= self.mincaf, snps))
+        self.snp = snps
         return True if self.snp else False
+
+    '''returns fixed width SNP annotation per primer'''
+    def display(self,reverse=False):
+        # TODO:
+        snpSeq = []
+        # add name
+        snpSeq.append(self.name)
+        # loci
+        snpSeq.append("{}({})".format(self.targetposition, len(self.loci)))
+        # sequence
+        snpSeq.append(self.seq.translate(revcmp)[::-1] if reverse else self.seq)
+        # add SNPs
+        for snp in self.snp:
+            snp_str = "{o}{t}-{s}({f:.3f})" if not reverse else "({f:.3f}){s}-{t}{o}"
+            snpstr = snp_str.format(o=snp.offset*" ", t=snp.length*snp.varType, s=snp.name, f=snp.maf()) 
+            snpSeq.append(snpstr)
+        # normalise lengths
+        max_len = max(map(len,snpSeq))
+        result = []
+        for i, l in enumerate(snpSeq):
+            fill_char = '-' if i == 2 else ' ' 
+            fill_len = max_len-len(l)
+            fill = fill_char * fill_len if len(l)<max_len else ''
+            result.append(l+fill if not reverse else fill+l)
+        return result
 
     def checkTarget(self):
         if self.targetposition is not None:
@@ -461,6 +543,34 @@ class Primer(object):
                     if int(locus.offset) == int(self.targetposition.offset):
                         return True
         return False
+
+'''SNP VCF line'''
+class SNP(object):
+    def __init__(self, vcfline, offset=0):
+        f = vcfline.split()
+        # calculate SNP location on reference/primer
+        refLength = len(f[3])
+        altLength = max(map(len,f[4].split(',')))
+        snpOffset = (int(f[1])-1) - offset  # convert to 0-based
+        snpLength = max(map(len,[ f[3] ] + f[4].split(',')))
+        varType = '^' if (refLength == 1 and altLength == 1) else \
+            'I' if refLength < altLength else 'D'
+        self.chrom = f[0]
+        self.offset = snpOffset
+        self.length = snpLength
+        self.name = f[2]
+        self.varType = varType
+        self.raw = vcfline
+
+    '''returns minor allele frequency from CAF field'''
+    def maf(self):
+        caf = re.search(r'CAF=([^;\s]+)', self.raw)
+        if caf:
+            freqs = map(float,filter(lambda x: x != '.', caf.group(1).split(',')))
+            ## second largest AF is MAF
+            maf = sorted(freqs)[-2] if len(freqs) > 1 else None 
+            return maf
+
 
 '''Locus'''
 class Locus(object):
@@ -472,8 +582,7 @@ class Locus(object):
         self.tm = tm
 
     def __str__(self):
-        strand = '-' if self.reverse else '+'
-        return self.chrom+":"+str(self.offset)+":"+strand
+        return self.chrom+":"+str(self.offset)+":"+self.strand()
 
     def __lt__(self,other):
         return (self.chrom, self.offset) < (other.chrom, other.offset)
@@ -487,6 +596,9 @@ class Locus(object):
     def __hash__(self):
         return hash((self.chrom, self.offset, self.length, self.reverse))
 
+    def strand(self):
+        return '-' if self.reverse else '+'
+
     def snpCheck(self,database):
         db = pysam.TabixFile(database)
         try:
@@ -497,11 +609,8 @@ class Locus(object):
             raise
         # query database and translate to primer positions
         snp_positions = []
-        for v in snps:
-            f = v.split()
-            snpOffset = (int(f[1])-1) - self.offset  # convert to 0-based
-            snpLength = max(map(len,[ f[3] ] + f[4].split(',')))
-            snp_positions.append( (f[0],snpOffset,snpLength,f[2]) )
+        for vcfline in snps:
+            snp_positions.append(SNP(vcfline, self.offset))
         return snp_positions
 
 '''primer3 wrapper class'''
@@ -558,9 +667,3 @@ class Primer3(object):
         self.pairs = OrderedDict(sorted(designedPairs.items())).values()
         return len(self.pairs)
 
-
-if __name__=="__main__":
-    mf = MultiFasta(sys.argv[1])
-    primers = mf.createPrimers('/Users/dbrawand/dev/snappy/WORK/genome/human_g1k_v37.bowtie')
-    for primer in primers:
-        print primer

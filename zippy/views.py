@@ -7,17 +7,18 @@ import json
 import bcrypt
 import hashlib
 import subprocess
-from functools import wraps
+import tempfile
+from functools import wraps, reduce
+from collections import Counter
 from flask import Flask, render_template, request, redirect, send_from_directory, session, flash, url_for
-from celery import Celery
 from werkzeug.utils import secure_filename
 from . import app
-from .zippy import zippyBatchQuery, zippyPrimerQuery, updateLocation, searchByName, updatePrimerName, updatePrimerPairName, updatePairCond, updatePairCondStd, blacklistPair, deletePair, readprimerlocations
+from .zippy import validateAndImport, zippyBatchQuery, zippyPrimerQuery, updateLocation, searchByName, updatePrimerName, updatePrimerPairName, updatePairCond, updatePairCondStd, blacklistPair, deletePair, readprimerlocations
 from .zippylib import ascii_encode_dict
-from .zippylib.primer import Location
+from .zippylib.primer import Location, checkPrimerFormat
 from .zippylib.database import PrimerDB
 
-app.config['ALLOWED_EXTENSIONS'] = set(['txt', 'batch', 'vcf', 'bed', 'csv', 'tsv'])
+app.config['ALLOWED_EXTENSIONS'] = set(['txt', 'batch', 'vcf', 'bed', 'csv', 'tsv', 'fasta', 'fa'])
 app.secret_key = 'Zippy is the best handpuppet out there'
 
 # read zippy configuration file
@@ -191,6 +192,46 @@ def adhocdesign():
     else:
         print >> sys.stderr, "no locus or file given"
         return render_template('/adhoc_result.html', primerTable=[], resultList=[], missedIntervals=[])
+
+@app.route('/import_primers/', methods=['POST'])
+def import_primers():
+    # read form data
+    uploadFile = request.files['filePath']
+    primers = request.form.get('primers')
+    validate = request.form.get('validate')
+    # if Primers given
+    if checkPrimerFormat(primers) or (uploadFile and allowed_file(uploadFile.filename)):
+        # get target
+        if uploadFile:
+            filename = secure_filename(uploadFile.filename)
+            print >> sys.stderr, "Uploaded: ", filename
+            target = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            uploadFile.save(target)
+            print >> sys.stderr, "file saved to %s" % target
+        elif primers:
+            # write file
+            with tempfile.NamedTemporaryFile(suffix='.fa', prefix="primers_", delete=False) as fh:
+                print >> fh, primers
+            print >> sys.stderr, "primers written to %s" % fh.name
+            target = fh.name
+
+        # read config
+        with open(app.config['CONFIG_FILE']) as conf:
+            config = json.load(conf, object_hook=ascii_encode_dict)
+            db = PrimerDB(config['database'],dump=config['ampliconbed'])
+
+        # run Zippy
+        report_counts, failed_primers = validateAndImport(config, target, validate, db)
+        # print >> sys.stderr, report_counts, '<REPORT>'
+        # print >> sys.stderr, failed_primers, '<FAILED>'
+
+        # get missed and render template
+        return render_template('/import_report.html', failed_primers=failed_primers,
+            report_counts=report_counts)
+    else:
+        print >> sys.stderr, "no locus or file given"
+        return render_template('/no_primer_supplied.html')
+
 
 @app.route('/update_location/', methods=['POST'])
 def updatePrimerLocation():

@@ -60,7 +60,7 @@
         <div class="right">
             <form action="{{ url_for('adhocdesign') }}" method="post" enctype="multipart/form-data">
                 <table class="form">
-                    <tr><th colspan="2"><h3>Primer Query</h3></th></tr>
+                    <tr><th colspan="2"><h3>Primer Design/Query</h3></th></tr>
                     <tr>
                         <td class="left">
                             <span class="pop">BED, VCF, GenePred</span><br>
@@ -101,7 +101,7 @@
         <div class="left";>
             <form action="{{ url_for('searchName') }}" method="post" enctype="multipart/form-data">
                 <table class="form">
-                    <tr><th colspan="2"><h3>Primer Pair Query</h3></th></tr>
+                    <tr><th colspan="2"><h3>Primer Search</h3></th></tr>
                     <tr>
                         <td class="left">
                             <span class="pop">Search for</span><br>
@@ -115,7 +115,28 @@
                 <input type="submit" id="revSubmit" value="Search">
             </form>
         </div>
-        <div class="right">
+        <div class="right";>
+            <form action="{{ url_for('import_primers') }}" method="post" enctype="multipart/form-data">
+                <table class="form">
+                    <tr><th colspan="2"><h3>Validate and import Primer Pairs</h3></th></tr>
+                    <tr>
+                        <td class="left">
+                            <span class="pop">Primer Sequences (FASTA)</span><br>
+                            Names must be suffixed with _fwd or _rev<br>
+                        </td>
+                        <td class="right">
+                            <input type="file" name="filePath"><br>
+                            <span class="pop">-or-</span><br/>
+                            <textarea name="primers" rows="6" cols="30"
+                                placeholder=">primer1_fwd&#10;ACGTACGTACGT&#10;>primer1_rev&#10;GTCAGTCAGTCA&#10;">>DDD_ARHGAP31_Glu1284Ala_fwd&#10;AAAAACCAAAGCAAGATCCCGG&#10;>DDD_ARHGAP31_Glu1284Ala_rev&#10;CACTACTGCATCCTGGGTGG</textarea><br>
+                            <input type="checkbox" name="validate" value="True" checked>Validate primers<br>
+                        </td>
+                    </tr>
+                </table><br>
+                <input type="submit" id="revSubmit" value="Upload"><br><br>
+            </form>
+        </div>
+        <!-- <div class="right">
             <form action="{{ url_for('upload_samplesheet') }}" method="post" enctype="multipart/form-data">
                 <table class="form">
                     <tr>
@@ -131,6 +152,6 @@
                 </table><br><br>
                 <input type="submit" id="revSubmit" value="Upload">
             </form>
-        </div>
+        </div> -->
     </div>
 {% endblock %}

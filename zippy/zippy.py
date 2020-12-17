@@ -72,8 +72,17 @@ def shortHumanReadable(x):
     fields = unquote(x).split(',')
     return '_'.join([ fields[0], hashlib.sha1(','.join(fields[:-1])).hexdigest()[:6].upper() ])
 
-'''reads fasta/tab inputfile, searches genome for targets, decides if valid pairs'''
-def importPrimerPairs(inputfile,config,primer3=True):
+'''generates hash from primer sequences'''
+seqhash = lambda x,y: hashlib.sha1(','.join([x,y])).hexdigest()  # sequence pair hashing function
+
+'''reads fasta/tab inputfile, searches genome for targets, decides if valid pairs
+    inputfile: FILENAME
+    config:    CONFIGURATION DICT
+    primer3:   PRIMER3 PRIMERS (disables deep amplicon searching)
+    keepall:   KEEP ALL PAIRS (even if they do not yield an amplicon)
+
+'''
+def importPrimerPairs(inputfile,config,primer3=True,keepall=False):
     # read table/fasta
     primersets = defaultdict(list)  # pair primersets
     primertags = {}  # primer tags from table
@@ -188,6 +197,7 @@ def importPrimerPairs(inputfile,config,primer3=True):
         print >> sys.stderr, 'Identifying correct amplicons for unplaced primer pairs...'
         for p in pairs.values():
             if not p[0].targetposition or not p[1].targetposition:
+                # find primer pair amplicons of the maximum import size
                 amplicons = p.amplicons(config['import']['ampliconsize'],autoreverse=True)
                 if amplicons:
                     shortest = sorted(amplicons,key=lambda x: len(x[2]))[0]  # sort amplicons by size
@@ -196,37 +206,91 @@ def importPrimerPairs(inputfile,config,primer3=True):
                     p[0].targetposition = shortest[0]  # m
                     p[1].targetposition = shortest[1]  # n
                     validPairs.append(p)
-                elif not primer3:
-                    # try to find amplicon by sequence matching if no amplicons from genome mapping with sufficient Tm
-                    refGenome = Genome(config['design']['genome'])
+                elif primer3:
+                    # if primer comes from primer3, then do not attempt deep amplicon search
+                    print >> sys.stderr, 'WARNING: Primer set {} does not produce a well-sized, unique amplicon ({},{})'.format(p.name,len(p[0].loci),len(p[1].loci))
+                else:
+                    # try to find amplicon by sequence matching (locus+-ampliconsize)
+                    #   if no amplicons from genome mapping with sufficient Tm
+                    # --------------------------------------------------------
+                    
                     # get new loci (one round)
+                    refGenome = Genome(config['design']['genome'])
                     newLoci = [[],[]]
-                    for mapped,query in [[0,1],[1,0]]:
+                    for mapped, query in [[0,1],[1,0]]:
                         for l in p[mapped].loci:
                             newLoci[query] += refGenome.primerMatch(l,p[query].seq,config['import']['ampliconsize'])
+
                     # add new loci
-                    if not newLoci[0] and not newLoci[1]:
-                        print >> sys.stderr, 'WARNING: {} is not specific and not imported ({},{})'.format(p.name,len(p[0].loci),len(p[1].loci))
-                        continue
-                    else:  # add new loci
+                    if newLoci[0] or newLoci[1]:
                         for i,loc in enumerate(newLoci):
                             p[i].loci += loc
                             p[i].loci = list(set(p[i].loci))  # remove redundancy
-                    # store new amplicon
+                    elif keepall:
+                        validPairs.append(p)
+                    else:
+                        print >> sys.stderr, 'WARNING: {} is not specific and not imported ({},{})'.format(p.name,len(p[0].loci),len(p[1].loci))
+                        continue
+                    
+                    # infer new amplicons and store
                     amplicons = p.amplicons(config['import']['ampliconsize'],autoreverse=True)
                     if amplicons:
                         p[0].targetposition = amplicons[0][0]  # m
                         p[1].targetposition = amplicons[0][1]  # n
                         validPairs.append(p)
+                    elif keepall:
+                        validPairs.append(p)
                     else:
                         print >> sys.stderr, '\n'.join([ "-> "+str(l) for l in p[0].loci])
                         print >> sys.stderr, '\n'.join([ "<- "+str(l) for l in p[1].loci])
                         print >> sys.stderr, 'WARNING: Primer set {} has no valid amplicons ({},{})'.format(p.name,len(p[0].loci),len(p[1].loci))
-                else:
-                    print >> sys.stderr, 'WARNING: Primer set {} does not produce a well-sized, unique amplicon ({},{})'.format(p.name,len(p[0].loci),len(p[1].loci))
             else:
                 validPairs.append(p)
     return validPairs
+
+'''checks (mispriming, amplicons, snpcheck) primerpairs and generates simple report'''
+def checkPrimerPairs(pairs, db, config):
+    pairs_passed = defaultdict(list)  # found/designed primer pairs (from database or design)
+
+    # create report (primername -> result) and result array
+    report = defaultdict(list)
+    passed_primer_pairs, failed_primer_pairs = [], []
+
+    #  load blacklist
+    blacklist = db.blacklist() if db else []
+    try:
+        blacklist += pickle.load(open(config['blacklistcache'],'rb'))
+    except:
+        print >> sys.stderr, 'Could not read blacklist cache, check permissions'
+        print >> sys.stderr, os.getcwd(), config['blacklistcache']
+    
+    # filter primer pairs
+    progress = Progressbar(len(pairs),'Validating')
+    for i, pair in enumerate(pairs):
+        sys.stderr.write('\r'+progress.show(i))
+
+        # check blacklist (will skip further checks)
+        if pair.uniqueid() in blacklist:
+            report[pair.name].append("blacklisted")
+        # check targets (will skip further checks)
+        elif not all([pair[0].checkTarget(), pair[1].checkTarget()]):
+            report[pair.name].append("no_target")
+        else:
+            # run SNPcheck
+            for p in pair:
+                p.snpCheckPrimer(config['snpcheck']['common'], config['snpcheck']['maf'])
+            # check designlimits (use import amplicon length limit)
+            check_params = {'amplicons': [config['import']['ampliconsize'],True] }
+            report[pair.name] += pair.check(config['designlimits'],check_params)
+        # add passed primers
+        if not report[pair.name]:
+            passed_primer_pairs.append(pair)
+        else:
+            failed_primer_pairs.append(pair)
+    sys.stderr.write('\r'+progress.show(len(pairs))+'\n')
+
+    return passed_primer_pairs, failed_primer_pairs, report
+
 
 '''get primers from intervals'''
 def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible=False):
@@ -237,7 +301,6 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
     except:
         print >> sys.stderr, 'Could not read blacklist cache, check permissions'
         print >> sys.stderr, os.getcwd(), config['blacklistcache']
-    seqhash = lambda x,y: hashlib.sha1(','.join([x,y])).hexdigest()  # sequence pair hashing function
     # build gap primers and hash valid pairs
     if compatible:
         assert len(intervals)==2
@@ -332,7 +395,8 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                 for i, pair in enumerate(pairs):
                     sys.stderr.write('\r'+progress.show(i))
                     for p in pair:
-                        p.snpCheckPrimer(config['snpcheck']['common'])
+                        p.snpCheckPrimer(config['snpcheck']['common'],
+                            config['snpcheck']['maf'])
                 sys.stderr.write('\r'+progress.show(len(pairs))+'\n')
 
                 # assign designed primer pairs to intervals (remove ranks and tag)
@@ -342,7 +406,8 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                 for pair in pairs:
                     passed = 0
                     if pair.uniqueid() not in intervalprimers[pair.name]:
-                        if pair.check(config['designlimits']):
+                        ## if no check fails, add primers
+                        if not pair.check(config['designlimits']):
                             # add default tag
                             for primer in pair:
                                 primer.tag = config['design']['tag']
@@ -626,6 +691,33 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
                     print >> fh, '\n'.join([ '\t'.join([sample,unquote(i.name)]) for i in missed ])
     return writtenFiles, sorted(list(set(missedIntervalNames)))
 
+def validateAndImport(config, target, validate, db):
+    pairs = importPrimerPairs(target, config, primer3=False, keepall=validate)  # import and locate primer pairs
+    if validate:
+        print >> sys.stderr, "Validating {} primer pairs...".format(len(pairs))
+        pairs, failed_pairs, report = checkPrimerPairs(pairs, db, config)
+        # print report
+        failed_pair_count = len(failed_pairs)
+        if failed_pair_count:
+            print >> sys.stderr, 'INFO: {:d} pairs violated design limits, yield no amplicon, or are blacklisted (of {:d} total)'.format(failed_pair_count,len(pairs))
+            for primer_name, fails in report.items():
+                result = 'PASS' if not fails else ', '.join(fails)
+                print >> sys.stderr, "{:<40} {}".format(primer_name,result)
+        # create summry stat 
+        report_counts = Counter()
+        for p,r in report.items():
+            for t in r:
+                report_counts[t] +=1
+        report_counts['PASS'] = len(pairs)
+        # store primers
+        db.addPair(*pairs)
+        # return stat and failed pairs
+        return report_counts, failed_pairs
+    # no validation
+    db.addPair(*pairs)  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
+    sys.stderr.write('Added {} primer pairs to database without validation\n'.format(len(pairs)))
+    return {}, []
+
 # update storage location for primer
 def updateLocation(primername, location, database, force=False):
     occupied = database.getLocation(location)
@@ -734,6 +826,8 @@ def main():
     parser_add = subparsers.add_parser('add', help='Add previously designed primers to database')
     parser_add.add_argument("primers", default=None, metavar="FASTA/TAB", \
         help="Primers or locations to add to database")
+    parser_add.add_argument("--check", dest="check", default=False, action="store_true", \
+        help="Check imported primers against designlimits")
     parser_add.set_defaults(which='add')
 
     ## retrieve
@@ -809,10 +903,22 @@ def main():
     if options.which=='add':  # read primers and add to database
         # import primer pairs
         if options.primers.split('.')[-1].startswith('fa'):
-            pairs = importPrimerPairs(options.primers, config, primer3=False)  # import and locate primer pairs
-            print >> sys.stderr, "Storing Primers..."
-            db.addPair(*pairs)  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
-            sys.stderr.write('Added {} primer pairs to database\n'.format(len(pairs)))
+            report, failed_pairs = validateAndImport(config, options.primers, options.check, db)
+            # pairs = importPrimerPairs(options.primers, config, primer3=False, \
+            #     keepall=options.check)  # import and locate primer pairs
+            # if options.check:
+            #     pairs, failed_pairs, report = checkPrimerPairs(pairs, db, config)
+            #     # print report
+            #     failed_pair_count = len(failed_pairs)
+            #     if failed_pair_count:
+            #         print >> sys.stderr, 'INFO: {:d} pairs violated design limits, yield no amplicon, or are blacklisted (of {:d} total)'.format(failed_pair_count,len(pairs))
+            #         for primer_name, fails in report.items():
+            #             result = 'PASS' if not fails else ', '.join(fails)
+            #             print >> sys.stderr, "{:<40} {}".format(primer_name,result)
+
+            # print >> sys.stderr, "Storing Primers..."
+            # db.addPair(*pairs)  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
+            # sys.stderr.write('Added {} primer pairs to database\n'.format(len(pairs)))
         # store locations if table
         if not options.primers.split('.')[-1].startswith('fa'):  # assume table format
             locations = importPrimerLocations(options.primers)
