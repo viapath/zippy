@@ -18,7 +18,7 @@ import primer3
 from copy import deepcopy
 from collections import defaultdict
 from . import flatten
-from .primer import Primer, Locus, PrimerPair, Location, parsePrimerName
+from .primer import Primer, Locus, PrimerPair, Location, parsePrimerName, Tag
 
 # changes conflicting name
 def changeConflictingName(n):
@@ -204,7 +204,7 @@ class PrimerDB(object):
                     originalName = deepcopy(p.name)
                     try:
                         cursor.execute('''INSERT INTO primer(name,seq,tag,tm,gc,dateadded) VALUES(?,?,?,?,?,?)''', \
-                            (p.name, p.seq, p.tag, p.tm, p.gc, current_time))
+                            (p.name, p.seq, p.tag.tag, p.tm, p.gc, current_time))
                     except sqlite3.IntegrityError:
                         try:
                             p.name = changeConflictingName(p.name)
@@ -258,7 +258,7 @@ class PrimerDB(object):
         return
 
     '''query for interval or name'''
-    def query(self, query,opendb=None):
+    def query(self, query, opendb=None, **kwargs):
         '''returns suitable primer pairs for the specified interval'''
         try:
             self.db = opendb if opendb else sqlite3.connect(self.sqlite)
@@ -306,15 +306,6 @@ class PrimerDB(object):
         # return primer pairs that would match
         primerPairs = []
         for row in rows:
-            # build targets
-            leftTargetposition = Locus(row[7], row[8], len(row[3]), False, primer3.calcTm(str(row[3])))
-            rightTargetposition = Locus(row[7], row[9]-len(row[4]), len(row[4]), True, primer3.calcTm(str(row[4])))
-            # build storage locations (if available)
-            leftLocation = Location(*row[10:12]) if all(row[10:12]) else None
-            rightLocation = Location(*row[12:14]) if all(row[12:14]) else None
-            # Build primers
-            leftPrimer = Primer(row[5], row[3], targetposition=leftTargetposition, tag=row[1], location=leftLocation)
-            rightPrimer = Primer(row[6], row[4], targetposition=rightTargetposition, tag=row[2], location=rightLocation)
             # get reverse status (from name)
             orientations = [ x[1] for x in map(parsePrimerName,row[5:7]) ]
             if not any(orientations) or len(set(orientations))==1:
@@ -328,6 +319,23 @@ class PrimerDB(object):
                 reverse = True
             else:
                 raise Exception('PrimerPairStrandError')
+            # amend tag sequences if supplied
+            # (usually not needed as primers in database are already validated)
+            left_tag = Tag(row[1]) 
+            right_tag = Tag(row[2]) 
+            if 'sequencetags' in kwargs.keys():
+                tagorder = [1,0] if reverse else [0,1]
+                left_tag =  Tag(row[1], kwargs['sequencetags'][row[1]]['tags'][tagorder[0]])
+                right_tag = Tag(row[2], kwargs['sequencetags'][row[2]]['tags'][tagorder[1]])
+            # build targets
+            leftTargetposition = Locus(row[7], row[8], len(row[3]), False, primer3.calcTm(str(row[3])))
+            rightTargetposition = Locus(row[7], row[9]-len(row[4]), len(row[4]), True, primer3.calcTm(str(row[4])))
+            # build storage locations (if available)
+            leftLocation = Location(*row[10:12]) if all(row[10:12]) else None
+            rightLocation = Location(*row[12:14]) if all(row[12:14]) else None
+            # Build primers
+            leftPrimer = Primer(row[5], row[3], targetposition=leftTargetposition, tag=left_tag, location=leftLocation)
+            rightPrimer = Primer(row[6], row[4], targetposition=rightTargetposition, tag=right_tag, location=rightLocation)
             # Build pair
             primerPairs.append(PrimerPair([leftPrimer, rightPrimer],name=row[0],reverse=reverse,cond=row[14]))
         return primerPairs  # ordered by midpoint distance

@@ -145,6 +145,14 @@ class MultiFasta(object):
 class BoundExceedError(Exception):
     pass
 
+class Tag(object):
+    def __init__(self,tag,seq=''):
+        self.tag = tag
+        self.seq = seq
+    
+    def __str__(self):
+        return self.tag
+
 '''storage location class'''
 class Location(object):
     def __init__(self, vessel, well):
@@ -373,19 +381,21 @@ class PrimerPair(list):
 
     def taggedthermo(self):
         # calculate primer dimer when tagged
-        # TODO:
-        left, right = self[0].seq, self[1].seq
+        left, right = self[0].taggedseq(), self[1].taggedseq()
+        return self.thermo([left, right])
 
-         
-        tm = [
-            primer3.calcHomodimer(left).tm,
-            primer3.calcHomodimer(right).tm,
-            primer3.calcHairpin(left).tm,
-            primer3.calcHairpin(right).tm,
-            primer3.calcHeterodimer(left,right).tm
-        ]
-        print >> sys.stderr, tm
-        return max(tm)
+    def untaggedthermo(self):
+        # calculate primer dimer when tagged
+        left, right = self[0].seq, self[1].seq
+        return self.thermo([left,right])
+
+    def thermo(self,seqs):
+        MAXLEN = 60
+        # calculate primer dimer when tagged
+        tms = [ primer3.calcHomodimer(s).tm if len(s) <= MAXLEN else 0.0 for s in seqs ] + \
+            [ primer3.calcHairpin(s).tm if len(s) <= MAXLEN else 0.0 for s in seqs ] + \
+            [ primer3.calcHeterodimer(*seqs).tm if max(map(len,seqs)) <= MAXLEN else 0.0 ]
+        return max(tms)
 
     # checks designlimits returns array of failed checks
     def check(self, limits, params={}):
@@ -442,7 +452,12 @@ class PrimerPair(list):
         target_count = len(self._amplicons)
         target = self.sequencingTarget()
         target_str = '- {}:{}-{} -'.format(*target) if target else '- NO TARGET -'
-        middle = ['','',target_str, "("+str(target_count)+")"]
+        middle = [
+            "[Tmin: {:.1f} / {:.1f}]".format(self.untaggedthermo(),self.taggedthermo()),
+            '('+str(target_count)+')',
+            target_str,
+            ''
+        ]
 
         # assemble and return
         result = []
@@ -472,7 +487,7 @@ class Primer(object):
             pass
 
     def __hash__(self):
-        return hash(self.name) ^ hash(self.seq) ^ hash(self.tag)
+        return hash(self.name) ^ hash(self.seq) ^ hash(str(self.tag))
 
     def __repr__(self):
         return '<Primer ('+self.name+'):'+str(self.tag)+'-'+self.seq+' Mappings:'+str(len(self.loci))+' Target:'+str(self.targetposition)+'>'
@@ -485,10 +500,8 @@ class Primer(object):
     def __len__(self):
         return len(self.seq)
 
-    def snpFilter(self,position):
-        # return list of boolean if spliced position has Variant
-        for l in self.loci:
-            raise NotImplementedError
+    def taggedseq(self):
+        return str(self.tag.seq+self.seq)
 
     def fasta(self,seqname=None):
         if not seqname:

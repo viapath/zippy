@@ -23,7 +23,7 @@ import tempfile
 import hashlib
 import csv
 from zippylib.files import VCF, BED, GenePred, Interval, Data, readTargets, readBatch
-from zippylib.primer import Genome, MultiFasta, Primer3, Primer, PrimerPair, Location, parsePrimerName
+from zippylib.primer import Tag, Genome, MultiFasta, Primer3, Primer, PrimerPair, Location, parsePrimerName
 from zippylib.reports import Test
 from zippylib.database import PrimerDB
 from zippylib.interval import IntervalList
@@ -138,11 +138,25 @@ def importPrimerPairs(inputfile,config,primer3=True,keepall=False):
         for r in primerfile.references:
             primertags[r] = config['import']['tag']
     print >> sys.stderr, "Placing primers on genome..."
+
+    # amend tag sequences
+    primer_tags_seqs = {}
+    for primername, tag in primertags.items():
+        m = re.match(r'(.*_(fwd|rev))(\|\S+)?', primername, re.IGNORECASE)
+        if m:
+            if m.group(2).lower() == 'fwd':
+                primer_tags_seqs[m.group(1)] = Tag(tag, config['ordersheet']['sequencetags'][tag]['tags'][0])
+            elif m.group(2).lower() == 'rev':
+                primer_tags_seqs[m.group(1)] = Tag(tag, config['ordersheet']['sequencetags'][tag]['tags'][1])
+        else:
+            primer_tags_seqs[primername] = Tag(tag)
+
     # Align primers to genome
     primers = primerfile.createPrimers(config['design']['bowtieindex'], \
-        delete=False,tags=primertags, \
+        delete=False,tags=primer_tags_seqs, \
         tmThreshold=config['design']['mispriming']['minimaltm'], \
         endMatch=config['design']['mispriming']['identity3prime'])  # places in genome
+
     # pair primers (by name or by primerset) MAKE COPIES!!!!
     pairs = {}
     for p in primers:
@@ -410,7 +424,9 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                         if not pair.check(config['designlimits']):
                             # add default tag
                             for primer in pair:
-                                primer.tag = config['design']['tag']
+                                tagname = config['design']['tag']
+                                tagseqs = config['ordersheet']['sequencetags'][tagname]['tags']
+                                primer.tag = Tag(config['design']['tag'])
                             # assign to interval
                             ivpairs[intervalindex[pair.name]].append(pair)
                             intervalprimers[pair.name].add(pair.uniqueid())
@@ -904,21 +920,12 @@ def main():
         # import primer pairs
         if options.primers.split('.')[-1].startswith('fa'):
             report, failed_pairs = validateAndImport(config, options.primers, options.check, db)
-            # pairs = importPrimerPairs(options.primers, config, primer3=False, \
-            #     keepall=options.check)  # import and locate primer pairs
-            # if options.check:
-            #     pairs, failed_pairs, report = checkPrimerPairs(pairs, db, config)
-            #     # print report
-            #     failed_pair_count = len(failed_pairs)
-            #     if failed_pair_count:
-            #         print >> sys.stderr, 'INFO: {:d} pairs violated design limits, yield no amplicon, or are blacklisted (of {:d} total)'.format(failed_pair_count,len(pairs))
-            #         for primer_name, fails in report.items():
-            #             result = 'PASS' if not fails else ', '.join(fails)
-            #             print >> sys.stderr, "{:<40} {}".format(primer_name,result)
+            print >> sys.stderr, report
+            if failed_pairs:
+                print >> sys.stderr, "FAILED IMPORTS"
+                for primerpair in failed_pairs:
+                    print >> sys.stderr, primerpair.display()
 
-            # print >> sys.stderr, "Storing Primers..."
-            # db.addPair(*pairs)  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
-            # sys.stderr.write('Added {} primer pairs to database\n'.format(len(pairs)))
         # store locations if table
         if not options.primers.split('.')[-1].startswith('fa'):  # assume table format
             locations = importPrimerLocations(options.primers)

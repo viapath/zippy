@@ -21,10 +21,10 @@
 					<td><b>{{pair[0].targetposition.chrom}}:{{pair[0].targetposition.offset+pair[0].targetposition.length}}-{{pair[1].targetposition.offset}} ({{pair[1].targetposition.offset+pair[1].targetposition.length-pair[0].targetposition.offset}} bp)</b></td>
 					<td>{{pair.TmRange()}}˚C</td>
 					<td><i><a class="pop-link" href="{{ url_for('primer_to_update', primerName=pair[0].name, primerLoc=pair[0].location) }}">{{pair[0].name}}</a></i></td>
-					<td>{{pair[0].tag}}-{{pair[0].seq}}</td>
+					<td>{{pair[0].tag.tag}}-{{pair[0].seq}}</td>
 					<td>{{pair[0].location}}</td>
 					<td><i><a class="pop-link" href="{{ url_for('primer_to_update', primerName=pair[1].name, primerLoc=pair[1].location) }}">{{pair[1].name}}</a></i></td>
-					<td>{{pair[1].tag}}-{{pair[1].seq}}</td>
+					<td>{{pair[1].tag.tag}}-{{pair[1].seq}}</td>
 					<td>{{pair[1].location}}</td>
 					<td><i><a class="pop-link" href="{{ url_for('pair_to_update', pairName=pair.name) }}">{{pair.cond}}</a></i></td>
 				</tr>

@@ -766,7 +766,7 @@ class Worksheet(list):
                             # Location string
                             locations = ' '.join([ str(l) if l else '' for l in cell.primerpairobject.locations() ])
                             # get tag name
-                            tagstring = '/'.join(set([ x.tag for x in cell.primerpairobject ]))
+                            tagstring = '/'.join(set([ str(x.tag) for x in cell.primerpairobject ]))
                             print >> fh, "^XA"  # start label
                             print >> fh, "^PR1,A,A"  # slower print speed
                             print >> fh, "^FO20,50^AB^FD{}  {}^FS".format(self.date[:self.date.rfind('.')],locations)  # date and location
