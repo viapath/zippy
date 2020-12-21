@@ -65,6 +65,8 @@ class PrimerDB(object):
                 seq TEXT, chrom TEXT, position INT, reverse BOOLEAN, tm REAL,
                 UNIQUE (seq,chrom,position,reverse),
                 FOREIGN KEY(seq) REFERENCES primer(seq) ON DELETE CASCADE);''')
+            cursor.execute('''CREATE TABLE IF NOT EXISTS users(
+                name TEXT PRIMARY KEY, password TEXT, updated TEXT);''')
             cursor.execute('''CREATE TABLE IF NOT EXISTS blacklist(
                 uniqueid TEXT PRIMARY KEY, blacklistdate TEXT);''')
             self.db.commit()
@@ -97,6 +99,43 @@ class PrimerDB(object):
             self.db.close()
         return "\n".join([ '{:<20} {:40} {:>20} {:<25} {:>20} {:<25} {:>8} {:>9d} {:>9d} {}'.format(*row) for row in rows ])
 
+    '''user CUD (depending on args)'''
+    def editUser(self, name, password=None):
+        users = self.getUser(name)
+        now = datetime.datetime.now().isoformat()
+        try:
+            self.db = sqlite3.connect(self.sqlite)
+        except:
+            raise
+        else:
+            cursor = self.db.cursor()
+            if users:
+                if password:
+                    # update password
+                    cursor.execute('''UPDATE OR IGNORE users as u SET u.password = ?, u.updated = ? WHERE u.name = ?;''', (password,now,name))
+                else:
+                    # delete user
+                    cursor.execute('''DELETE FROM users WHERE u.name = ?;''', (name,))
+            else:
+                # create user
+                cursor.execute('''INSERT INTO users(name,password,updated) VALUES(?,?,?);''', (name,password,now))
+            return self.db.commit()
+        finally:
+            self.db.close()
+
+    def getUser(self, name):
+        try:
+            self.db = sqlite3.connect(self.sqlite)
+        except:
+            raise
+        else:
+            cursor = self.db.cursor()
+            cursor.execute('''SELECT * FROM users AS u WHERE u.name = ?;''', (name,))
+            return cursor.fetchall()
+        finally:
+            self.db.close()
+
+    '''data dumps'''
     def writeAmpliconDump(self):
         ## dump amplicons to bed file
         if self.dump:

@@ -24,7 +24,7 @@ app.secret_key = 'Zippy is the best handpuppet out there'
 # read zippy configuration file
 try:
     assert os.environ['ZIPPY_CONFIG']
-except KeyError, AssertionError:
+except (KeyError, AssertionError):
     app.config['CONFIG_FILE'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'zippy.json')
 except:
     raise
@@ -39,7 +39,7 @@ with open(app.config['CONFIG_FILE']) as conf:
     app.config['PASSWORD'] = config['password']
     try:
         assert os.environ['ZIPPY_PASSWORD']
-    except KeyError, AssertionError:
+    except (KeyError, AssertionError):
         pass
     except:
         raise
@@ -50,18 +50,40 @@ with open(app.config['CONFIG_FILE']) as conf:
     # read folder locations
     app.config['UPLOAD_FOLDER'] = config['uploads_folder']
     app.config['DOWNLOAD_FOLDER'] = config['results_folder']
+    # load database
+    db = PrimerDB(config['database'],dump=config['ampliconbed'])
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
 
+'''user is logged in'''
+def logged_in(s):
+    if "logged_in" in s:
+        if s['logged_in'] == 'admin':
+            return s['logged_in']
+        elif db.getUser(s["logged_in"]):
+            return s['logged_in']
+    return None
+
+''' extremely simple login system for basic audit capabilities'''
 def login_required(func):
     @wraps(func)
     def wrap(*args, **kwargs):
-        if 'logged_in' in session:
+        if logged_in(session):
             return func(*args, **kwargs)
         else:
             flash('Authentication required!', 'warning')
             return redirect(url_for('login'))
+    return wrap
+
+def is_admin(func):
+    @wraps(func)
+    def wrap(*args, **kwargs):
+        if logged_in(session) == 'admin':
+            return func(*args, **kwargs)
+        else:
+            error = 'Administrator login required'
+            return render_template('login.html', error=error)
     return wrap
 
 @app.route('/')
@@ -75,12 +97,16 @@ def index():
 def login():
     error = None
     if request.method == 'POST':
-        if bcrypt.hashpw(request.form['password'].rstrip().encode('utf-8'), app.config['PASSWORD']) == app.config['PASSWORD']:
-            session['logged_in'] = True
+        username = request.form['username'].rstrip().encode('utf-8')
+        users = db.getUser(username)
+        stored_pw = users[0][1].encode('utf-8') if users else app.config['PASSWORD'] if username == 'admin' else None
+        if stored_pw and bcrypt.hashpw(request.form['password'].rstrip().encode('utf-8'), stored_pw) == stored_pw:
+            session['logged_in'] = username
             return redirect(url_for('index'))
         else:
             error = 'Wrong password. Please try again.'
     return render_template('login.html', error=error)
+
 @app.route('/favicon.ico') 
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
