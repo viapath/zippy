@@ -20,7 +20,7 @@
             "minimaltm": 47.0,
             "identity3prime": 6
         },
-        "tag": "M13",
+        "tag": "TAG1",
         "tiers": [
             [ 0, "selected", "Stringent (<550bp)" ],
             [ 1, "selected", "Relaxed (<550bp)" ],
@@ -100,7 +100,7 @@
     },
     "import": {
         "ampliconsize": [100,2000],
-        "tag": "M13"
+        "tag": "TAG1"
     },
     "snpcheck": {
         "COMMENT": "must be dbSNP VCF with INFO/CAF field",
@@ -154,7 +154,17 @@
         "sequencetags" : {
             "M13": {
                 "name": "M13(-21)/M13_pUC",
-                "tags": ["TGTAAAACGACGGCCAGT", "CAGGAAACAGCTATGACC"]
+                "tags": [
+                    "TGTAAAACGACGGCCAGT",
+                    "CAGGAAACAGCTATGACC"
+                ]
+            },
+            "TAG1": {
+                "name": "GSTT Long TAG 1",
+                "tags": [
+                    "GTCTCAGTTCAGGTGTCCTTCCTG",
+                    "AGACGTCTTGTGTCGTGGCTACTG"
+                ]
             }
         }
     }
