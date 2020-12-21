@@ -382,14 +382,14 @@ class PrimerPair(list):
     def taggedthermo(self):
         # calculate primer dimer when tagged
         left, right = self[0].taggedseq(), self[1].taggedseq()
-        return self.thermo([left, right])
+        return self.maxthermo([left, right])
 
-    def untaggedthermo(self):
+    def thermo(self):
         # calculate primer dimer when tagged
         left, right = self[0].seq, self[1].seq
-        return self.thermo([left,right])
+        return self.maxthermo([left,right])
 
-    def thermo(self,seqs):
+    def maxthermo(self,seqs):
         MAXLEN = 60
         # calculate primer dimer when tagged
         tms = [ primer3.calcHomodimer(s).tm if len(s) <= MAXLEN else 0.0 for s in seqs ] + \
@@ -445,7 +445,10 @@ class PrimerPair(list):
             self[i].name = re.sub('^'+oldname,newname,self[i].name)
         return
 
-    def display(self):
+    def fasta(self):
+        return '\n'.join([ '>'+self[0].name, self[0].seq, '>'+self[1].name, self[1].seq ])
+
+    def display(self, prefix=''):
         left = self[0].display(False)
         right = self[1].display(True)
         # create middle section (amplicon count) 
@@ -453,7 +456,7 @@ class PrimerPair(list):
         target = self.sequencingTarget()
         target_str = '- {}:{}-{} -'.format(*target) if target else '- NO TARGET -'
         middle = [
-            "[Tmin: {:.1f} / {:.1f}]".format(self.untaggedthermo(),self.taggedthermo()),
+            "[Tmin: {:.1f} / {:.1f}]".format(self.thermo(),self.taggedthermo()),
             '('+str(target_count)+')',
             target_str,
             ''
@@ -466,7 +469,9 @@ class PrimerPair(list):
             for j in [left,middle,right]:
                 max_len = max(map(len,j))
                 result[i] += ("{:^"+str(max_len)+"}").format(j[i]) if i < len(j) else " " * max_len
-        return "\n".join(result)
+        
+        # join with prefix
+        return '\n'.join(list([ prefix+line for line in result ]))
 
 
 '''fasta/primer'''

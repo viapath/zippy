@@ -844,6 +844,8 @@ def main():
         help="Primers or locations to add to database")
     parser_add.add_argument("--check", dest="check", default=False, action="store_true", \
         help="Check imported primers against designlimits")
+    parser_add.add_argument("-F", dest="outfile", default=None, type=str, \
+        help="Output failed imports to file")
     parser_add.set_defaults(which='add')
 
     ## retrieve
@@ -920,11 +922,17 @@ def main():
         # import primer pairs
         if options.primers.split('.')[-1].startswith('fa'):
             report, failed_pairs = validateAndImport(config, options.primers, options.check, db)
-            print >> sys.stderr, report
             if failed_pairs:
-                print >> sys.stderr, "FAILED IMPORTS"
-                for primerpair in failed_pairs:
-                    print >> sys.stderr, primerpair.display()
+                if options.outfile is None:
+                    print >> sys.stderr, "FAILED IMPORTS"
+                    for primerpair in failed_pairs:
+                        print >> sys.stderr, primerpair.display()
+                else:
+                    with open(options.outfile, 'w') as fh:
+                        for primerpair in failed_pairs:
+                            print >> fh, primerpair.display('# ')
+                            print >> fh, primerpair.fasta()
+            print >> sys.stderr, report
 
         # store locations if table
         if not options.primers.split('.')[-1].startswith('fa'):  # assume table format

@@ -113,8 +113,8 @@
         "mispriming": 9,
         "snpcount": 0,
         "designrank": 100,
-        "taggedthermo": 47.0,
-        "untaggedthermo": 47.0
+        "taggedthermo": 56.0,
+        "thermo": 52.0
     },
     "report": {
         "auth": "AUTHORISER_NOT_DEFINED",
