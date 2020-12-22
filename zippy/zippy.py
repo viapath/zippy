@@ -206,7 +206,8 @@ def importPrimerPairs(inputfile,config,primer3=True,keepall=False):
             assert p[0].targetposition and p[1].targetposition  # make sure target postiions are set
             p.pruneRanks()
         validPairs = pairs.values()
-    else:  # guess target if not set
+    else:
+        # guess target if not set
         validPairs = []
         print >> sys.stderr, 'Identifying correct amplicons for unplaced primer pairs...'
         for p in pairs.values():
@@ -242,6 +243,7 @@ def importPrimerPairs(inputfile,config,primer3=True,keepall=False):
                             p[i].loci = list(set(p[i].loci))  # remove redundancy
                     elif keepall:
                         validPairs.append(p)
+                        continue
                     else:
                         print >> sys.stderr, 'WARNING: {} is not specific and not imported ({},{})'.format(p.name,len(p[0].loci),len(p[1].loci))
                         continue
