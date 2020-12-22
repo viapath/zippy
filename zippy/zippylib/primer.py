@@ -204,6 +204,7 @@ class PrimerPair(list):
         self.reversed = reverse
         self.name = name
         self.cond = cond
+        self.failed = []  # vaildation failures [str]
         self.variants = []  # list of intervals with metadata from input table
         self._amplicons = None  # the calculated amplicons
         if not name and all(self):
@@ -399,18 +400,24 @@ class PrimerPair(list):
 
     # checks designlimits returns array of failed checks
     def check(self, limits, params={}):
-        failed = []
+        self.failed = []
         for k,v in limits.items():
             x = getattr(self,k)(*params[k]) if k in params.keys() else getattr(self,k)()
             try:
-                x = int(x)
+                x = float(x)
             except TypeError:
                 x = len(x)
             except:
                 raise
             if x > v:
-                failed.append(k)  # fails check
-        return failed
+                self.failed.append(k)  # fails check
+        return self.failed
+
+    def failures(self):
+        failed = self.failed
+        if not self.sequencingTarget():
+            failed.append('no_target')
+        return ", ".join(failed)
 
     def uniqueid(self):
         return sha1(','.join([str(self[0].tag)+'-'+self[0].seq,str(self[1].tag)+'-'+self[1].seq])).hexdigest()

@@ -1,0 +1,46 @@
+
+{% extends "base.html" %}
+{% block content %}
+    {% if error %}
+      <p class="error"><strong>Error:</strong> {{ error }}
+    {% endif %}
+	<h3>User admin</h3>
+    {% if session.logged_in %}
+        {% if session.logged_in is equalto 'admin' %}
+            <h4>Edit user (create or change password)</h4>
+            <form action="{{ url_for('user_admin') }}" method=post>
+                <input type="text" placeholder="Username" name="edit_username">
+                <input type="password" placeholder="Password" name="edit_password">
+                <input type="submit" value="Submit">
+            </form>
+        {% else %}
+            <h4>Change password for {{ session.logged_in }}</h4>
+            <form action="{{ url_for('user_admin') }}" method=post>
+                <input type="hidden" value="{{ session.logged_in }}" name="edit_username" />
+                <input type="password" placeholder="Password" name="edit_password">
+                <input type="submit" value="Set Password" />
+              </form>
+        {% endif %}
+    {% endif %}
+	{% if users is not equalto [] %}
+		<table>
+			<tr>
+				<th>Username</th>
+                <th>Last Updated</th>
+                <th>Action</th>
+			</tr>
+			{% for user in users %}
+				<tr>
+					<td>{{ user[0] }}</td>
+					<td>{{ user[1] }}</td>
+                    <td>
+                        <form action="{{ url_for('user_admin') }}" method=post>
+                            <input type=hidden value="{{ user[0] }}" name="delete_username" />
+                            <input type=submit value="Delete user">
+                        </form>
+                    </td>
+				</tr>
+			{% endfor %}
+		</table>
+    {% endif %}
+{% endblock %}

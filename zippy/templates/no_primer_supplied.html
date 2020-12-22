@@ -1,0 +1,9 @@
+
+{% extends "base.html" %}
+{% block content %}
+	<p>No primer pair or primer file supplied</p>
+	<p>Please go back and try again</p>
+	<div>
+        <a href="{{ url_for('index') }}">Go Back</a>
+	</div>
+{% endblock %}

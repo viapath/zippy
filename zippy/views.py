@@ -1,5 +1,4 @@
 #!/usr/local/env python
-
 import sys
 import os
 import re
@@ -104,26 +103,30 @@ def login():
             session['logged_in'] = username
             return redirect(url_for('index'))
         else:
-            error = 'Wrong password. Please try again.'
+            error = 'Please try again.'
     return render_template('login.html', error=error)
 
 @app.route('/user_admin', methods=['GET','POST'])
 def user_admin():
+    error = None
     if request.method =='POST':
         if 'edit_username' in request.form.keys() and request.form['edit_username'] and\
             'edit_password' in request.form.keys() and request.form['edit_password']:
             # change password or edit user
-            hashed_password = bcrypt.hashpw(request.form['edit_password'].encode('utf-8'), bcrypt.gensalt())
-            db.editUser(request.form['edit_username'], hashed_password)
-            # if not admin go back to index after change
-            if logged_in(session) != 'admin':
-                return redirect(url_for('index'))
+            if re.match(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$", request.form['edit_password']):
+                hashed_password = bcrypt.hashpw(request.form['edit_password'].encode('utf-8'), bcrypt.gensalt())
+                db.editUser(request.form['edit_username'], hashed_password)
+                # if not admin go back to index after change
+                if logged_in(session) != 'admin':
+                    return redirect(url_for('index'))
+            else:
+                error = "Password must be at least 8 characters long, and contain numbers and letters"
         elif 'delete_username' in request.form.keys() and \
             request.form['delete_username'] and logged_in(session) == 'admin':
             # deletes user
             db.editUser(request.form['delete_username'])
     users = db.getUsers() if logged_in(session) == 'admin' else []
-    return render_template('user_admin.html', users=users)
+    return render_template('user_admin.html', users=users, error=error)
 
 @app.route('/favicon.ico') 
 def favicon():
@@ -174,11 +177,6 @@ def upload():
             print >> sys.stderr, "file saved to %s" % uploadedFiles[-1]
 
     if uploadedFiles:
-        # open config file and database
-        with open(app.config['CONFIG_FILE']) as conf:
-            config = json.load(conf, object_hook=ascii_encode_dict)
-            db = PrimerDB(config['database'],dump=config['ampliconbed'])
-
         # create output folder
         filehash = hashlib.sha1(''.join([ open(uf).read() for uf in uploadedFiles ])).hexdigest()
         downloadFolder = os.path.join(app.config['DOWNLOAD_FOLDER'], filehash)
@@ -219,10 +217,6 @@ def adhocdesign():
             print >> sys.stderr, "file saved to %s" % target
         else:
             target = locus
-        # read config
-        with open(app.config['CONFIG_FILE']) as conf:
-            config = json.load(conf, object_hook=ascii_encode_dict)
-            db = PrimerDB(config['database'],dump=config['ampliconbed'])
         # run Zippy
         primerTable, resultList, missedIntervals = zippyPrimerQuery(config, target, design, None, db, store, tiers, gap)
 
@@ -259,11 +253,6 @@ def import_primers():
             print >> sys.stderr, "primers written to %s" % fh.name
             target = fh.name
 
-        # read config
-        with open(app.config['CONFIG_FILE']) as conf:
-            config = json.load(conf, object_hook=ascii_encode_dict)
-            db = PrimerDB(config['database'],dump=config['ampliconbed'])
-
         # run Zippy
         report_counts, failed_primers = validateAndImport(config, target, validate, db)
         # print >> sys.stderr, report_counts, '<REPORT>'
@@ -289,10 +278,6 @@ def updatePrimerLocation():
     except:
         print >> sys.stderr, 'Please fill in all fields (PrimerName VesselNumber Well)'
         return render_template('location_updated.html', status=None)
-    # read config
-    with open(app.config['CONFIG_FILE']) as conf:
-        config = json.load(conf, object_hook=ascii_encode_dict)
-        db = PrimerDB(config['database'],dump=config['ampliconbed'])
     # run zippy and render
     updateStatus = updateLocation(primername, loc, db, force)
     return render_template('location_updated.html', status=updateStatus)
@@ -307,13 +292,10 @@ def update_pair_name(pairName):
     if newName == pairName:
         flash('New name is the same as current', 'warning')
         return render_template('update_pair.html', pairName=pairName)
-    with open(app.config['CONFIG_FILE']) as conf:
-        config = json.load(conf, object_hook=ascii_encode_dict)
-        db = PrimerDB(config['database'],dump=config['ampliconbed'])
-        if updatePrimerPairName(pairName, newName, db):
-            flash('Pair "%s" renamed "%s"' % (pairName, newName), 'success')
-        else:
-            flash('Pair renaming failed', 'warning')
+    if updatePrimerPairName(pairName, newName, db):
+        flash('Pair "%s" renamed "%s"' % (pairName, newName), 'success')
+    else:
+        flash('Pair renaming failed', 'warning')
     return render_template('update_pair.html', pairName=newName)
 
 @app.route('/select_primer_to_update/<primerName>')
@@ -335,9 +317,6 @@ def updateLocationFromTable(primerInfo):
         except:
             print >> sys.stderr, 'Please fill in all fields (PrimerName VesselNumber Well)'
             return render_template('location_updated.html', status=None)
-        with open(app.config['CONFIG_FILE']) as conf:
-            config = json.load(conf, object_hook=ascii_encode_dict)
-            db = PrimerDB(config['database'],dump=config['ampliconbed'])
         # run zippy and render
         updateStatus = updateLocation(primerName, loc, db, force)
         if updateStatus[0] == 'occupied':
@@ -372,33 +351,22 @@ def update_name_of_primer(primerInfo):
     if newName == currentName:
         flash('Primer renaming failed - new name is the same as current', 'warning')
         return render_template('update_location_from_table.html', primerName=newName, primerLoc=primerLoc)
-    with open(app.config['CONFIG_FILE']) as conf:
-        config = json.load(conf, object_hook=ascii_encode_dict)
-        db = PrimerDB(config['database'],dump=config['ampliconbed'])
-        if updatePrimerName(currentName, newName, db):
-            flash('Primer "%s" renamed "%s"' % (currentName, newName), 'success')
-        else:
-            flash('Primer renaming failed', 'warning')
+    if updatePrimerName(currentName, newName, db):
+        flash('Primer "%s" renamed "%s"' % (currentName, newName), 'success')
+    else:
+        flash('Primer renaming failed', 'warning')
     return render_template('update_location_from_table.html', primerName=newName, primerLoc=primerLoc)
 
 @app.route('/update_pair_conditions/<pairname>', methods=['POST'])
 def update_pair_cond(pairname):
-    print >> sys.stderr, 'This is the pairname: ' + pairname
-    with open(app.config['CONFIG_FILE']) as conf:
-        config = json.load(conf, object_hook=ascii_encode_dict)
-        db = PrimerDB(config['database'],dump=config['ampliconbed'])
-        longbatch = updatePairCond(pairname, db)
-        flash('%s added to longbatch program' % (longbatch,), 'success')
+    longbatch = updatePairCond(pairname, db)
+    flash('%s added to longbatch program' % (longbatch,), 'success')
     return redirect(url_for('search_by_name'))
 
 @app.route('/update_pair_conditions_std/<pairname>', methods=['POST'])
 def update_pair_cond_std(pairname):
-    print >> sys.stderr, 'This is the pairname: ' + pairname
-    with open(app.config['CONFIG_FILE']) as conf:
-        config = json.load(conf, object_hook=ascii_encode_dict)
-        db = PrimerDB(config['database'],dump=config['ampliconbed'])
-        stdbatch = updatePairCondStd(pairname, db)
-        flash('%s added to standard program' % (stdbatch,), 'success')
+    stdbatch = updatePairCondStd(pairname, db)
+    flash('%s added to standard program' % (stdbatch,), 'success')
     return redirect(url_for('search_by_name'))
 
 @app.route('/specify_searchname/', methods=['POST'])
@@ -410,32 +378,21 @@ def searchName():
 @app.route('/search_by_name/')
 def search_by_name():
     searchName = session['searchName']
-    with open(app.config['CONFIG_FILE']) as conf:
-        config = json.load(conf, object_hook=ascii_encode_dict)
-        db = PrimerDB(config['database'],dump=config['ampliconbed'])
-        searchResult = searchByName(searchName, db)
+    searchResult = searchByName(searchName, db)
     return render_template('searchname_result.html', searchResult=searchResult, searchName=searchName)
 
 @app.route('/blacklist_pair/<pairname>', methods=['POST'])
 def blacklist_pair(pairname):
-    print >> sys.stderr, 'This is the pairname: ' + pairname
-    with open(app.config['CONFIG_FILE']) as conf:
-        config = json.load(conf, object_hook=ascii_encode_dict)
-        db = PrimerDB(config['database'],dump=config['ampliconbed'])
-        blacklisted = blacklistPair(pairname, db)
-        for b in blacklisted:
-            flash('%s added to blacklist' % (b,), 'success')
+    blacklisted = blacklistPair(pairname, db)
+    for b in blacklisted:
+        flash('%s added to blacklist' % (b,), 'success')
     return redirect(url_for('search_by_name'))
 
 @app.route('/delete_pair/<pairname>', methods=['POST'])
 def delete_pair(pairname):
-    print >> sys.stderr, 'This is the pairname: ' + pairname
-    with open(app.config['CONFIG_FILE']) as conf:
-        config = json.load(conf, object_hook=ascii_encode_dict)
-        db = PrimerDB(config['database'],dump=config['ampliconbed'])
-        deleted = deletePair(pairname, db)
-        for d in deleted:
-            flash('%s deleted' % (d,), 'success')
+    deleted = deletePair(pairname, db)
+    for d in deleted:
+        flash('%s deleted' % (d,), 'success')
     return redirect(url_for('search_by_name'))
 
 @app.route('/upload_batch_locations/', methods=['POST'])
@@ -449,16 +406,13 @@ def upload_samplesheet():
             saveloc = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             locationsheet.save(saveloc)
             updateList = readprimerlocations(saveloc)
-            with open(app.config['CONFIG_FILE']) as conf:
-                config = json.load(conf, object_hook=ascii_encode_dict)
-                db = PrimerDB(config['database'],dump=config['ampliconbed'])
-                for item in updateList:
-                    updateStatus = updateLocation(item[0], item[1], db, True) # Force is set to True, will force primers into any occupied locations
-                    if updateStatus[0] == 'occupied':
-                        flash('Location already occupied by %s' % (' and '.join(updateStatus[1])), 'warning')
-                    elif updateStatus[0] == 'success':
-                        flash('%s location sucessfully set to %s' % (item[0], str(item[1])), 'success')
-                    else:
-                        flash('%s location update to %s failed' % (item[0], str(item[1])), 'warning')
+            for item in updateList:
+                updateStatus = updateLocation(item[0], item[1], db, True) # Force is set to True, will force primers into any occupied locations
+                if updateStatus[0] == 'occupied':
+                    flash('Location already occupied by %s' % (' and '.join(updateStatus[1])), 'warning')
+                elif updateStatus[0] == 'success':
+                    flash('%s location sucessfully set to %s' % (item[0], str(item[1])), 'success')
+                else:
+                    flash('%s location update to %s failed' % (item[0], str(item[1])), 'warning')
             print >> sys.stderr, 'Updated locations using :', updateList
     return redirect(url_for('index'))
