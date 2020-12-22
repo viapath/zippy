@@ -16,6 +16,13 @@ header {
 	text-align: center;
 	position: fixed;
 	height: 40px;
+	display: flex;
+	justify-content: space-between;
+}
+
+a.headerlink {
+	font-size: 10px;
+	color: #FFFFFF;
 }
 
 #below_header {
@@ -24,6 +31,10 @@ header {
 
 #indexPage {
   text-align: center;
+}
+
+div.flex {
+	display: flex;
 }
 
 div.left {
@@ -194,7 +205,7 @@ input[type=submit] {
 	border-color: #005EB8;
   border-radius: 4px;
   color: white;
-  padding: 10px;
+  padding: 5px;
   text-decoration: none;
   cursor: pointer;
   width: 100px;
@@ -304,7 +315,6 @@ input[type=submit]:active {
 	color: #00e64d;
 	font-style: oblique;
 }
-
 
 .flash {
   border-radius:10px;

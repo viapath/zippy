@@ -112,10 +112,10 @@ class PrimerDB(object):
             if users:
                 if password:
                     # update password
-                    cursor.execute('''UPDATE OR IGNORE users as u SET u.password = ?, u.updated = ? WHERE u.name = ?;''', (password,now,name))
+                    cursor.execute('''UPDATE OR IGNORE users SET password = ?, updated = ? WHERE name = ?;''', (password,now,name))
                 else:
                     # delete user
-                    cursor.execute('''DELETE FROM users WHERE u.name = ?;''', (name,))
+                    cursor.execute('''DELETE FROM users WHERE name = ?;''', (name,))
             else:
                 # create user
                 cursor.execute('''INSERT INTO users(name,password,updated) VALUES(?,?,?);''', (name,password,now))
@@ -131,6 +131,18 @@ class PrimerDB(object):
         else:
             cursor = self.db.cursor()
             cursor.execute('''SELECT * FROM users AS u WHERE u.name = ?;''', (name,))
+            return cursor.fetchall()
+        finally:
+            self.db.close()
+
+    def getUsers(self):
+        try:
+            self.db = sqlite3.connect(self.sqlite)
+        except:
+            raise
+        else:
+            cursor = self.db.cursor()
+            cursor.execute('''SELECT name,updated FROM users;''')
             return cursor.fetchall()
         finally:
             self.db.close()

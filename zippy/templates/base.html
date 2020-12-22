@@ -19,8 +19,19 @@
       </script>
     </head>
     <body>
-      <div>
-        <a href="{{ url_for('index') }}"><header><b>Zippy: Primer Design and Storage</b></header></a>
+        <header>
+          <div class="box">
+            
+          </div>
+          <div>
+            <b>Zippy: Primer Design and Storage</b>
+          </div>
+          <div class="box">
+            <a class="headerlink" href="{{ url_for('index') }}">HOME</a>
+            <a class="headerlink" href="{{ url_for('user_admin') }}">user</a>
+            <a class="headerlink" href="{{ url_for('logout') }}">logout</a>
+          </div>
+        </header>
       </div>
       <div id="below_header">
         <br>

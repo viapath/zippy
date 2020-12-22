@@ -9,7 +9,7 @@ import hashlib
 import subprocess
 import tempfile
 from functools import wraps, reduce
-from collections import Counter
+from collections import Counter, defaultdict
 from flask import Flask, render_template, request, redirect, send_from_directory, session, flash, url_for
 from werkzeug.utils import secure_filename
 from . import app
@@ -106,6 +106,24 @@ def login():
         else:
             error = 'Wrong password. Please try again.'
     return render_template('login.html', error=error)
+
+@app.route('/user_admin', methods=['GET','POST'])
+def user_admin():
+    if request.method =='POST':
+        if 'edit_username' in request.form.keys() and request.form['edit_username'] and\
+            'edit_password' in request.form.keys() and request.form['edit_password']:
+            # change password or edit user
+            hashed_password = bcrypt.hashpw(request.form['edit_password'].encode('utf-8'), bcrypt.gensalt())
+            db.editUser(request.form['edit_username'], hashed_password)
+            # if not admin go back to index after change
+            if logged_in(session) != 'admin':
+                return redirect(url_for('index'))
+        elif 'delete_username' in request.form.keys() and \
+            request.form['delete_username'] and logged_in(session) == 'admin':
+            # deletes user
+            db.editUser(request.form['delete_username'])
+    users = db.getUsers() if logged_in(session) == 'admin' else []
+    return render_template('user_admin.html', users=users)
 
 @app.route('/favicon.ico') 
 def favicon():

@@ -16,7 +16,7 @@
         }
     }
     </script>
-    <div id="indexPage">
+    <div id="indexPage" class="flex">
         <div class="left">
             <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
                 <table class="form">
@@ -98,7 +98,7 @@
         <div>
             <p>&nbsp</p><br><br><hr><br><br>
         </div>
-        <div class="left";>
+        <div class="left">
             <form action="{{ url_for('searchName') }}" method="post" enctype="multipart/form-data">
                 <table class="form">
                     <tr><th colspan="2"><h3>Primer Search</h3></th></tr>
@@ -115,7 +115,7 @@
                 <input type="submit" id="revSubmit" value="Search">
             </form>
         </div>
-        <div class="right";>
+        <div class="right">
             <form action="{{ url_for('import_primers') }}" method="post" enctype="multipart/form-data">
                 <table class="form">
                     <tr><th colspan="2"><h3>Validate and import Primer Pairs</h3></th></tr>
