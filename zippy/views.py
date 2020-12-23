@@ -61,15 +61,9 @@ def allowed_file(filename):
 def logger(func):
     @wraps(func)
     def wrap(*args, **kwargs):
-        print >> sys.stderr, func.__name__
-        print >> sys.stderr, args, kwargs
-        print >> sys.stderr, session['logged_in']
-        print >> sys.stderr, request.form
-        print >> sys.stderr, request.files
-
+        # pre execution logger
         db.log(session['logged_in'], func.__name__, str(args), str(kwargs), \
             str(request.form), str(request.files))
-
         return func(*args, **kwargs)
     return wrap
 
@@ -261,7 +255,8 @@ def import_primers():
     primers = request.form.get('primers')
     validate = request.form.get('validate')
     # if Primers given
-    if checkPrimerFormat(primers) or (uploadFile and allowed_file(uploadFile.filename)):
+    if (primers and checkPrimerFormat(primers)) or \
+        (uploadFile and allowed_file(uploadFile.filename)):
         # get target
         if uploadFile:
             filename = secure_filename(uploadFile.filename)
