@@ -151,25 +151,21 @@ def logout():
     session.pop('logged_in', None)
     return redirect(url_for('login'))
 
-@app.route('/file_uploaded')
-def file_uploaded():
-    return render_template('file_uploaded.html')
+@app.route('/batch_result')
+def batch_result():
+    return render_template('batch_result.html')
 
-@app.route('/file_uploaded/<path:filename>')
+@app.route('/batch_result/<path:filename>')
 def download_file(filename):
     return send_from_directory(app.config['DOWNLOAD_FOLDER'], filename, as_attachment=True)
-
-@app.route('/adhoc_result')
-def adhoc_result(primerTable, resultList, missedIntervals):
-    return render_template('file_uploaded.html', primerTable, resultList, missedIntervals)
 
 @app.route('/location_updated')
 def location_updated(status):
     return render_template('location_updated.html', status)
 
-@app.route('/upload/', methods=['POST', 'GET'])
+@app.route('/batch_design/', methods=['POST', 'GET'])
 @logger
-def upload():
+def batch_design():
     # read form
     uploadFile = request.files['variantTable']
     uploadFile2 = request.files['missedRegions']
@@ -198,14 +194,14 @@ def upload():
         downloadFile = os.path.join(downloadFolder, outfile) if outfile else os.path.join(downloadFolder, shortName)
         arrayOfFiles, missedIntervalNames = zippyBatchQuery(config, uploadedFiles, design, downloadFile, db, predesign, tiers)
         arrayOfFiles = list([ f[len(app.config['DOWNLOAD_FOLDER']):].lstrip('/') for f in arrayOfFiles if f.startswith(app.config['DOWNLOAD_FOLDER'])])
-        return render_template('file_uploaded.html', outputFiles=arrayOfFiles, missedIntervals=missedIntervalNames)
+        return render_template('batch_result.html', outputFiles=arrayOfFiles, missedIntervals=missedIntervalNames)
     else:
         flash('No appropriate worksheets supplied','warning')
         return redirect(url_for('index'))
 
 @app.route('/adhoc_design/', methods=['POST'])
 @logger
-def adhocdesign():
+def adhoc_design():
     # read form data
     uploadFile = request.files['filePath']
     locus = request.form.get('locus')

@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-	<p>File upload succesful</p>
-	<p>Zippy returned the following files: </p>
+	<p>Batch PCR generated</p>
 	<ul>
 		{% for file in outputFiles %}
 			{% set filelist = file.split('/') %}
