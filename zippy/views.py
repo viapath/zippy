@@ -12,7 +12,9 @@ from collections import Counter, defaultdict
 from flask import Flask, render_template, request, redirect, send_from_directory, session, flash, url_for
 from werkzeug.utils import secure_filename
 from . import app
-from .zippy import validateAndImport, zippyBatchQuery, zippyPrimerQuery, updateLocation, searchByName, updatePrimerName, updatePrimerPairName, updatePairCond, updatePairCondStd, blacklistPair, deletePair, readprimerlocations
+from .zippy import validateAndImport, zippyBatchQuery, zippyPrimerQuery, \
+    updateLocation, searchByName, updatePrimerName, updatePrimerPairName, \
+    blacklistPair, deletePair, readprimerlocations
 from .zippylib import ascii_encode_dict
 from .zippylib.primer import Location, checkPrimerFormat
 from .zippylib.database import PrimerDB
@@ -54,6 +56,21 @@ with open(app.config['CONFIG_FILE']) as conf:
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
+
+'''API logger'''
+def logger(func):
+    @wraps(func)
+    def wrap(*args, **kwargs):
+        print >> sys.stderr, func.__name__
+        print >> sys.stderr, args, kwargs
+        print >> sys.stderr, session['logged_in']
+        print >> sys.stderr, request.form
+        print >> sys.stderr, request.files
+
+        #db.log(session['logged_in'], func.__name__, str(request.form)+str(request.files))
+
+        return func(*args, **kwargs)
+    return wrap
 
 '''user is logged in'''
 def logged_in(s):
@@ -101,6 +118,7 @@ def login():
         stored_pw = users[0][1].encode('utf-8') if users else app.config['PASSWORD'] if username == 'admin' else None
         if stored_pw and bcrypt.hashpw(request.form['password'].rstrip().encode('utf-8'), stored_pw) == stored_pw:
             session['logged_in'] = username
+            db.log(session['logged_in'], 'login')
             return redirect(url_for('index'))
         else:
             error = 'Please try again.'
@@ -134,6 +152,7 @@ def favicon():
 
 @app.route('/logout')
 def logout():
+    db.log(session['logged_in'], 'logout')
     session.pop('logged_in', None)
     return redirect(url_for('login'))
 
@@ -158,6 +177,7 @@ def location_updated(status):
     return render_template('location_updated.html', status)
 
 @app.route('/upload/', methods=['POST', 'GET'])
+@logger
 def upload():
     # read form
     uploadFile = request.files['variantTable']
@@ -193,6 +213,7 @@ def upload():
         return redirect(url_for('no_file'))
 
 @app.route('/adhoc_design/', methods=['POST'])
+@logger
 def adhocdesign():
     # read form data
     uploadFile = request.files['filePath']
@@ -232,6 +253,7 @@ def adhocdesign():
         return render_template('/adhoc_result.html', primerTable=[], resultList=[], missedIntervals=[])
 
 @app.route('/import_primers/', methods=['POST'])
+@logger
 def import_primers():
     # read form data
     uploadFile = request.files['filePath']
@@ -265,8 +287,8 @@ def import_primers():
         print >> sys.stderr, "no locus or file given"
         return render_template('/no_primer_supplied.html')
 
-
 @app.route('/update_location/', methods=['POST'])
+@logger
 def updatePrimerLocation():
     primername = request.form.get('primername')
     vessel = request.form.get('vessel')
@@ -283,10 +305,12 @@ def updatePrimerLocation():
     return render_template('location_updated.html', status=updateStatus)
 
 @app.route('/select_pair_to_update/<pairName>')
+@logger
 def pair_to_update(pairName):
     return render_template('update_pair.html', pairName=pairName)
 
 @app.route('/update_pair_name/<pairName>', methods=['POST'])
+@logger
 def update_pair_name(pairName):
     newName = request.form.get('name')
     if newName == pairName:
@@ -300,11 +324,13 @@ def update_pair_name(pairName):
 
 @app.route('/select_primer_to_update/<primerName>')
 @app.route('/select_primer_to_update/<primerName>/<primerLoc>')
+@logger
 def primer_to_update(primerName, primerLoc="None"):
     primerInfo = primerName + '|' + primerLoc
     return redirect(url_for('updateLocationFromTable', primerInfo=primerInfo))
 
 @app.route('/update_location_from_table/<primerInfo>', methods=['GET','POST'])
+@logger
 def updateLocationFromTable(primerInfo):
     if request.method == 'POST':
         primerName = primerInfo
@@ -333,6 +359,7 @@ def updateLocationFromTable(primerInfo):
         return render_template('update_location_from_table.html', primerName=primerName, primerLoc=primerLoc)
 
 @app.route('/select_primer_to_rename/<primerName>/<primerLoc>', methods=['POST'])
+@logger
 def primer_to_rename(primerName, primerLoc):
     newName = request.form.get('name')
     print >> sys.stderr, primerName
@@ -343,6 +370,7 @@ def primer_to_rename(primerName, primerLoc):
     return redirect(url_for('update_name_of_primer', primerInfo=primerInfo))
 
 @app.route('/update_primer_name/<primerInfo>')
+@logger
 def update_name_of_primer(primerInfo):
     splitInfo = primerInfo.split('|')
     currentName = splitInfo[0]
@@ -357,18 +385,6 @@ def update_name_of_primer(primerInfo):
         flash('Primer renaming failed', 'warning')
     return render_template('update_location_from_table.html', primerName=newName, primerLoc=primerLoc)
 
-@app.route('/update_pair_conditions/<pairname>', methods=['POST'])
-def update_pair_cond(pairname):
-    longbatch = updatePairCond(pairname, db)
-    flash('%s added to longbatch program' % (longbatch,), 'success')
-    return redirect(url_for('search_by_name'))
-
-@app.route('/update_pair_conditions_std/<pairname>', methods=['POST'])
-def update_pair_cond_std(pairname):
-    stdbatch = updatePairCondStd(pairname, db)
-    flash('%s added to standard program' % (stdbatch,), 'success')
-    return redirect(url_for('search_by_name'))
-
 @app.route('/specify_searchname/', methods=['POST'])
 def searchName():
     searchName = request.form.get('searchName')
@@ -382,6 +398,7 @@ def search_by_name():
     return render_template('searchname_result.html', searchResult=searchResult, searchName=searchName)
 
 @app.route('/blacklist_pair/<pairname>', methods=['POST'])
+@logger
 def blacklist_pair(pairname):
     blacklisted = blacklistPair(pairname, db)
     for b in blacklisted:
@@ -389,6 +406,7 @@ def blacklist_pair(pairname):
     return redirect(url_for('search_by_name'))
 
 @app.route('/delete_pair/<pairname>', methods=['POST'])
+@logger
 def delete_pair(pairname):
     deleted = deletePair(pairname, db)
     for d in deleted:
@@ -396,6 +414,7 @@ def delete_pair(pairname):
     return redirect(url_for('search_by_name'))
 
 @app.route('/upload_batch_locations/', methods=['POST'])
+@logger
 def upload_samplesheet():
     if request.method == 'POST':
         locationsheet = request.files['locationsheet']

@@ -116,13 +116,54 @@
         "taggedthermo": 56.0,
         "thermo": 52.0
     },
+    "conditions": {
+        "COMMENT": "This is for future design tier awareness and appropriate report selection",
+        "STD": {
+            "tiers": [-1,0,1,2],
+            "length": [null,550],
+            "report": {
+                "auth": "AUTHORISER_NOT_DEFINED",
+                "docid": "NO_DOCUMENT_ID_ASSIGNED",
+                "site": "NO_SITE_DEFINED",
+                "logo": "zippy.png",
+                "pairs": 1,
+                "platesize": [16,24],
+                "volumes": {
+                    "mastermix": 6,
+                    "qsolution": 2,
+                    "water":0,
+                    "excess": 0.15,
+                    "program": "ngsconfirm"
+                }
+            }
+        },
+        "LB": {
+            "tiers": [3],
+            "length": [550,null],
+            "report": {
+                "auth": "AUTHORISER_NOT_DEFINED",
+                "docid": "NO_DOCUMENT_ID_ASSIGNED",
+                "site": "NO_SITE_DEFINED",
+                "logo": "zippy.png",
+                "pairs": 1,
+                "platesize": [16,24],
+                "volumes": {
+                    "mastermix": 12.5,
+                    "qsolution": 5,
+                    "water": 5.5,
+                    "excess": 0.15,
+                    "program": "A1_TD"
+                }
+            }
+        }
+    },
     "report": {
         "auth": "AUTHORISER_NOT_DEFINED",
         "docid": "NO_DOCUMENT_ID_ASSIGNED",
         "site": "NO_SITE_DEFINED",
         "logo": "zippy.png",
         "pairs": 1,
-        "platesize": [8,12],
+        "platesize": [16,24],
         "volumes": {
             "mastermix": 6,
             "qsolution": 2,
@@ -137,7 +178,7 @@
         "site": "NO_SITE_DEFINED",
         "logo": "zippy.png",
         "pairs": 1,
-        "platesize": [8,12],
+        "platesize": [16,24],
         "volumes": {
             "mastermix": 12.5,
             "qsolution": 5,

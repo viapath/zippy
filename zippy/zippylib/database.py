@@ -69,6 +69,10 @@ class PrimerDB(object):
                 name TEXT PRIMARY KEY, password TEXT, updated TEXT);''')
             cursor.execute('''CREATE TABLE IF NOT EXISTS blacklist(
                 uniqueid TEXT PRIMARY KEY, blacklistdate TEXT);''')
+            cursor.execute('''CREATE TABLE IF NOT EXISTS logs(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                username TEXT, action TEXT, data BLOB);''')
             self.db.commit()
         except:
             print >> sys.stderr, self.sqlite
@@ -98,6 +102,18 @@ class PrimerDB(object):
         finally:
             self.db.close()
         return "\n".join([ '{:<20} {:40} {:>20} {:<25} {:>20} {:<25} {:>8} {:>9d} {:>9d} {}'.format(*row) for row in rows ])
+
+    def log(self, username, action, data=None):
+        try:
+            self.db = sqlite3.connect(self.sqlite)
+        except:
+            raise
+        else:
+            cursor = self.db.cursor()
+            cursor.execute('''INSERT INTO logs(username,action,data) VALUES(?,?,?);''', (username,action,data))
+            self.db.commit()
+        finally:
+            self.db.close()
 
     '''user CUD (depending on args)'''
     def editUser(self, name, password=None):
@@ -277,7 +293,7 @@ class PrimerDB(object):
             self.writeAmpliconDump()
         return
 
-    def addPair(self, *pairs):
+    def addPairs(self, pairs, conditions=None):
         '''adds primer pairs (and individual primers)'''
         # add primers (and rename if necessary)
         flat = []
@@ -300,8 +316,27 @@ class PrimerDB(object):
                 chrom = p[0].targetposition.chrom
                 start = p[0].targetposition.offset
                 end = p[1].targetposition.offset+p[1].targetposition.length
-                cursor.execute('''INSERT OR IGNORE INTO pairs(pairid,uniqueid,left,right,chrom,start,end,dateadded) VALUES(?,?,?,?,?,?,?,?)''', \
-                    (p.name, p.uniqueid(), p[0].name, p[1].name, chrom, start, end, current_time))
+                amplilen = end - start
+                # pick condition
+                cond = 'STD'
+                if conditions:
+                    for condition in conditions.keys():
+                        # select by design tier first
+                        if p.tier:
+                            if p.tier in conditions[condition]['tiers']:
+                                cond = condition
+                                break
+                        # infer condition from length
+                        else:
+                            length = conditions[condition]['length']
+                            gt = amplilen > length[0] if length[0] else True
+                            lt = amplilen < length[1] if length[1] else True
+                            if gt and lt:
+                                cond = condition
+                                break
+                # insert into database
+                cursor.execute('''INSERT OR IGNORE INTO pairs(pairid,uniqueid,left,right,chrom,start,end,dateadded,cond) VALUES(?,?,?,?,?,?,?,?,?)''', \
+                    (p.name, p.uniqueid(), p[0].name, p[1].name, chrom, start, end, current_time, cond))
             self.db.commit()
         finally:
             self.db.close()
@@ -667,37 +702,3 @@ class PrimerDB(object):
             finally:
                 self.db.close()
             return rows, ['primername', 'primerset', 'tag', 'sequence', 'vessel', 'well']
-
-    def updateconditions(self, pairname):
-        '''updates the primer conditions from STD to LB'''
-        try:
-            self.db = sqlite3.connect(self.sqlite)
-        except:
-            raise
-        else:
-            #update
-            cursor = self.db.cursor()
-            rows = cursor.fetchall()
-            cursor.execute('''UPDATE OR ABORT pairs SET cond = 'LB'
-                WHERE pairid = ?''', (pairname,))
-            self.db.commit()
-            return pairname
-        finally:
-            self.db.close()
-
-    def updateconditionsstd(self, pairname):
-        '''updates the primer conditions from LB to STD'''
-        try:
-            self.db = sqlite3.connect(self.sqlite)
-        except:
-            raise
-        else:
-            #update
-            cursor = self.db.cursor()
-            rows = cursor.fetchall()
-            cursor.execute('''UPDATE OR ABORT pairs SET cond = 'STD'
-                WHERE pairid = ?''', (pairname,))
-            self.db.commit()
-            return pairname
-        finally:
-            self.db.close()

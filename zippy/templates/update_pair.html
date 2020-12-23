@@ -16,12 +16,6 @@
         <form action="{{ url_for('delete_pair', pairname=pairName) }}" method="post" onsubmit="return confirm('Are you sure you want to delete this primer pair?');">
           <input type="submit" id="revWideButton" value="Delete pair">
         </form>
-        <form action="{{ url_for('update_pair_cond', pairname=pairName) }}" method="post" onsubmit="return confirm('Are you sure you want to change {{pairName}} to long batch conditions?')">
-          <input type="submit" id="revWideButton" value="Change to LONG conditions">
-        </form>
-        <form action="{{ url_for('update_pair_cond_std', pairname=pairName) }}" method="post" onsubmit="return confirm('Are you sure you want to change {{pairName}} to standard conditions?')">
-          <input type="submit" id="revWideButton" value="Change to STANDARD conditions">
-        </form>
       </div>
   </div>
   <div class="holdBottom">

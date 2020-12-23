@@ -198,11 +198,12 @@ class Location(object):
 
 '''primer pair (list)'''
 class PrimerPair(list):
-    def __init__(self, elements, length=2, name=None, reverse=False, cond=None):
+    def __init__(self, elements, length=2, name=None, reverse=False, cond=None, tier=-1):
         list.__init__(self, elements)
         self.length = length  # pair of primers by default
         self.reversed = reverse
         self.name = name
+        self.tier = tier  # design tier reference (-1 as default)
         self.cond = cond
         self.failed = []  # vaildation failures [str]
         self.variants = []  # list of intervals with metadata from input table

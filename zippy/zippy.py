@@ -532,7 +532,7 @@ def zippyPrimerQuery(config, targets, design=True, outfile=None, db=None, store=
     ## print and store primer pairs
     # if db:
     if store and db and design:
-        db.addPair(*resultList)  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
+        db.addPairs(resultList, config['conditions'])  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
         print >> sys.stderr, "Primer designs stored in database"
     return primerTable, resultList, missedIntervals
 
@@ -584,7 +584,7 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
         if intervals:
             primerTable, resultList, missedIntervals = getPrimers(intervals,db,predesign,config,tiers)
             if db:
-                db.addPair(*resultList)  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
+                db.addPairs(resultList, config['conditions'])  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
         # reload query files ()
         print >> sys.stderr, 'Updating query table...'
         sampleVariants = readBatch(targets[0], config['tiling'], database=db)[0]
@@ -616,7 +616,7 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
         primerTableConcat += [ [sample]+l for l in primerTable ]
         # store primers
         if db:
-            db.addPair(*resultList)  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
+            db.addPairs(resultList, config['conditions'])  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
         # Build Tests
         for primerpair in resultList:
             tests.append(Test(primerpair,sample))
@@ -728,11 +728,11 @@ def validateAndImport(config, target, validate, db):
                 report_counts[t] +=1
         report_counts['PASS'] = len(pairs)
         # store primers
-        db.addPair(*pairs)
+        db.addPairs(pairs, config['conditions'])
         # return stat and failed pairs
         return report_counts, failed_pairs
     # no validation
-    db.addPair(*pairs)  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
+    db.addPairs(pairs, config['conditions'])  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
     sys.stderr.write('Added {} primer pairs to database without validation\n'.format(len(pairs)))
     return {}, []
 
@@ -775,16 +775,6 @@ def updatePrimerPairName(pairName, newName, db):
     else:
         print >> sys.stderr, 'Pair renaming failed'
         return nameUpdate
-
-def updatePairCond(pairname, db):
-    longbatched = db.updateconditions(pairname)
-    print >> sys.stderr, '%s will now be run on the long batch program' % (longbatched,)
-    return longbatched
-
-def updatePairCondStd(pairname, db):
-    stdbatched = db.updateconditionsstd(pairname)
-    print >> sys.stderr, '%s will now be run on the standard program' % (stdbatched,)
-    return stdbatched
 
 # blacklist primer pair in database
 def blacklistPair(pairname, db):
