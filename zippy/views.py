@@ -384,17 +384,13 @@ def update_name_of_primer(primerInfo):
         flash('Primer renaming failed', 'warning')
     return render_template('update_location_from_table.html', primerName=newName, primerLoc=primerLoc)
 
-@app.route('/specify_searchname/', methods=['POST'])
-def searchName():
-    searchName = request.form.get('searchName')
-    session['searchName'] = searchName
-    return redirect(url_for('search_by_name'))
-
-@app.route('/search_by_name/')
-def search_by_name():
-    searchName = session['searchName']
-    searchResult = searchByName(searchName, db)
-    return render_template('searchname_result.html', searchResult=searchResult, searchName=searchName)
+@app.route('/search/', methods=['POST','GET'])
+def search():
+    if request.method == 'POST':
+        session['seachName'] = request.form.get('searchName')
+    searchResult = searchByName(session['searchName'], db)
+    return render_template('searchname_result.html', searchResult=searchResult, \
+        searchName=session['searchName'])
 
 @app.route('/blacklist_pair/<pairname>', methods=['POST'])
 @logger
@@ -402,7 +398,7 @@ def blacklist_pair(pairname):
     blacklisted = blacklistPair(pairname, db)
     for b in blacklisted:
         flash('%s added to blacklist' % (b,), 'success')
-    return redirect(url_for('search_by_name'))
+    return redirect(url_for('search'))
 
 @app.route('/delete_pair/<pairname>', methods=['POST'])
 @logger
@@ -410,7 +406,7 @@ def delete_pair(pairname):
     deleted = deletePair(pairname, db)
     for d in deleted:
         flash('%s deleted' % (d,), 'success')
-    return redirect(url_for('search_by_name'))
+    return redirect(url_for('search'))
 
 @app.route('/upload_locations/', methods=['POST'])
 @logger
