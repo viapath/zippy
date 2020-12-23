@@ -1,28 +1,29 @@
-
 {% extends "base.html" %}
 {% block content %}
     <div>
-        <h3>Primer import</h3>
         <div>
-        	<table>
-        		<th class="primer">
-        			<td class="primer">Count</td>
+            <h3>Primer import</h3>
+            <table>
+                <th class="primer">
+                    <td class="primer">Count</td>
+                    <td class="primer">Desciption</td>
                 </th>
-                {% for result, count in report_counts.items() %}
-        		    <tr>
-        		    	<td class="left"><span class="pop">{{ result }}</span></td>
-        		    	<td class="right">{{ count }}</td>
+                {% for row in report %}
+                    <tr>
+                        <td class="left"><span class="pop">{{ row[0] }}</span></td>
+                        <td class="left">{{ row[1] }}</td>
+                        <td class="right">{{ row[2] }}</td>
                     </tr>
                 {% endfor %}
-        	</table>
+            </table>
         </div>
         <br/>
-	    {% if failed_primers is not equalto [] %}
+        {% if failed_primers is not equalto [] %}
             <h4>Failed validation</h4>
-		    {% for item in failed_primers %}
+            {% for item in failed_primers %}
               <h5>{{  item.name }} ({{ item.failures() }})</h5>
               <pre>{{ item.display() }}</pre>
-		    {% endfor %}
-	    {% endif %}
+            {% endfor %}
+        {% endif %}
     </div>
 {% endblock %}

@@ -273,12 +273,24 @@ def import_primers():
 
         # run Zippy
         report_counts, failed_primers = validateAndImport(config, target, validate, db)
-        # print >> sys.stderr, report_counts, '<REPORT>'
-        # print >> sys.stderr, failed_primers, '<FAILED>'
-
+        # amend report descriptions
+        desc = defaultdict(str, {
+            "PASS": "Passed validation",
+            "amplicons": "Too many amplicons",
+            "criticalsnp": "Polymorphism in 3prime end",
+            "mispriming": "Excess primer binding sites",
+            "snpcount": "Polymorphism in primers",
+            "designrank": "Suboptimal design",
+            "taggedthermo": "Tagged primer forms secondary structures or dimers",
+            "thermo": "Forms secondary structures or dimers",
+            "no_target": " Could not infer target sequence"
+        })
+        report = []
+        for keyword, count in sorted(report_counts.items(), key=lambda x: x[1] * -1):
+            report.append([keyword, count, desc[keyword]])
         # get missed and render template
         return render_template('/import_report.html', failed_primers=failed_primers,
-            report_counts=report_counts)
+            report=report)
     else:
         print >> sys.stderr, "no locus or file given"
         return render_template('/no_primer_supplied.html')
