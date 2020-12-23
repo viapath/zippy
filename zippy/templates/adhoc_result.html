@@ -55,14 +55,4 @@
 			{% endfor %}
 		</table>
 	{% endif %}
-	{% if not missedIntervals and not resultList %}
-		<p>The specific locus to design primers for was not given in the correct format. Please re-submit in the correct format: <span class="pop">Chromosome:Start-End[:-]</span></p>
-		<div>
-		    <form action="{{ url_for('adhocdesign') }}" method="post" enctype="multipart/form-data">
-    	        <input type="text" name="locus"><br><br>
-    	        <input type="checkbox" name="store" value="True">Store designed primers<br><br>
-    	        <input type="submit" value="Submit">
-    	    </form>
-    	</div>
-    {% endif %}
 {% endblock %}

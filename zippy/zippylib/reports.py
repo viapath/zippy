@@ -621,10 +621,11 @@ class Worksheet(list):
                 # add tag according to primername (check 1 fwd and 1 rev)
                 tagorder = [1,0] if pp.reversed else [0,1]
                 for i, p in enumerate(pp):
+                    tag = str(p.tag)
                     try:
-                        tagseq = config['sequencetags'][p.tag]['tags'][tagorder[i]]
+                        tagseq = config['sequencetags'][tag]['tags'][tagorder[i]]
                     except:
-                        tagseq = '' if not p.tag else p.tag+'-'
+                        tagseq = '' if not tag else tag+'-'
                     print >> fh, '\t'.join([ p.name, tagseq+p.seq ] + config['extracolumns'])
 
     '''print robot csv, (DestinationPlate,DestinationWell,SampleID,PrimerID)'''

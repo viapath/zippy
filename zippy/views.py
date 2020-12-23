@@ -151,10 +151,6 @@ def logout():
     session.pop('logged_in', None)
     return redirect(url_for('login'))
 
-@app.route('/no_file')
-def no_file():
-    return render_template('no_file.html')
-
 @app.route('/file_uploaded')
 def file_uploaded():
     return render_template('file_uploaded.html')
@@ -204,8 +200,8 @@ def upload():
         arrayOfFiles = list([ f[len(app.config['DOWNLOAD_FOLDER']):].lstrip('/') for f in arrayOfFiles if f.startswith(app.config['DOWNLOAD_FOLDER'])])
         return render_template('file_uploaded.html', outputFiles=arrayOfFiles, missedIntervals=missedIntervalNames)
     else:
-        print("file for upload not supplied or file-type not allowed")
-        return redirect(url_for('no_file'))
+        flash('No appropriate worksheets supplied','warning')
+        return redirect(url_for('index'))
 
 @app.route('/adhoc_design/', methods=['POST'])
 @logger
@@ -239,8 +235,8 @@ def adhocdesign():
             missedIntervalNames.append(interval.name)
         return render_template('/adhoc_result.html', primerTable=primerTable, resultList=resultList, missedIntervals=missedIntervalNames)
     else:
-        print >> sys.stderr, "no locus or file given"
-        return render_template('/adhoc_result.html', primerTable=[], resultList=[], missedIntervals=[])
+        flash('No locus of file given for primer design','warning')
+        return redirect(url_for('index'))
 
 @app.route('/import_primers/', methods=['POST'])
 @logger
@@ -287,8 +283,8 @@ def import_primers():
         return render_template('/import_report.html', failed_primers=failed_primers,
             report=report)
     else:
-        print >> sys.stderr, "no locus or file given"
-        return render_template('/no_primer_supplied.html')
+        flash('No primers supplied','warning')
+        return redirect(url_for('index'))
 
 @app.route('/update_location/', methods=['POST'])
 @logger
@@ -416,9 +412,9 @@ def delete_pair(pairname):
         flash('%s deleted' % (d,), 'success')
     return redirect(url_for('search_by_name'))
 
-@app.route('/upload_batch_locations/', methods=['POST'])
+@app.route('/upload_locations/', methods=['POST'])
 @logger
-def upload_samplesheet():
+def upload_locations():
     if request.method == 'POST':
         locationsheet = request.files['locationsheet']
         if not locationsheet or not locationsheet.filename.endswith('.csv'):
