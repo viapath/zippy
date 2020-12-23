@@ -67,7 +67,8 @@ def logger(func):
         print >> sys.stderr, request.form
         print >> sys.stderr, request.files
 
-        #db.log(session['logged_in'], func.__name__, str(request.form)+str(request.files))
+        db.log(session['logged_in'], func.__name__, str(args), str(kwargs), \
+            str(request.form), str(request.files))
 
         return func(*args, **kwargs)
     return wrap

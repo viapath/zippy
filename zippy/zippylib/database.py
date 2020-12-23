@@ -72,7 +72,7 @@ class PrimerDB(object):
             cursor.execute('''CREATE TABLE IF NOT EXISTS logs(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                username TEXT, action TEXT, data BLOB);''')
+                username TEXT, action TEXT, args TEXT, kwargs TEXT, request_form TEXT, request_files TEXT);''')
             self.db.commit()
         except:
             print >> sys.stderr, self.sqlite
@@ -103,14 +103,15 @@ class PrimerDB(object):
             self.db.close()
         return "\n".join([ '{:<20} {:40} {:>20} {:<25} {:>20} {:<25} {:>8} {:>9d} {:>9d} {}'.format(*row) for row in rows ])
 
-    def log(self, username, action, data=None):
+    def log(self, username, action, args=None, kwargs=None, request_form=None, request_files=None):
         try:
             self.db = sqlite3.connect(self.sqlite)
         except:
             raise
         else:
             cursor = self.db.cursor()
-            cursor.execute('''INSERT INTO logs(username,action,data) VALUES(?,?,?);''', (username,action,data))
+            cursor.execute('''INSERT INTO logs(username,action,args,kwargs,request_form,request_files) VALUES(?,?,?,?,?,?);''', \
+                (username, action, args, kwargs, request_form, request_files))
             self.db.commit()
         finally:
             self.db.close()
