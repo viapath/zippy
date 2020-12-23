@@ -1,5 +1,21 @@
 {% extends "base.html" %}
 {% block content %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script>
+      $(function(){
+            $('input:submit').click(function(){
+                $(this).val('Please wait...');
+                $(this).attr('disabled', 'disabled');
+                $('.hideOnLoad').hide();
+                $body.addClass("loading");
+                $(this).parents('form').submit();
+            });
+      });
+      $(window).load(function(){
+            $('input:submit').removeAttr('disabled');
+            $body.removeClass("loading");
+      });
+    </script>
     <script>
     window.onmousedown = function (e) {
         var el = e.target;
@@ -16,6 +32,7 @@
         }
     }
     </script>
+    <!-- <div id="indexPage" class="hideOnLoad"> -->
     <div id="indexPage">
         <div class="left">
             <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
@@ -98,7 +115,7 @@
         <div>
             <p>&nbsp</p><br><br><hr><br><br>
         </div>
-        <div class="left">
+        <!-- <div class="left">
             <form action="{{ url_for('searchName') }}" method="post" enctype="multipart/form-data">
                 <table class="form">
                     <tr><th colspan="2"><h3>Primer Search</h3></th></tr>
@@ -113,6 +130,23 @@
                     </tr>
                 </table><br><br>
                 <input type="submit" id="revSubmit" value="Search">
+            </form>
+        </div> -->
+        <div class="left">
+            <form action="{{ url_for('upload_samplesheet') }}" method="post" enctype="multipart/form-data">
+                <table class="form">
+                    <tr>
+                        <th colspan="2"><h3>Update Storage Locations</h3></th>
+                    </tr>
+                    <tr>
+                        <td class="left">
+                            <span class="pop">CSV file</span><br>
+                            (PrimerName,Box,Well)
+                        </td>
+                        <td class="right"><input type="file" name="locationsheet"></td>
+                    </tr>
+                </table><br><br>
+                <input type="submit" id="revSubmit" value="Upload">
             </form>
         </div>
         <div class="right">
@@ -136,22 +170,5 @@
                 <input type="submit" id="revSubmit" value="Upload"><br><br>
             </form>
         </div>
-        <!-- <div class="right">
-            <form action="{{ url_for('upload_samplesheet') }}" method="post" enctype="multipart/form-data">
-                <table class="form">
-                    <tr>
-                        <th colspan="2"><h3>Update Storage Locations</h3></th>
-                    </tr>
-                    <tr>
-                        <td class="left">
-                            <span class="pop">CSV file</span><br>
-                            (PrimerName,Box,Well)
-                        </td>
-                        <td class="right"><input type="file" name="locationsheet"></td>
-                    </tr>
-                </table><br><br>
-                <input type="submit" id="revSubmit" value="Upload">
-            </form>
-        </div> -->
     </div>
 {% endblock %}

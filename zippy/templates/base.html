@@ -9,11 +9,13 @@
             $('input:submit').click(function(){
                 $(this).val('Please wait...');
                 $(this).attr('disabled', 'disabled');
-                $('.hideOnLoad').hide();
+                $("body").addClass("loading");
+                $(".modal").show();
                 $(this).parents('form').submit();
             });
         });
         $(window).load(function(){
+            $("body").removeClass("loading");
             $('input:submit').removeAttr('disabled');
         });
       </script>
@@ -21,7 +23,9 @@
     <body>
         <header>
           <div class="box">
-            
+            <form action="{{ url_for('searchName') }}" method="post" enctype="multipart/form-data">
+                <input type="text" width="100" name="searchName" placeholder="Search">
+            </form>
           </div>
           <div>
             <b onclick="location.href = '/'">Zippy: Primer Design and Storage</b>
@@ -46,7 +50,7 @@
           {% endif %}
         {% endwith %}
        {% block content %}{% endblock %}
-     <div>
-     </div>
+      <div></div>
+      <div class="modal"></div>
     </body>
 </html>

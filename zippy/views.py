@@ -217,12 +217,7 @@ def adhocdesign():
     tiers = map(int,request.form.getlist('tiers'))
     gap = request.form.get('gap')
     store = request.form.get('store')
-
-    print >> sys.stderr, 'tiers', tiers
-    print >> sys.stderr, 'locus', locus
-    print >> sys.stderr, 'gap', gap
-
-    # if locus:
+    # if locus or file
     if re.match('\w{1,2}:\d+-\d+',locus) or (uploadFile and allowed_file(uploadFile.filename)):
         # get target
         if uploadFile:
