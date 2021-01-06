@@ -249,8 +249,9 @@ class PrimerDB(object):
                 chrom = p[0].targetposition.chrom
                 start = p[0].targetposition.offset
                 end = p[1].targetposition.offset+p[1].targetposition.length
-                cursor.execute('''INSERT OR IGNORE INTO pairs(pairid,uniqueid,left,right,chrom,start,end,dateadded) VALUES(?,?,?,?,?,?,?,?)''', \
-                    (p.name, p.uniqueid(), p[0].name, p[1].name, chrom, start, end, current_time))
+                cursor.execute('''INSERT OR IGNORE INTO pairs(pairid,uniqueid,left,right,chrom,start,end,dateadded,cond) VALUES(?,?,?,?,?,?,?,?,?)''', \
+                    (p.name, p.uniqueid(), p[0].name, p[1].name, chrom, start, end, current_time, p.cond))
+                print p
             self.db.commit()
         finally:
             self.db.close()

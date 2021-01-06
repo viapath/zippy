@@ -160,7 +160,7 @@ class Report(object):
         self.elements.append(Spacer(1, 2))
         data = [[ 'Date','','','Operator','','','Worklist',self.worklist]]
         t = Table(data, \
-            colWidths=[2.3*cm, 2.3*cm, 0.7*cm, 2.3*cm, 2.3*cm, 0.7*cm, 2.3*cm, 3.0*cm], rowHeights=0.6*cm)
+            colWidths=[2.3*cm, 2.3*cm, 0.7*cm, 2.3*cm, 2.3*cm, 0.7*cm, 2.3*cm, 4.5*cm], rowHeights=0.6*cm)
         t.setStyle(TABLE_STYLE)
         self.elements.append(t)
         self.elements.append(Spacer(1, 12))
@@ -197,7 +197,7 @@ class Report(object):
         self.elements.append(NextPageTemplate(template))
 
     # generic dataframe style table (relative column width, pagesize dependent, full width)
-    def genericTable(self, data, landscape=False, rowShading=False, header=True, tableTitle=None, relativeColWidth=None, rowHeight=0.5*cm, mergeColumnFields=None):
+    def genericTable(self, data, landscape=False, rowShading=False, betaHeader=False, header=True, tableTitle=None, relativeColWidth=None, rowHeight=0.5*cm, mergeColumnFields=None):
         # global stylesheet
         stylesheet = [
             ('ALIGN',(0,0),(-1,-1),'LEFT')
@@ -210,8 +210,22 @@ class Report(object):
                 ('INNERGRID', (0,0), (-1,0), 0.25, colors.black), # header inner grid
                 ('BOX', (0,0), (-1,0), 1, colors.black)  # header box
             ]
+        #formatting for beta worksheet
+        if betaHeader:
+            stylesheet += [
+                ('FONTSIZE',(0,0),(-1,1),9),
+                ('BACKGROUND', (0,0), (-1,1), colors.bisque),  # header color
+                ('INNERGRID', (0,0), (-1,1), 0.25, colors.black),# header inner grid
+                ('BOX', (0,0), (-1,1), 1, colors.black)  # header box
+            ]
         # Data cell styles
-        firstData = (0,1) if header else (0,0)
+        if header:
+            firstData = (0,1)
+        if betaHeader:
+            firstData = (0,2)
+        else:
+            firstData = (0,0)
+
         stylesheet += [
             ('FONTSIZE',firstData, (-1,-1),8),
             ('VALIGN', firstData, (-1,-1), 'MIDDLE') # middle cell alignment for data rows
@@ -311,22 +325,56 @@ class Report(object):
                     locationParagraph = Paragraph(locationString, centered if len(locationString) < 10 else centeredsmall)
                 else:
                     locationParagraph = Paragraph(' ',centered)
-            data.append((['W','LowV','B'] if i<len(s) else ['','','']) + ([ counts[s[i]] if counts else '', s[i] ] if i<len(s) else ['','']) + ['','',''] + \
+            data.append((['LowV','W','LowC'] if i<len(s) else ['','','']) + ([ counts[s[i]] if counts else '', s[i] ] if i<len(s) else ['','']) + ['','',''] + \
                 ([ counts[p[i][0]] if counts else '', p[i][0], Paragraph('<br/>'.join(p[i][1]),doubleLine), locationParagraph ] if i<len(p) else ['','','','']))
         self.elements.append(Spacer(1, 2))
-        t = Table(data, colWidths=[0.6*cm,1.0*cm,0.6*cm,0.6*cm,2.3*cm,2.0*cm,1.3*cm,0.3*cm,0.6*cm,5.3*cm,1.6*cm,1.8*cm,0.8*cm], rowHeights=0.6*cm)
+        t = Table(data, colWidths=[1.0*cm,0.6*cm,1.0*cm,0.6*cm,2.3*cm,2.0*cm,1.3*cm,0.3*cm,0.6*cm,5.3*cm,1.6*cm,1.8*cm,0.8*cm], rowHeights=0.6*cm)
         t.setStyle(TABLE_STYLE)
         self.elements.append(t)
         self.elements.append(Spacer(1, 12))
 
-    def volumeLists(self,reactions,mastermix,qsolution,water,excess,program):
+    def samplePrimerListsBeta(self,s,p,counts=Counter()):
+#Beta batch specific
+        TABLE_STYLE = TableStyle([
+            ('FONTSIZE',(0,1),(-1,-1),8),  # body
+            ('FONTSIZE',(0,0),(-1,0),10),  # title line
+            ('VALIGN',(0,0),(-1,-1),'TOP'),
+            ('ALIGN',(0,0),(-1,-1),'LEFT'),
+            ('INNERGRID', (0,1),(5,len(s)), 0.25, colors.black),
+            ('LINEABOVE', (0,1),(5,1),1,colors.black),
+            ('LINEBEFORE', (3,0),(3,len(s)),1,colors.black),
+            ('BOX', (0,0), (5,len(s)), 1, colors.black),
+            ('INNERGRID', (7,1), (-1,len(p)), 0.25, colors.black),
+            ('LINEABOVE', (7,1),(-1,1),1,colors.black),
+            ('BOX', (7,0), (-1,len(p)), 1, colors.black),
+            ])
+        doubleLine = ParagraphStyle('suffixes', fontSize=5, leading=5)  # suffix column
+        centered = ParagraphStyle('locations', fontSize=8, leading=5, alignment=1)  # Location column
+        centeredsmall = ParagraphStyle('locations', fontSize=6, leading=6, alignment=1)  # Location column
+        data = [['','','',str(len(s)),'Samples','Conc.','',str(len(p)),'Primer Pairs', 'Suffixes','Locations','Dilution Date/Lot #']]
+        for i in range(max(len(s),len(p))):
+            if i<len(p):
+                if any(p[i][2]):
+                    locationString = ' '.join(map(str,p[i][2]))
+                    locationParagraph = Paragraph(locationString, centered if len(locationString) < 10 else centeredsmall)
+                else:
+                    locationParagraph = Paragraph(' ',centered)
+            data.append((['LowV','W','LowC'] if i<len(s) else ['','','']) + ([ counts[s[i]] if counts else '', s[i] ] if i<len(s) else ['','']) + ['',''] + \
+                ([ counts[p[i][0]] if counts else '', p[i][0], Paragraph('<br/>'.join(p[i][1]),doubleLine), locationParagraph ] if i<len(p) else ['','','','','']))
+        self.elements.append(Spacer(1, 2))
+        t = Table(data, colWidths=[1.0*cm,0.6*cm,1.0*cm,0.6*cm,2.3*cm,1.3*cm,0.3*cm,0.6*cm,2.3*cm,1.6*cm,1.8*cm,4.5*cm], rowHeights=1.0*cm)
+        t.setStyle(TABLE_STYLE)
+        self.elements.append(t)
+        self.elements.append(Spacer(1, 12))
+
+    def volumeLists(self,reactions,mastermix,qsolution,water,excess,program,volume):
         # batch mix
         #add format here
         data = [['Reagent','Quantity','LOT','Expiry','','Reactions', str(reactions) ],
             ['MasterMix', str("{0:.0f}".format((1.+excess)*reactions*mastermix))+' µl', '', '', '', 'Excess', str((excess)*100)+' %' ],
             ['Q-Solution', str("{0:.0f}".format((1.+excess)*reactions*qsolution))+' µl', '', '', '', 'PCR Program', program ],
-            ['H2O', str("{0:.0f}".format((1.+excess)*reactions*water))+' µl', '', '', '', 'PCR Block', '' ],
-            ['TOTAL', str("{0:.0f}".format((1.+excess)*reactions*(mastermix+qsolution+water)))+' µl', '', '', '', '','']]
+            ['H2O', str("{0:.0f}".format((1.+excess)*reactions*water))+' µl', '', '', '', 'Reaction Vol.', volume ],
+            ['TOTAL', str("{0:.0f}".format((1.+excess)*reactions*(mastermix+qsolution+water)))+' µl', '', '', '', 'PCR Block', '']]
         t = Table(data, colWidths=[2.5*cm,2.5*cm,2.5*cm,2.5*cm,0.3*cm,2.7*cm,2.5*cm], rowHeights=0.6*cm)
         t.setStyle(TableStyle([
             ('FONTSIZE',(0,1),(0,-1),10),
@@ -339,7 +387,6 @@ class Report(object):
             ('LINEABOVE', (0,1),(3,1), 1, colors.black),
             ('BACKGROUND',(2,-1),(3,-1),colors.lightgrey),
             ('BACKGROUND', (0,0), (3,0), colors.bisque),
-            ('BACKGROUND',(5,-1),(6,-1),colors.lightgrey),
             ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
             ('ALIGN',(0,0),(-1,-1),'RIGHT'),
             ('BOX', (0,0), (3,-1), 1, colors.black),
@@ -348,6 +395,41 @@ class Report(object):
         self.elements.append(Spacer(1, 12))
         self.elements.append(KeepTogether(t))
         self.elements.append(Spacer(1, 12))
+
+    # volumelists config for beta mastermix
+    def volumeListsBeta(self,reactions,pcrbuffer,dNTPs,mgcl2,bsa,taq,water,excess,program,volume):
+        # batch mix
+        #add format here
+        data = [['Reagent','Quantity','LOT','Expiry','','Reactions', str(reactions) ],
+            ['10x Buffer', str("{0:.0f}".format((1.+excess)*reactions*pcrbuffer))+' µl', '', '', '', 'Excess', str((excess)*100)+' %' ],
+            ['2nM dNTPs', str("{0:.0f}".format((1.+excess)*reactions*dNTPs))+' µl', '', '', '', 'PCR Program', program ],
+            ['25mM MgCl2', str("{0:.0f}".format((1.+excess)*reactions*mgcl2))+' µl', '', '', '', 'Reaction Vol.', volume ],
+            ['BSA', str("{0:.0f}".format((1.+excess)*reactions*bsa))+' µl', '', '', '', 'PCR Block', '' ],
+            ['Taq', str("{0:.0f}".format((1.+excess)*reactions*taq))+' µl', '', '', '', '', '' ],
+            ['H20', str("{0:.0f}".format((1.+excess)*reactions*water))+' µl', '', '', '', ''],
+            ['TOTAL', str("{0:.0f}".format((1.+excess)*reactions*(pcrbuffer+dNTPs+mgcl2+bsa+taq+water)))+' µl', '', '', '', '','']]
+        t = Table(data, colWidths=[2.5*cm,2.5*cm,2.5*cm,2.5*cm,0.3*cm,2.7*cm,2.5*cm], rowHeights=0.6*cm)
+        t.setStyle(TableStyle([
+            ('FONTSIZE',(0,1),(0,-1),10),
+            ('FONTSIZE',(1,0),(4,0),10),
+            ('FONTSIZE',(1,1),(4,-1),8),
+            ('FONTSIZE',(5,0),(5,-1),10),
+            ('FONTSIZE',(6,0),(6,-1),8),
+            ('INNERGRID', (0,0), (3,-1), 0.25, colors.black),
+            ('INNERGRID', (5,0), (6,-1), 0.25, colors.black),
+            ('LINEABOVE', (0,1),(3,1), 1, colors.black),
+            ('BACKGROUND',(2,-1),(3,-1),colors.lightgrey),
+            ('BACKGROUND', (0,0), (3,0), colors.bisque),
+            ('BACKGROUND',(5,5),(6,-1),colors.lightgrey),
+            ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
+            ('ALIGN',(0,0),(-1,-1),'RIGHT'),
+            ('BOX', (0,0), (3,-1), 1, colors.black),
+            ('BOX', (5,0), (6,-1), 1, colors.black)
+            ]))
+        self.elements.append(Spacer(1, 12))
+        self.elements.append(KeepTogether(t))
+        self.elements.append(Spacer(1, 12))
+
 #If report config is l_report use def pcrLongProgram or if program is A1_TD use long program
     def pcrProgram(self, tableTitle=None,program=''):
         if tableTitle:
@@ -383,7 +465,7 @@ class Report(object):
             self.elements.append(KeepTogether(t))
             self.elements.append(Spacer(1, 12))
 
-        if program == 'A1_TD':
+        if program == 'A1_TDZippy':
             data = [['','Temp','Time','No. of Cycles'],
             ['Stage 1', '94', '14m', '1'],
             ['Stage 2', '95', '30s', '5'],
@@ -410,6 +492,99 @@ class Report(object):
                 ('LINEABOVE', (0,5), (3,5), 0.25, colors.black),
                 ('LINEABOVE', (0,-4), (3,-4), 0.25, colors.black),
                 ('LINEABOVE', (0,-1), (3,-1), 0.25, colors.black),
+                ]))
+            self.elements.append(Spacer(1, 12))
+            self.elements.append(KeepTogether(t))
+            self.elements.append(Spacer(1, 12))
+
+        if program == 'A1TD':
+            data = [['','Temp','Time','No. of Cycles'],
+            ['Stage 1', '94', '14m', '1'],
+            ['Stage 2', '95', '30s', '5'],
+            ['', '62', '30s', ''],
+            ['', '72', '1m 30s', ''],
+            ['Stage 3', '95', '30s', '5'],
+            ['', '60', '30s', ''],
+            ['', '72', '1m 30s', ''],
+            ['Stage 4', '95', '30s', '29'],
+            ['', '58', '30s', ''],
+            ['', '72', '1m 30s', ''],
+            ['Stage 5', '10', '10m', '1']]
+            t = Table(data, colWidths=[2.5*cm,2.0*cm,2.0*cm,3.0*cm], rowHeights=0.6*cm)
+            t.setStyle(TableStyle([
+                ('BOX', (0,0), (3,-1), 1, colors.black),
+                ('FONTSIZE', (0,0), (3,0), 10),
+                ('FONTSIZE', (0,1), (0,5), 10),
+                ('FONTSIZE', (1,1), (-1,-1), 8),
+                ('INNERGRID', (0,0), (3,1), 0.25, colors.black),
+                ('LINEABOVE', (0,2), (3,2), 0.25, colors.black),
+                ('LINEBEFORE', (1,2), (1,-1), 0.25, colors.black),
+                ('LINEBEFORE', (3,0), (3,-1), 0.25, colors.black),
+                ('INNERGRID', (1,2), (2,-1), 0.25, colors.black),
+                ('LINEABOVE', (0,5), (3,5), 0.25, colors.black),
+                ('LINEABOVE', (0,-4), (3,-4), 0.25, colors.black),
+                ('LINEABOVE', (0,-1), (3,-1), 0.25, colors.black),
+                ]))
+            self.elements.append(Spacer(1, 12))
+            self.elements.append(KeepTogether(t))
+            self.elements.append(Spacer(1, 12))
+
+        if program == 'A2TD':
+            data = [['','Temp','Time','No. of Cycles'],
+            ['Stage 1', '94', '14m', '1'],
+            ['Stage 2', '95', '30s', '5'],
+            ['', '66', '30s', ''],
+            ['', '72', '1m 30s', ''],
+            ['Stage 3', '95', '30s', '5'],
+            ['', '64', '30s', ''],
+            ['', '72', '1m 30s', ''],
+            ['Stage 4', '95', '30s', '29'],
+            ['', '62', '30s', ''],
+            ['', '72', '1m 30s', ''],
+            ['Stage 5', '10', '10m', '1']]
+            t = Table(data, colWidths=[2.5*cm,2.0*cm,2.0*cm,3.0*cm], rowHeights=0.6*cm)
+            t.setStyle(TableStyle([
+                ('BOX', (0,0), (3,-1), 1, colors.black),
+                ('FONTSIZE', (0,0), (3,0), 10),
+                ('FONTSIZE', (0,1), (0,5), 10),
+                ('FONTSIZE', (1,1), (-1,-1), 8),
+                ('INNERGRID', (0,0), (3,1), 0.25, colors.black),
+                ('LINEABOVE', (0,2), (3,2), 0.25, colors.black),
+                ('LINEBEFORE', (1,2), (1,-1), 0.25, colors.black),
+                ('LINEBEFORE', (3,0), (3,-1), 0.25, colors.black),
+                ('INNERGRID', (1,2), (2,-1), 0.25, colors.black),
+                ('LINEABOVE', (0,5), (3,5), 0.25, colors.black),
+                ('LINEABOVE', (0,-4), (3,-4), 0.25, colors.black),
+                ('LINEABOVE', (0,-1), (3,-1), 0.25, colors.black),
+                ]))
+            self.elements.append(Spacer(1, 12))
+            self.elements.append(KeepTogether(t))
+            self.elements.append(Spacer(1, 12))
+
+        if program == 'Beta_seq':
+            data = [['','Temp','Time','No. of Cycles'],
+            ['Stage 1', '94', '10m', '1'],
+            ['Stage 2', '94', '30s', '32'],
+            ['', '57', '30s', ''],
+            ['', '72', '30s', ''],
+            ['Stage 3', '72', '5m', '1'],
+            ['Stage 4', '10', '10m', '1']]
+            t = Table(data, colWidths=[2.5*cm,2.0*cm,2.0*cm,3.0*cm], rowHeights=0.6*cm)
+            t.setStyle(TableStyle([
+                ('BOX', (0,0), (3,-1), 1, colors.black),
+                ('FONTSIZE', (0,0), (3,0), 10),
+                ('FONTSIZE', (0,1), (0,4), 10),
+                ('FONTSIZE', (1,1), (3,-1), 8),
+                ('INNERGRID', (0,0), (3,1), 0.25, colors.black),
+                ('LINEABOVE', (0,2), (3,2), 0.25, colors.black),
+                ('LINEBEFORE', (1,2), (1,-1), 0.25, colors.black),
+                ('LINEBEFORE', (3,0), (3,-1), 0.25, colors.black),
+                ('INNERGRID', (1,2), (2,-1), 0.25, colors.black),
+                ('LINEABOVE', (0,-2), (3,-2), 0.25, colors.black),
+                ('LINEABOVE', (0,-1), (3,-1), 0.25, colors.black),
+                ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
+                ('ALIGN',(0,0),(2,-1),'LEFT'),
+                ('ALIGN',(-1,1),(-1,-1),'CENTER'),
                 ]))
             self.elements.append(Spacer(1, 12))
             self.elements.append(KeepTogether(t))
@@ -460,7 +635,7 @@ class Report(object):
 
     #def pcrProgram(self,title='Program',table=[],tableHeafer=['Stage','Temp','Time','No. of Cycles'],)
 
-    def checkBoxes(self,title='Checks',checktable=[],table=[],tableHeader=['Check','SampleID','Date','Operator','Checker'],tickbox=[],tickboxNames=['YES','NO'],textLines={}):
+    def checkBoxes(self,title='Checks',checktable=[],table=[],dilutioncheck=[],primercheck=[],tableHeader=['Check','SampleID','Date','Operator','Checker'],tickbox=[],tickboxNames=['YES','NO'],textLines={}):
         # title
         if title:
             self.elements.append(Paragraph(title, self.styles["Heading4"]))
@@ -471,11 +646,11 @@ class Report(object):
             TABLE_STYLE = TableStyle([
                 ('ALIGN',(0,0),(-1,-1),'RIGHT'),
                 ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
-                ('FONTSIZE',(0,1),(-1,-1),8),
+                ('FONTSIZE',(0,1),(-1,-1),10),
                 ('BOX', (0,0), (-1,-1), 1, colors.black),
                 ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
                 ('LINEABOVE', (0,1), (-1,1), 1, colors.black),
-                ('BACKGROUND', (0,0), (-1,0), colors.bisque)
+                ('BACKGROUND', (0,0), (-1,0), colors.bisque),
                 ])
             data = [tableHeader]
             for i in range(len(table)):
@@ -490,17 +665,17 @@ class Report(object):
             TABLE_STYLE = TableStyle([
                 ('ALIGN',(0,0),(-1,-1),'RIGHT'),
                 ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
-                ('FONTSIZE',(0,1),(-1,-1),11),
+                ('FONTSIZE',(0,1),(-1,-1),10),
                 ('BOX', (0,0), (-1,-1), 1, colors.black),
                 ('INNERGRID', (0,0), (-1,1), 0.25, colors.black),
-                ('INNERGRID', (1,2),(-1,5),0.25, colors.black),
-                ('INNERGRID', (1,6),(-1,-1), 0.25, colors.black),
+                ('INNERGRID', (1,1),(-1,5),0.25, colors.black),
+                ('INNERGRID', (1,5),(-1,-1), 0.25, colors.black),
                 ('LINEABOVE', (0,1), (-1,1), 1, colors.black),
-                ('LINEABOVE', (0,2), (-1,2), 1, colors.black),
-                ('LINEABOVE', (0,6), (-1,6), 1, colors.black),
+                ('LINEABOVE', (0,4), (-1,4), 1, colors.black),
+                ('LINEABOVE', (0,8), (-1,8), 1, colors.black),
                 ('LINEBEFORE', (1,2), (1,-1), 0.25, colors.black),
                 ('BACKGROUND', (0,0), (-1,0), colors.bisque),
-                ('BACKGROUND', (1,1), (1,1), colors.lightgrey),
+                ('BACKGROUND', (1,1), (1,3), colors.lightgrey),
                 ])
             data = [tableHeader]
             for i in range(len(checktable)):
@@ -510,12 +685,54 @@ class Report(object):
             self.elements.append(KeepTogether(t))
             self.elements.append(Spacer(1, 6))
 
+        if dilutioncheck:
+            # right justified checkboxes with appropriate names
+            TABLE_STYLE = TableStyle([
+                ('ALIGN',(0,0),(-1,-1),'LEFT'),
+                ('ALIGN',(0,2),(0,-2),'RIGHT'),
+                ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
+                ('FONTSIZE',(0,1),(-1,-1),10),
+                ('BOX', (0,0), (-1,-1), 1, colors.black),
+                ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
+                ('LINEABOVE', (0,1), (-1,1), 1, colors.black),
+                ('BACKGROUND', (0,0), (-1,0), colors.bisque),
+                ('BACKGROUND',(2,2), (3,3), colors.lightgrey),
+                ('BACKGROUND',(-1,-1), (-1,-1), colors.lightgrey)
+                ])
+            data = [tableHeader]
+            for i in range(len(dilutioncheck)):
+                data.append([ dilutioncheck[i], '', '' ])
+            t = Table(data, colWidths=[5.5*cm,3.5*cm,3.5*cm,2*cm,2*cm], rowHeights=0.6*cm)
+            t.setStyle(TABLE_STYLE)
+            self.elements.append(KeepTogether(t))
+            self.elements.append(Spacer(1, 6))
+
+        if primercheck:
+            # right justified checkboxes with appropriate names
+            TABLE_STYLE = TableStyle([
+                ('ALIGN',(0,0),(-1,-1),'LEFT'),
+                ('ALIGN',(0,2),(0,-2),'RIGHT'),
+                ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
+                ('FONTSIZE',(0,1),(-1,-1),10),
+                ('BOX', (0,0), (-1,-1), 1, colors.black),
+                ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
+                ('LINEABOVE', (0,1), (-1,1), 1, colors.black),
+                ('BACKGROUND', (0,0), (-1,0), colors.bisque)
+                ])
+            data = [tableHeader]
+            for i in range(len(primercheck)):
+                data.append([ primercheck[i], '', '' ])
+            t = Table(data, colWidths=[5.5*cm,3.5*cm,3.5*cm,2*cm,2*cm], rowHeights=0.6*cm)
+            t.setStyle(TABLE_STYLE)
+            self.elements.append(KeepTogether(t))
+            self.elements.append(Spacer(1, 6))
+
         if tickbox:
             stylesheet = [
                 ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
                 ('ALIGN',(1,0),(-1,-1),'LEFT'),
                 ('ALIGN',(0,0), (0,-1),'RIGHT'),
-                ('FONTSIZE',(0,0),(-1,-1),9)
+                ('FONTSIZE',(0,0),(-1,-1),10)
             ]
             # set column width
             colWidths = [3*cm]
@@ -707,10 +924,132 @@ class Worksheet(list):
         # store ordered list of sample (str) and primers (primername, primersuffixes, locations)
         r.samplePrimerLists(orderedSamples,orderedPrimers,counts=self.reactionCount())
         # reaction volume list
-        r.volumeLists(sum([len(p) for p in self.plates]),kwargs['volumes']['mastermix'],kwargs['volumes']['qsolution'],kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'])
+        r.volumeLists(sum([len(p) for p in self.plates]),kwargs['volumes']['mastermix'],kwargs['volumes']['qsolution'],kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'],kwargs['volumes']['volume'])
         # add checkboxes
-        checkTasks = ['New primers ordered', 'Plate orientation checked', 'Primer checked and storage assigned'] if primertest \
-    else ['Plate orientation checked', 'Transfer Check:', 'Dilution / External tube', 'H20 Lot#: __________________','','Labelling Check:', 'Failing Barcode / Barcode Override','','']
+        checkTasks= ['New primers ordered', 'Plate orientation checked', 'Primer checked and storage assigned'] if primertest \
+    else ['Plate orientation and labelling', 'Correct Hamilton Method', 'Manual entry of PCR plate numbers','Transfer Check:', 'Dilution / External tube', 'H20 Lot#: __________________','','Labelling Check:', 'Failing Barcode / Barcode Override','','']
+        r.checkBoxes(title='',checktable=checkTasks)
+        r.pcrProgram(tableTitle='PCR Cycling Conditions',program=kwargs['volumes']['program'])
+        # plate layout
+        r.plateLayouts(plates)
+        # print result table
+        if primertest:
+            fields = [[ 'Primer Pair', 'Amplicon Size', 'Result']]
+            for i,t in enumerate([ x for x in sorted(self,key=lambda x: (x.sample,x.primerpair)) if not x.control ]):
+                fields += [[ t.primerpair, str(t.primerpairobject.targetLength(includePrimers=True))+' bp', '']]
+            # create result table
+            r.pageBreak()
+            r.genericTable(fields,tableTitle='Results',landscape=False, mergeColumnFields=[], relativeColWidth=[2,1,3])
+            # add checkboxes
+            checkTasks = ['Primer checked and storage assigned']
+            r.checkBoxes(title='',table=checkTasks)
+        else:
+            fields = [['DNA #', 'Primer Pair', 'Variant', 'Zygosity', 'Result', 'Check']]
+            for i,t in enumerate([ x for x in sorted(self,key=lambda x: (x.sample,x.primerpair)) if not x.control ]):
+                for v in t.primerpairobject.variants:
+                    fields += [[ t.sample, t.primerpair, ' '.join(unquote(v.name).split(',')[:-1]), unquote(v.name).split(',')[-1], '', '']]
+            # create result table
+            r.setNextPageTemplate('landscape')
+            r.pageBreak()
+            r.genericTable(fields,tableTitle='Results',landscape=True, mergeColumnFields=[0,-1],relativeColWidth=[0.8,1.0,3.0,0.5,2.3,0.4])
+            # add checkboxes
+            r.checkBoxes(title='',table=['Primary Reporter', 'Secondary Reporter'],tableHeader=['Reporter','Date','Initial'],
+                tickbox=['Unmatched Sample Check', 'Control Check'], tickboxNames=['YES','NO'],
+                textLines={'Comments': 3})
+        # build pdf
+        r.build()
+    def createAlphaWorkSheet(self,fi,primertest=False,worklist='',**kwargs):
+        logo = kwargs['logo'] if 'logo' in kwargs.keys() and kwargs['logo'] else None
+        site = kwargs['site'] if 'site' in kwargs.keys() and kwargs['site'] else None
+        auth = kwargs['auth'] if 'auth' in kwargs.keys() and kwargs['auth'] else None
+        docid = kwargs['docid'] if 'docid' in kwargs.keys() and kwargs['docid'] else None
+        program = kwargs['volumes']['program'] if 'volumes' in kwargs.keys() and kwargs['volumes']['program'] else None
+        r = Report(fi,title=self.name,logo=logo,site=site,auth=auth,docid=docid,worklist=worklist,program=program)
+        # add plates
+        samples, primers, plates = [], [], []
+        for plate in self.plates:
+            s, p, m = plate.platemap()  # gets samples, (pairname, (primersuffixes), (locations)), platemap
+            samples += s
+            primers += p  # PrimerPair Objects
+            plates.append(m)
+        # sample list (similar to plate order)
+        sampleOrder = { s: self.plates[0]._bestRows(Test(PrimerPair([None,None],name='dummyprimer'),s),'sample')[0] \
+            for s in set(samples) }
+        orderedSamples = [ x[0] for x in sorted(sampleOrder.items(), key=lambda x: x[1]) ]
+        # primer list (similar to plate order)
+        primerOrder = { p: self.plates[0]._bestRows(Test(p,'dummy'),'primerpair')[0] \
+            for p in set(primers) }
+        orderedPrimers = [ (x[0].name, x[0].primerSuffixes(), tuple(x[0].locations())) for x in sorted(primerOrder.items(), key=lambda x: x[1]) ]
+        # store ordered list of sample (str) and primers (primername, primersuffixes, locations)
+        r.samplePrimerLists(orderedSamples,orderedPrimers,counts=self.reactionCount())
+        #  check
+        r.checkBoxes(title='Primer Dilution Check',dilutioncheck=['New dilution made','Forward primer Lot#/Exp.','Reverse primer Lot#/Exp.','Previous dilution used'], tableHeader=['','Tick / LOT #','Date of Dilution','Checker'])
+        #r.checkBoxes(title='',tickbox=['New dilution made'],tickboxNames=['YES'])
+        #r.checkBoxes(title='',tickbox=[''],tickboxNames=['NO'])
+        r.volumeLists(sum([len(p) for p in self.plates]),kwargs['volumes']['mastermix'],kwargs['volumes']['qsolution'],kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'],kwargs['volumes']['volume'])
+        # add checkboxes
+        checkTasks= ['New primers ordered', 'Plate orientation checked', 'Primer checked and storage assigned'] if primertest \
+    else ['Plate orientation and labelling', 'Correct Hamilton Method', 'Manual entry of PCR plate numbers','Transfer Check:', 'Dilution / External tube', 'H20 Lot#: __________________','','Labelling Check:', 'Failing Barcode / Barcode Override','','']
+        r.checkBoxes(title='',checktable=checkTasks)
+        r.pcrProgram(tableTitle='PCR Cycling Conditions',program=kwargs['volumes']['program'])
+        # plate layout
+        r.plateLayouts(plates)
+        # print result table
+        if primertest:
+            fields = [[ 'Primer Pair', 'Amplicon Size', 'Result']]
+            for i,t in enumerate([ x for x in sorted(self,key=lambda x: (x.sample,x.primerpair)) if not x.control ]):
+                fields += [[ t.primerpair, str(t.primerpairobject.targetLength(includePrimers=True))+' bp', '']]
+            # create result table
+            r.pageBreak()
+            r.genericTable(fields,tableTitle='Results',landscape=False, mergeColumnFields=[], relativeColWidth=[2,1,3])
+            # add checkboxes
+            checkTasks = ['Primer checked and storage assigned']
+            r.checkBoxes(title='',table=checkTasks)
+        else:
+            fields = [['DNA #', 'Primer Pair', 'Variant', 'Zygosity', 'Result', 'Check']]
+            for i,t in enumerate([ x for x in sorted(self,key=lambda x: (x.sample,x.primerpair)) if not x.control ]):
+                for v in t.primerpairobject.variants:
+                    fields += [[ t.sample, t.primerpair, ' '.join(unquote(v.name).split(',')[:-1]), unquote(v.name).split(',')[-1], '', '']]
+            # create result table
+            r.setNextPageTemplate('landscape')
+            r.pageBreak()
+            r.genericTable(fields,tableTitle='Results',landscape=True, mergeColumnFields=[0,-1],relativeColWidth=[0.8,1.0,3.0,0.5,2.3,0.4])
+            # add checkboxes
+            r.checkBoxes(title='',table=['Primary Reporter', 'Secondary Reporter'],tableHeader=['Reporter','Date','Initial'],
+                tickbox=['Unmatched Sample Check', 'Control Check'], tickboxNames=['YES','NO'],
+                textLines={'Comments': 3})
+        # build pdf
+        r.build()
+
+    def createBetaWorkSheet(self,fi,primertest=False,worklist='',**kwargs):
+        logo = kwargs['logo'] if 'logo' in kwargs.keys() and kwargs['logo'] else None
+        site = kwargs['site'] if 'site' in kwargs.keys() and kwargs['site'] else None
+        auth = kwargs['auth'] if 'auth' in kwargs.keys() and kwargs['auth'] else None
+        docid = kwargs['docid'] if 'docid' in kwargs.keys() and kwargs['docid'] else None
+        program = kwargs['volumes']['program'] if 'volumes' in kwargs.keys() and kwargs['volumes']['program'] else None
+        r = Report(fi,title=self.name,logo=logo,site=site,auth=auth,docid=docid,worklist=worklist,program=program)
+        # add plates
+        samples, primers, plates = [], [], []
+        for plate in self.plates:
+            s, p, m = plate.platemap()  # gets samples, (pairname, (primersuffixes), (locations)), platemap
+            samples += s
+            primers += p  # PrimerPair Objects
+            plates.append(m)
+        # sample list (similar to plate order)
+        sampleOrder = { s: self.plates[0]._bestRows(Test(PrimerPair([None,None],name='dummyprimer'),s),'sample')[0] \
+            for s in set(samples) }
+        orderedSamples = [ x[0] for x in sorted(sampleOrder.items(), key=lambda x: x[1]) ]
+        # primer list (similar to plate order)
+        primerOrder = { p: self.plates[0]._bestRows(Test(p,'dummy'),'primerpair')[0] \
+            for p in set(primers) }
+        orderedPrimers = [ (x[0].name, x[0].primerSuffixes(), tuple(x[0].locations())) for x in sorted(primerOrder.items(), key=lambda x: x[1]) ]
+        # store ordered list of sample (str) and primers (primername, primersuffixes, locations)
+        r.samplePrimerListsBeta(orderedSamples,orderedPrimers,counts=self.reactionCount())
+        r.volumeListsBeta(sum([len(p) for p in self.plates]),kwargs['volumes']['pcrbuffer'],kwargs['volumes']['dNTPs'],kwargs['volumes']['mgcl2'],kwargs['volumes']['bsa'],kwargs['volumes']['taq'],
+        kwargs['volumes']['water'],kwargs['volumes']['excess'],kwargs['volumes']['program'],kwargs['volumes']['volume'])
+        # add checkboxes
+        checkTasks= ['New primers ordered', 'Plate orientation checked', 'Primer checked and storage assigned'] if primertest \
+    else ['Plate orientation and labelling', 'Correct Hamilton Method', 'Manual entry of PCR plate numbers','Transfer Check:', 'Dilution / External tube', 'H20 Lot#: __________________','','Labelling Check:', 'Failing Barcode / Barcode Override','','']
         r.checkBoxes(title='',checktable=checkTasks)
         r.pcrProgram(tableTitle='PCR Cycling Conditions',program=kwargs['volumes']['program'])
         # plate layout
@@ -774,6 +1113,39 @@ class Worksheet(list):
                             print >> fh, "^FO20,100^BY1.5^BCN,80,Y,N,N^FD{}^FS".format(d)  # Barcode uniqueid
                             print >> fh, "^XZ"  # end label
 
+    '''sample Labels'''
+    def sampleLabels(self,fi='/dev/null',tags={}):
+        # detects collisions, run with empty output to validate
+        digests = {}  # digest -> name
+        with open(fi,'w') as fh:
+            print >> fh, '~SD30'  # darkness to maximum
+            for n, p in enumerate(self.plates):
+                for i,row in enumerate(p.M):
+                    for j,cell in enumerate(row):
+                        if cell:
+                            # barcode id (with collision check, as trucated 32 byte string)
+                            d = cell.sample  # truncated uniqueid (1,099,511,627,776)
+
+                            if d in digests.keys():
+                                try:
+                                    assert cell.sample == digests[d]
+                                except:
+                                    raise Exception('BarcodeCollision')
+                                else:
+                                    continue  # dont print same barcode multiple times
+                            else:
+                                digests[d] = cell.sample
+                            # Location string
+                            locations = ' '.join([ str(l) if l else '' for l in cell.primerpairobject.locations() ])
+                            # get tag name
+                            #tagstring = '/'.join(set([ x.tag for x in cell.sample]))
+                            print >> fh, "^XA"  # start label
+                            print >> fh, "^PR1,A,A"  # slower print speed
+                            print >> fh, "^FO50,20^AB,25^FD{}^FS".format(cell.sample)
+                            print >> fh, "^FO50,50^AB,10^FD50ng/ul DILUTION^FS"
+                            print >> fh, "^FO50,70^AB,10^FD{}^FS".format(self.date[:self.date.rfind('.')])  # date
+                            print >> fh, "^FO50,100^BY1.5^BCN,80,Y,N,N^FD{}^FS".format(d)  # Barcode uniqueid
+                            print >> fh, "^XZ"  # end label
 
 class Plate(object):
     def __init__(self,rows,columns):
