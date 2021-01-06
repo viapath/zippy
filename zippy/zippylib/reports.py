@@ -325,10 +325,10 @@ class Report(object):
                     locationParagraph = Paragraph(locationString, centered if len(locationString) < 10 else centeredsmall)
                 else:
                     locationParagraph = Paragraph(' ',centered)
-            data.append((['W','LowV','B'] if i<len(s) else ['','','']) + ([ counts[s[i]] if counts else '', s[i] ] if i<len(s) else ['','']) + ['','',''] + \
+            data.append((['LowV','W','LowC'] if i<len(s) else ['','','']) + ([ counts[s[i]] if counts else '', s[i] ] if i<len(s) else ['','']) + ['','',''] + \
                 ([ counts[p[i][0]] if counts else '', p[i][0], Paragraph('<br/>'.join(p[i][1]),doubleLine), locationParagraph ] if i<len(p) else ['','','','']))
         self.elements.append(Spacer(1, 2))
-        t = Table(data, colWidths=[0.6*cm,1.0*cm,0.6*cm,0.6*cm,2.3*cm,2.0*cm,1.3*cm,0.3*cm,0.6*cm,5.3*cm,1.6*cm,1.8*cm,0.8*cm], rowHeights=0.6*cm)
+        t = Table(data, colWidths=[1.0*cm,0.6*cm,1.0*cm,0.6*cm,2.3*cm,2.0*cm,1.3*cm,0.3*cm,0.6*cm,5.3*cm,1.6*cm,1.8*cm,0.8*cm], rowHeights=0.6*cm)
         t.setStyle(TABLE_STYLE)
         self.elements.append(t)
         self.elements.append(Spacer(1, 12))
@@ -351,7 +351,7 @@ class Report(object):
         doubleLine = ParagraphStyle('suffixes', fontSize=5, leading=5)  # suffix column
         centered = ParagraphStyle('locations', fontSize=8, leading=5, alignment=1)  # Location column
         centeredsmall = ParagraphStyle('locations', fontSize=6, leading=6, alignment=1)  # Location column
-        data = [['','','',str(len(s)),'Samples','Empty','',str(len(p)),'Primer Pairs', 'Suffixes','Locations','ND','Dilution Date/Lot #']]
+        data = [['','','',str(len(s)),'Samples','Conc.','',str(len(p)),'Primer Pairs', 'Suffixes','Locations','Dilution Date/Lot #']]
         for i in range(max(len(s),len(p))):
             if i<len(p):
                 if any(p[i][2]):
@@ -359,10 +359,10 @@ class Report(object):
                     locationParagraph = Paragraph(locationString, centered if len(locationString) < 10 else centeredsmall)
                 else:
                     locationParagraph = Paragraph(' ',centered)
-            data.append((['W','LowV','B'] if i<len(s) else ['','','']) + ([ counts[s[i]] if counts else '', s[i] ] if i<len(s) else ['','']) + ['',''] + \
+            data.append((['LowV','W','LowC'] if i<len(s) else ['','','']) + ([ counts[s[i]] if counts else '', s[i] ] if i<len(s) else ['','']) + ['',''] + \
                 ([ counts[p[i][0]] if counts else '', p[i][0], Paragraph('<br/>'.join(p[i][1]),doubleLine), locationParagraph ] if i<len(p) else ['','','','','']))
         self.elements.append(Spacer(1, 2))
-        t = Table(data, colWidths=[0.6*cm,1.0*cm,0.6*cm,0.6*cm,2.3*cm,1.3*cm,0.3*cm,0.6*cm,2.3*cm,1.6*cm,1.8*cm,0.8*cm,4.0*cm], rowHeights=1.0*cm)
+        t = Table(data, colWidths=[1.0*cm,0.6*cm,1.0*cm,0.6*cm,2.3*cm,1.3*cm,0.3*cm,0.6*cm,2.3*cm,1.6*cm,1.8*cm,4.5*cm], rowHeights=1.0*cm)
         t.setStyle(TABLE_STYLE)
         self.elements.append(t)
         self.elements.append(Spacer(1, 12))
@@ -401,9 +401,9 @@ class Report(object):
         # batch mix
         #add format here
         data = [['Reagent','Quantity','LOT','Expiry','','Reactions', str(reactions) ],
-            ['Buffer', str("{0:.0f}".format((1.+excess)*reactions*pcrbuffer))+' µl', '', '', '', 'Excess', str((excess)*100)+' %' ],
-            ['dNTPs', str("{0:.0f}".format((1.+excess)*reactions*dNTPs))+' µl', '', '', '', 'PCR Program', program ],
-            ['MgCl2', str("{0:.0f}".format((1.+excess)*reactions*mgcl2))+' µl', '', '', '', 'Reaction Vol.', volume ],
+            ['10x Buffer', str("{0:.0f}".format((1.+excess)*reactions*pcrbuffer))+' µl', '', '', '', 'Excess', str((excess)*100)+' %' ],
+            ['2nM dNTPs', str("{0:.0f}".format((1.+excess)*reactions*dNTPs))+' µl', '', '', '', 'PCR Program', program ],
+            ['25mM MgCl2', str("{0:.0f}".format((1.+excess)*reactions*mgcl2))+' µl', '', '', '', 'Reaction Vol.', volume ],
             ['BSA', str("{0:.0f}".format((1.+excess)*reactions*bsa))+' µl', '', '', '', 'PCR Block', '' ],
             ['Taq', str("{0:.0f}".format((1.+excess)*reactions*taq))+' µl', '', '', '', '', '' ],
             ['H20', str("{0:.0f}".format((1.+excess)*reactions*water))+' µl', '', '', '', ''],
@@ -497,7 +497,7 @@ class Report(object):
             self.elements.append(KeepTogether(t))
             self.elements.append(Spacer(1, 12))
 
-        if program == 'Alpha_A1TD':
+        if program == 'A1TD':
             data = [['','Temp','Time','No. of Cycles'],
             ['Stage 1', '94', '14m', '1'],
             ['Stage 2', '95', '30s', '5'],
@@ -529,7 +529,7 @@ class Report(object):
             self.elements.append(KeepTogether(t))
             self.elements.append(Spacer(1, 12))
 
-        if program == 'Alpha_A2TD':
+        if program == 'A2TD':
             data = [['','Temp','Time','No. of Cycles'],
             ['Stage 1', '94', '14m', '1'],
             ['Stage 2', '95', '30s', '5'],
