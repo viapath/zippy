@@ -13,7 +13,7 @@ release: install resources webservice
 # development installs (with mounted volume)
 all: install resources
 
-install: essential bowtie zippy-install
+install: essential zippy-install
 
 # requirements
 essential:
@@ -24,7 +24,8 @@ essential:
 	apt-get install -y redis-server
 	apt-get install -y build-essential libjpeg-dev libfreetype6-dev python-dev python-imaging libcurl3-dev
 	apt-get install -y mysql-client
-	apt-get install -y postgres-server-dev-9.1
+	apt-get install -y bowtie2
+	apt-get install -y postgresql-server-dev-9.4
 	# add apache user
 	useradd -M $(WWWUSER)
 	usermod -s /bin/false $(WWWUSER)
@@ -35,12 +36,6 @@ essential:
 	apt-get install -y libapache2-mod-wsgi
 	# disable default site
 	a2dissite 000-default
-
-bowtie:
-	wget -c https://downloads.sourceforge.net/project/bowtie-bio/bowtie2/2.3.3.1/bowtie2-2.3.3.1-linux-x86_64.zip?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Fbowtie-bio%2Ffiles%2Fbowtie2%2F2.3.3.1&ts=1507890163&use_mirror=kent && \
-	unzip bowtie2-2.3.3.1-linux-x86_64.zip && \
-	cd bowtie2-2.3.3.1-linux-x86_64 && mv bowtie2* /usr/local/bin
-	rm -rf bowtie2-2.3.3.1*
 
 # zippy setup (will move to distutils in future release)
 zippy-install:
@@ -115,8 +110,8 @@ annotation: variation-download refgene-download
 
 variation-download:
 	mkdir -p $(ZIPPYVAR)/resources && cd $(ZIPPYVAR)/resources && \
-	wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b147_GRCh37p13/VCF/00-common_all.vcf.gz && \
-	wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b147_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
+	wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz && \
+	wget -c ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b151_GRCh37p13/VCF/00-common_all.vcf.gz.tbi
 
 refgene-download:
 	mkdir -p $(ZIPPYVAR)/resources && cd $(ZIPPYVAR)/resources && \
