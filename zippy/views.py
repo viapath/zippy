@@ -383,7 +383,7 @@ def update_name_of_primer(primerInfo):
 @app.route('/search/', methods=['POST','GET'])
 def search():
     if request.method == 'POST':
-        session['seachName'] = request.form.get('searchName')
+        session['searchName'] = request.form.get('searchName')
     searchResult = searchByName(session['searchName'], db)
     return render_template('searchname_result.html', searchResult=searchResult, \
         searchName=session['searchName'])
