@@ -28,6 +28,7 @@ install-dockerized: essential zippy-setup
 
 # requirements
 essential:
+	apt-get update
 	apt-get install -y wget sqlite3 unzip git htop jq
 	apt-get install -y python-pip python2.7-dev ncurses-dev python-virtualenv
 	apt-get install -y libxslt-dev libxml2-dev libffi-dev

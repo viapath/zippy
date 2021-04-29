@@ -447,18 +447,19 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                         print >> sys.stderr, 'WARNING: Target {} failed on designlimits'.format(k)
 
     # save blacklist cache
-    try:
-        pickle.dump(list(set(blacklist)),open(config['blacklistcache'],'wb'))
-    except:
-        print >> sys.stderr, 'Could not write to blacklist cache, check permissions'
-        print >> sys.stderr, os.getcwd(), config['blacklistcache']
+    if design:
+        try:
+            pickle.dump(list(set(blacklist)),open(config['blacklistcache'],'wb'))
+        except:
+            print >> sys.stderr, 'Could not write to blacklist cache, check permissions'
+            print >> sys.stderr, os.getcwd(), config['blacklistcache']
 
     # print primer pair count and build database table
     failure = [ iv.name for iv,p in ivpairs.items() if config['report']['pairs']>len(p) ]
     print >> sys.stderr, 'got primers for {:d} out of {:d} targets'.format(len(ivpairs)-len(failure), len(ivpairs))
     print >> sys.stderr, '{:<20} {:9} {:<10}'.format('INTERVAL', 'AMPLICONS', 'STATUS')
     print >> sys.stderr, '-'*41
-    for iv,p in sorted(ivpairs.items(),key=lambda x:x[0].name):
+    for iv,p in sorted(ivpairs.items(), key=lambda x:x[0].name):
         print >> sys.stderr, '{:<20} {:9} {:<10}'.format(unquote(iv.name), len(p), "FAIL" if len(p)<config['report']['pairs'] else "OK")
 
     # select primer pairs

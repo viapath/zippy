@@ -19,7 +19,7 @@ from .zippylib import ascii_encode_dict
 from .zippylib.primer import Location, checkPrimerFormat
 from .zippylib.database import PrimerDB
 
-app.config['ALLOWED_EXTENSIONS'] = set(['txt', 'batch', 'vcf', 'bed', 'csv', 'tsv', 'fasta', 'fa'])
+app.config['ALLOWED_EXTENSIONS'] = set(['txt', 'batch', 'vcf', 'genepred', 'bed', 'csv', 'tsv', 'fasta', 'fa'])
 app.secret_key = 'Zippy is the best handpuppet out there'
 
 # read zippy configuration file
@@ -231,7 +231,7 @@ def adhoc_design():
             missedIntervalNames.append(interval.name)
         return render_template('/adhoc_result.html', primerTable=primerTable, resultList=resultList, missedIntervals=missedIntervalNames)
     else:
-        flash('No locus of file given for primer design','warning')
+        flash('No locus or file given for primer design','warning')
         return redirect(url_for('index'))
 
 @app.route('/import_primers/', methods=['POST'])
