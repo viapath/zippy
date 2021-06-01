@@ -544,10 +544,10 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
         targets = [ targets ]
     # load query files
     print >> sys.stderr, 'Reading batch file {}...'.format(targets[0])
-    sampleVariants, genes, fullgenes = readBatch(targets[0], config['tiling'], database=db)
+    sampleVariants, genes, fullgenes = readBatch(targets[0], config, database=db)
     for t in range(1,len(targets)): # read additional files
         print >> sys.stderr, 'Reading additional file {}...'.format(targets[t])
-        sv, g, f = readBatch(targets[t], config['tiling'], database=db)
+        sv, g, f = readBatch(targets[t], config, database=db)
         # amend target regions
         for k,v in sv.items():
             if k in sampleVariants.keys():
@@ -557,12 +557,14 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
         genes = list(set(genes) | set(g))
         fullgenes = list(set(fullgenes) | set(f))
 
-    print >> sys.stderr, '\n'.join([ '{:<20} {:>2d}'.format(sample,len(variants)) \
+    print >> sys.stderr, '\n'.join([ '{:<20} - {:>2d}'.format(sample,len(variants)) \
         for sample,variants in sorted(sampleVariants.items(),key=lambda x: x[0]) ])
 
     # predesign
     if predesign and db and genes:
-        designVariants = [ var for var in variants if not db.query(var) ]
+        # check what variants are not covered
+        variants = [v for pv in sampleVariants.values() for v in pv]  # get all variants in batch
+        designVariants = [ var for var in variants if not db.query(var) ]  # get variants to design primers for
         selectedgeneexons = list(set(genes) - set(fullgenes))
         print >> sys.stderr, "Designing exon primers for {} variants..".format(str(len(designVariants)))
         # get variants with no overlapping amplicon -> get variants which need new primer designs
@@ -586,11 +588,11 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             primerTable, resultList, missedIntervals = getPrimers(intervals,db,predesign,config,tiers)
             if db:
                 db.addPairs(resultList, config['conditions'])  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
-        # reload query files ()
+        # reload query files
         print >> sys.stderr, 'Updating query table...'
-        sampleVariants = readBatch(targets[0], config['tiling'], database=db)[0]
+        sampleVariants = readBatch(targets[0], config, database=db)[0]
         for t in range(1,len(targets)): # read additional files
-            sv = readBatch(targets[t], config['tiling'], database=db)[0]
+            sv = readBatch(targets[t], config, database=db)[0]
             # amend target regions
             for k,v in sv.items():
                 if k in sampleVariants.keys():

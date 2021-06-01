@@ -190,13 +190,14 @@ class VCF(IntervalList):  # no interval tiling as a variant has to be sequenced 
 
 '''SNPpy result reader'''
 class SNPpy(IntervalList):
-    def __init__(self,fh,flank=0,delim='\t',db=None):
+    def __init__(self,fh,config,delim='\t',db=None):
         IntervalList.__init__(self, [], source='VCF')
         self.header = []
         self.samples = []
         self.data = {}
         self.missedgenes = set()
         commentcount = 0
+        flank = config['tiling']['flank']
         for i, line in enumerate(fh):
             if line.startswith('#'):
                 commentcount += 1
@@ -208,7 +209,7 @@ class SNPpy(IntervalList):
             else:
                 # parse fields
                 try:
-                    f = line.rstrip().split(delim)
+                    f = line.rstrip('\n').split(delim)
                     row = dict(zip(self.header,f))
                     for k,v in row.items():
                         try:
@@ -219,46 +220,48 @@ class SNPpy(IntervalList):
                     print >> sys.stderr, line
                     print >> sys.stderr, row
                     raise
-                # build variant/test description
-                if 'primers' in row.keys():  # sample, primer list
-                    assert db  # must have database handle to xtract targets
-                    pairnames = map(lambda x: x.strip(), row['primers'].split(','))
-                    for pp in pairnames:
-                        # get pair(s)
-                        pairs = db.query(pp)
-                        if not pairs:
-                            self.missedgenes.add(row['geneID'])
-                        # create interval
-                        for p in pairs:
-                            t = p.sequencingTarget()
-                            # (gene,tx,exon,hgvs/pos,zyg)
-                            # vd = [ row['geneID'], '', '', '{}:{}-{}'.format(t[0],t[1],t[2]), 'unknown' ]
-                            vd = [ row['geneID'], '', '', '', '' ]
-                            iv = Interval(t[0],t[1],t[2],name=quote(','.join(vd)),sample=row['sampleID'])
-                            iv.extend(-flank)  # shrink search interval
-                            self.append(iv)
-                else:
+                # get variant description
+                variantDescription = [ row.get('geneID'), row.get('transcriptID'), row.get('HGVS_c'), row.get('GT') ]
+                variantDescription = list([ x for x in variantDescription if x ])
+                # get target intervals
+                if row.get('chromosome'):
                     chrom = row['chromosome'][3:] if row['chromosome'].startswith('chr') else row['chromosome']
-                    # parse variant name
-                    variantDescription = [ row['geneID'] ]
-                    if '-' in row['position']:  # interval (gene,chrom,exon,hgvs/pos,zyg)
+                    if '-' in row['position']:
                         chromStart, chromEnd = map(int,row['position'].split('-'))
-                        variantDescription += [ row['chromosome'] ]
-                    else:  # variant (gene,tx,exon,hgvs/pos,zyg)
+                    else: 
                         if 'HGVS_c' in row.keys():
                             chromStart, chromEnd = int(row['position']), int(row['position'])+hgvsLength(row['HGVS_c'])
                         elif 'ALT' in row.keys() and 'REF' in row.keys():
                             chromStart, chromEnd = int(row['position']), int(row['position'])+max(map(len,[row['REF'],row['ALT']]))
                         else:
                             raise Exception('UnkownVariantLength')
-                        if 'transcriptID' in row.keys():
-                            variantDescription += [ row['transcriptID'] ]
-                    if 'rank' in row.keys() and '/' in row['rank']:
-                        variantDescription += [ 'exon'+row['rank'].split('/')[0] ] # exonnumber
-                    variantDescription += [ row['HGVS_c'] if 'HGVS_c' in row.keys() and row['HGVS_c'] else row['position'] ]  # HGVS
-                    variantDescription += [ ':'.join([ row[k] for k in sorted(row.keys()) if k.startswith('GT') ]) ]  # zygosity
+                    variantDescription.append('{}:{}-{}'.format(row.get('chromosome'),chromStart,chromEnd))
+                    # create interval
                     iv = Interval(chrom,chromStart,chromEnd,name=quote(','.join(variantDescription)),sample=row['sampleID'])
                     self.append(iv)
+                elif row.get('primers'):  
+                    assert db  # must have database handle to xtract targets
+                    pairnames = map(lambda x: x.strip(), row['primers'].split(','))
+                    for pp in pairnames:
+                        # get pair(s)
+                        pairs = db.query(pp) if pp else []
+                        if not pairs:
+                            self.missedgenes.add(row['geneID'])
+                        # create interval
+                        for p in pairs:
+                            t = p.sequencingTarget()
+                            iv = Interval(t[0],t[1],t[2],name=quote(','.join(variantDescription)),sample=row['sampleID'])
+                            iv.extend(-flank)  # shrink search interval
+                            self.append(iv)
+                elif row.get('geneID'):
+                    self.missedgenes.add(row['geneID'])
+                    # no primers defined assume whole gene
+                    with open(config['design']['annotation']) as fh:
+                        intervals = GenePred(fh,getgenes=[row['geneID']],**config['tiling']) 
+                        for iv in intervals:
+                            iv.extend(-flank)
+                            iv.sample = row['sampleID']
+                            self.append(iv)
         # add flanks and name
         for e in self:
             e.extend(flank)
@@ -318,14 +321,15 @@ def readTargets(targets,tiling):
 
 
 '''readBatch: read file from SNPpy result output'''
-def readBatch(fi,tiling,database=None):
+def readBatch(fi,config,database=None):
     try:
         assert os.path.isfile(fi)
     except AssertionError:
         print >> sys.stderr, "ERROR: Not a readable file (%s)" % fi
         raise
     with open(fi) as fh:
-        intervals = SNPpy(fh,flank=tiling['flank'],db=database)
+        intervals = SNPpy(fh,config,db=database)
+    # create targets, genes, fullgenes (genes with no primers)
     sampleVariants = {}
     for iv in intervals:
         try:

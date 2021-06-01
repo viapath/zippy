@@ -168,7 +168,7 @@ class Report(object):
     def plateLayouts(self,plates):
         PLATE_STYLE = TableStyle(
             [
-            ('FONTSIZE',(0,0),(-1,-1),5),
+            ('FONTSIZE',(0,0),(-1,-1),3),
             ('VALIGN',(0,0),(-1,0),'BOTTOM'),
             ('VALIGN',(0,1),(-1,-1),'MIDDLE'),
             ('ALIGN',(0,1),(-1,-1),'LEFT'),
@@ -177,8 +177,10 @@ class Report(object):
             ('BOX', (1,1), (-1,-1), 0.25, colors.grey),
             ('BACKGROUND',(0,1),(0,-1),colors.snow),
             ('BACKGROUND',(1,0),(-1,0),colors.snow),
-            ('LEFTPADDING',(1,1),(-1,-1),1),
-            ('RIGHTPADDING',(1,1),(-1,-1),1)
+            ('LEFTPADDING',(1,1),(-1,-1),0),
+            ('RIGHTPADDING',(1,1),(-1,-1),0),
+            ('TOPPADDING',(1,1),(-1,-1),0),
+            ('BOTTOMPADDING',(1,1),(-1,-1),0)
             ])
         for plateNumber, data in enumerate(plates):
             self.elements.append(Paragraph('Plate%s' % str(plateNumber+1), self.styles["Heading4"]))
@@ -188,7 +190,7 @@ class Report(object):
             for i,r in enumerate(data):
                 for j,c in enumerate(r):
                     data[i][j] = Paragraph(c,self.styles['tiny']) if i and j else Paragraph(c,self.styles['small'])
-            t = Table(data, colWidths=1.2*cm, rowHeights=0.5*cm)
+            t = Table(data, colWidths=0.8*cm, rowHeights=0.6*cm)
             t.setStyle(PLATE_STYLE)
             self.elements.append(KeepTogether(t))
             self.elements.append(Spacer(1, 12))
@@ -286,7 +288,7 @@ class Report(object):
         #     ('LINEABOVE', (3,1),(-1,1),1,colors.black),
         #     ('BOX', (3,0), (-1,len(p)), 1, colors.black),
         #     ])
-#Fomat for WDB circle list
+        #Format for WDB circle list
         TABLE_STYLE = TableStyle([
             ('FONTSIZE',(0,1),(-1,-1),8),  # body
             ('FONTSIZE',(0,0),(-1,0),10),  # title line
@@ -348,7 +350,7 @@ class Report(object):
         self.elements.append(Spacer(1, 12))
         self.elements.append(KeepTogether(t))
         self.elements.append(Spacer(1, 12))
-#If report config is l_report use def pcrLongProgram or if program is A1_TD use long program
+
     def pcrProgram(self, tableTitle=None,program=''):
         if tableTitle:
             self.elements.append(Paragraph(tableTitle, self.styles["Heading4"]))
@@ -414,51 +416,6 @@ class Report(object):
             self.elements.append(Spacer(1, 12))
             self.elements.append(KeepTogether(t))
             self.elements.append(Spacer(1, 12))
-
-
-# #!!!!!!!!!!THIS WORKS DO NOT DELETE
-#     def pcrLongProgram(self):
-#         data = [['','Temp','Time','No. of Cycles'],
-#             ['Stage1', '94', '14m', '1'],
-#             ['Stage2', '95', '30s', '5'],
-#             ['', '62', '30s', ''],
-#             ['', '72', '1m 30s', ''],
-#             ['Stage3', '95', '30s', '5'],
-#             ['', '60', '30s', ''],
-#             ['', '72', '1m 30s', ''],
-#             ['Stage4', '95', '30s', ''],
-#             ['', '58', '30s', ''],
-#             ['', '72', '1m 30s', ''],
-#             ['Stage5', '10', '10m', '1']]
-# #     #def pcrStdProgram(self):
-# #     #     data_std = [['Stage','Temp','Time','No. of Cycles']
-# #     #         ['Stage1', '95', '15m', '1'],
-# #     #         ['Stage2', '94', '30s', '35'],
-# #     #         ['', '60', '1m30s', ''],
-# #     #         ['', '72', '1m', ''],
-# #     #         ['Stage3', '72', '10m', '1'],
-# #     #         ['Stage4', '10', '10m', '1']
-# #     #         ['', '', '', '']]
-#         t = Table(data, colWidths=[2.5*cm,2.0*cm,2.0*cm,3.0*cm], rowHeights=0.6*cm)
-#         t.setStyle(TableStyle([
-#             ('BOX', (0,0), (3,-1), 1, colors.black),
-#             ('FONTSIZE', (0,0), (3,0), 12),
-#             ('FONTSIZE', (0,1), (0,5), 12),
-#             ('FONTSIZE', (1,1), (-1,-1), 8),
-#             ('INNERGRID', (0,0), (3,1), 0.25, colors.black),
-#             ('LINEABOVE', (0,2), (3,2), 0.25, colors.black),
-#             ('LINEBEFORE', (1,2), (1,-1), 0.25, colors.black),
-#             ('LINEBEFORE', (3,0), (3,-1), 0.25, colors.black),
-#             ('INNERGRID', (1,2), (2,-1), 0.25, colors.black),
-#             ('LINEABOVE', (0,5), (3,5), 0.25, colors.black),
-#             ('LINEABOVE', (0,-4), (3,-4), 0.25, colors.black),
-#             ('LINEABOVE', (0,-1), (3,-1), 0.25, colors.black),
-#             ]))
-#         self.elements.append(Spacer(1, 12))
-#         self.elements.append(KeepTogether(t))
-#         self.elements.append(Spacer(1, 12))
-
-    #def pcrProgram(self,title='Program',table=[],tableHeafer=['Stage','Temp','Time','No. of Cycles'],)
 
     def checkBoxes(self,title='Checks',checktable=[],table=[],tableHeader=['Check','SampleID','Date','Operator','Checker'],tickbox=[],tickboxNames=['YES','NO'],textLines={}):
         # title
@@ -728,14 +685,14 @@ class Worksheet(list):
             checkTasks = ['Primer checked and storage assigned']
             r.checkBoxes(title='',table=checkTasks)
         else:
-            fields = [['DNA #', 'Primer Pair', 'Variant', 'Zygosity', 'Result', 'Check']]
+            fields = [['DNA #', 'Primer Pair', 'Variant', 'Result', 'Check']]
             for i,t in enumerate([ x for x in sorted(self,key=lambda x: (x.sample,x.primerpair)) if not x.control ]):
                 for v in t.primerpairobject.variants:
-                    fields += [[ t.sample, t.primerpair, ' '.join(unquote(v.name).split(',')[:-1]), unquote(v.name).split(',')[-1], '', '']]
+                    fields += [[ t.sample, t.primerpair, ' '.join(unquote(v.name).split(',')), '', '']]
             # create result table
             r.setNextPageTemplate('landscape')
             r.pageBreak()
-            r.genericTable(fields,tableTitle='Results',landscape=True, mergeColumnFields=[0,-1],relativeColWidth=[0.8,1.0,3.0,0.5,2.3,0.4])
+            r.genericTable(fields,tableTitle='Results',landscape=True, mergeColumnFields=[0,-1],relativeColWidth=[0.8,1.0,3.5,2.3,0.4])
             # add checkboxes
             r.checkBoxes(title='',table=['Primary Reporter', 'Secondary Reporter'],tableHeader=['Reporter','Date','Initial'],
                 tickbox=['Unmatched Sample Check', 'Control Check'], tickboxNames=['YES','NO'],
