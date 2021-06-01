@@ -11,6 +11,9 @@ __pycache__/
 # temporary files
 tmp/
 
+# tlog
+tlog
+
 # flask virtualenv
 flask/
 
@@ -77,6 +80,9 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# VScode
+.vscode/*
 
 # mac stuff
 .DS_Store

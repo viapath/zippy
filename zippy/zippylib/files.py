@@ -228,7 +228,7 @@ class SNPpy(IntervalList):
                     chrom = row['chromosome'][3:] if row['chromosome'].startswith('chr') else row['chromosome']
                     if '-' in row['position']:
                         chromStart, chromEnd = map(int,row['position'].split('-'))
-                    else: 
+                    else:
                         if 'HGVS_c' in row.keys():
                             chromStart, chromEnd = int(row['position']), int(row['position'])+hgvsLength(row['HGVS_c'])
                         elif 'ALT' in row.keys() and 'REF' in row.keys():
@@ -239,7 +239,7 @@ class SNPpy(IntervalList):
                     # create interval
                     iv = Interval(chrom,chromStart,chromEnd,name=quote(','.join(variantDescription)),sample=row['sampleID'])
                     self.append(iv)
-                elif row.get('primers'):  
+                elif row.get('primers'):
                     assert db  # must have database handle to xtract targets
                     pairnames = map(lambda x: x.strip(), row['primers'].split(','))
                     for pp in pairnames:

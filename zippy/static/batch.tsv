@@ -1,0 +1,14 @@
+# sampleID is mondatory,for the other fields supply one of the following									
+# - chromosome position (eg. 123123-123180)									
+# - chromosome position REF ALT									
+# - chromosome position HGVS_c									
+# - primers geneID									
+# - geneID (will output primers for whole gene sequencing)									
+# the following fields will be entered into the worksheet:									
+# - geneID transcriptID HGVS_c genotype									
+sampleID	geneID	primers	chromosome	position	transcriptID	HGVS_c	genotype	REF	ALT
+hgvs	HFE2		chr1	145416584	NM_213653.3	c.929C>G	het		
+range	HBB		chr11	5248223-5248243			hom		
+vcf_like	HFE		chr6	26091179				C	G
+first_exon	HBB	HBB_1_%							
+full_gene	FOXP2								

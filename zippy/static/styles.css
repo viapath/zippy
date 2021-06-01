@@ -25,6 +25,11 @@ a.headerlink {
 	color: #FFFFFF;
 }
 
+a.hiddenlink {
+	font-size: 10px;
+	color: #FFFFFF;
+}
+
 #below_header {
 	margin-top: 80px;
 }

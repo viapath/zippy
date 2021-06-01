@@ -40,10 +40,11 @@
                     <tr><th colspan="2"><h3>Batch PCR</h3></th></tr>
                     <tr>
                         <td class="left">
+                            <a class="hiddenlink" href="{{ url_for('batchtemplate') }}" download="template.tsv">
                             <span class="pop">Variant Table</span><br>
                             or <span class="pop">Missed Regions</span><br>
                             or <span class="pop">Primer Lists</span><br>
-                            or <span class="pop">Gene Lists</span>
+                            or <span class="pop">Gene Lists</span></a>
                         </td>
                         <td class="right">
                             <input type="file" name="variantTable"><br>

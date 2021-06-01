@@ -145,6 +145,10 @@ def user_admin():
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
+@app.route('/batchtemplate')
+def batchtemplate():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'batch.tsv', mimetype='text/csv')
+
 @app.route('/logout')
 def logout():
     db.log(session['logged_in'], 'logout')
