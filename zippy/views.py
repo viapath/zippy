@@ -214,7 +214,9 @@ def adhoc_design():
     gap = request.form.get('gap')
     store = request.form.get('store')
     # if locus or file
-    if re.match('\w{1,2}:\d+-\d+',locus) or (uploadFile and allowed_file(uploadFile.filename)):
+    if re.match('\w{1,2}:\d+-\d+',locus) or \
+        re.match('[A-Z0-9]+$',locus) or \
+        (uploadFile and allowed_file(uploadFile.filename)):
         # get target
         if uploadFile:
             filename = secure_filename(uploadFile.filename)

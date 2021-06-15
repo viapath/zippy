@@ -300,21 +300,24 @@ class Data(object):
 
 
 ''' read target intervals from VCF, BED or directly'''
-def readTargets(targets,tiling):
+def readTargets(targets,config):
     if os.path.isfile(targets):
         with open(targets) as fh:
             if targets.endswith('vcf'):  # VCF files (strand 0)
-                intervals = VCF(fh,**tiling)
+                intervals = VCF(fh,**config['tiling'])
             elif targets.endswith('bed'):  # BED files (BED3 with automatic names)
-                intervals = BED(fh,**tiling)
+                intervals = BED(fh,**config['tiling'])
             elif targets.endswith('txt') or targets.lower().endswith('genepred'):  # GenePred files (uses gene name if unique)
-                intervals = GenePred(fh,**tiling)
+                intervals = GenePred(fh,**config['tiling'])
             else:
                 raise Exception('UnknownFileExtension')
     elif re.match('\w+:\d+-\d+',targets):  # single interval, no tiling
         m = re.match('(\w+):(\d+)-(\d+):?([+-])?',targets)
         rev = None if m.group(4) is None else True if m.group(4) == '-' else False
         intervals = [ Interval(m.group(1),m.group(2),m.group(3),reverse=rev) ]
+    elif re.match('[A-Z0-9]+',targets):  # gene symbol
+        with open(config['design']['annotation']) as fh:
+            intervals = GenePred(fh,getgenes=[targets],**config['tiling'])
     else:
         raise Exception('FileNotFound')
     return intervals

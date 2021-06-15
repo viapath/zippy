@@ -513,11 +513,11 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
 
 # query database / design primer for VCF,BED,GenePred or interval
 def zippyPrimerQuery(config, targets, design=True, outfile=None, db=None, store=False, tiers=[0], gap=None):
-    intervals = readTargets(targets, config['tiling'])  # get intervals from file or commandline
+    intervals = readTargets(targets, config)  # get intervals from file or commandline
     if gap:  # gap PCR primers
         try:
             assert len(intervals)==1
-            intervals += readTargets(gap, config['tiling'])  # get interval of second breakpoint
+            intervals += readTargets(gap, config)  # get interval of second breakpoint
             assert len(set([i.chrom for i in intervals] ))
         except AssertionError:
             print >> sys.stderr, "ERROR: gap-PCR primers can only be designed for a single pair of breakpoint intervals on the same chromosome!"
