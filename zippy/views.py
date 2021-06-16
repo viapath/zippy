@@ -3,6 +3,7 @@ import sys
 import os
 import re
 import json
+import time
 import bcrypt
 import hashlib
 import subprocess
@@ -226,16 +227,25 @@ def adhoc_design():
             print >> sys.stderr, "file saved to %s" % target
         else:
             target = locus
+        # create output folder
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        querystamp = hashlib.sha1(locus).hexdigest()[:8]
+        downloadFolder = os.path.join(app.config['DOWNLOAD_FOLDER'], '-'.join([timestamp, querystamp]))
+        subprocess.check_call(['mkdir', '-p', downloadFolder], shell=False)
+        # generate filename
+        outfile = locus if re.match('[A-Z0-9]+$',locus) else locus.replace(':','_') 
+        downloadFile = os.path.join(downloadFolder, '.'.join([outfile, timestamp, 'txt']))
         # run Zippy
-        primerTable, resultList, missedIntervals = zippyPrimerQuery(config, target, design, None, db, store, tiers, gap)
-
-        print >> sys.stderr, primerTable
-
+        primerTable, resultList, missedIntervals = zippyPrimerQuery(config, target, design, downloadFile, db, store, tiers, gap)
+        # get files
+        arrayOfFiles = [ downloadFile ]
+        arrayOfFiles = list([ f[len(app.config['DOWNLOAD_FOLDER']):].lstrip('/') for f in arrayOfFiles if f.startswith(app.config['DOWNLOAD_FOLDER'])])
         # get missed and render template
         missedIntervalNames = []
         for interval in missedIntervals:
             missedIntervalNames.append(interval.name)
-        return render_template('/adhoc_result.html', primerTable=primerTable, resultList=resultList, missedIntervals=missedIntervalNames)
+        return render_template('/adhoc_result.html', primerTable=primerTable, \
+            resultList=resultList, missedIntervals=missedIntervalNames, outputFiles=arrayOfFiles)
     else:
         flash('No locus or file given for primer design','warning')
         return redirect(url_for('index'))

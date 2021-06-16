@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
 	<h3>Primer Query Results:</h3>
+	<ul>
+		{% for file in outputFiles %}
+			{% set filelist = file.split('/') %}
+			<li><a href="{{ url_for('download_file', filename=file) }}" target="_blank">{{filelist[-1]}}</a></li>
+		{% endfor %}
+	</ul>
 	{% if resultList is not equalto [] %}
 		{% for item in resultList %}
 			<table class="primer">

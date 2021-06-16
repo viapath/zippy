@@ -528,6 +528,7 @@ def zippyPrimerQuery(config, targets, design=True, outfile=None, db=None, store=
     if outfile:
         with open(outfile,'w') as fh:
             print >> fh, '\n'.join([ '\t'.join(map(str,l)) for l in primerTable ])
+            print >> fh, '\n'.join([ '\t'.join([mi.name,'NA']+['']*12) for mi in missedIntervals ])
     else:
         print >> sys.stdout, '\n'.join([ '\t'.join(map(str,l)) for l in primerTable ])
     ## print and store primer pairs
@@ -669,15 +670,15 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             ws_long.fillPlates(size=config['report']['platesize'],randomize=True)
             ws_long.createWorkSheet(writtenFiles[-1], worklist=worksheetName+'_LONG', **config['l_report'])
             ws_long.tubeLabels()
-        # robot csv
+            # robot csv
             writtenFiles.append(outfile+'_long.csv')
             print >> sys.stderr, "Writing long batch robot CSV to {}...".format(writtenFiles[-1])
             ws_long.robotCsv(writtenFiles[-1], sep=',')
-        #tube Labels
+            # tube Labels
             writtenFiles.append(outfile+'_long.tubelabels.txt')
             print >> sys.stderr, "Writing long batch tube labels to {}...".format(writtenFiles[-1])
             ws_long.tubeLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
-        # Batch PCR worksheet std
+            # Batch PCR worksheet std
         if tests_std:
             writtenFiles.append(outfile+'.pdf')
             print >> sys.stderr, "Writing worksheet to {}...".format(writtenFiles[-1])
@@ -685,22 +686,22 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
             ws_std.addControls()
             ws_std.fillPlates(size=config['report']['platesize'],randomize=True)
             ws_std.createWorkSheet(writtenFiles[-1], worklist=worksheetName, **config['report'])
-        # validate primer tube labels (checks for hash substring collisions)
+            # validate primer tube labels (checks for hash substring collisions)
             ws_std.tubeLabels()
-        # robot csv
+            # robot csv
             writtenFiles.append(outfile+'.csv')
             print >> sys.stderr, "Writing robot CSV to {}...".format(writtenFiles[-1])
             ws_std.robotCsv(writtenFiles[-1], sep=',')
-        # writtenFiles.append(outfile+'.long.csv')
-        # print >> sys.stderr, "Writing long batch robot CSV to {}...".format(writtenFiles[-1])
-        # ws_long.robotCsv(writtenFiles[-1], sep=',')
-        # tube labels
+            # writtenFiles.append(outfile+'.long.csv')
+            # print >> sys.stderr, "Writing long batch robot CSV to {}...".format(writtenFiles[-1])
+            # ws_long.robotCsv(writtenFiles[-1], sep=',')
+            # tube labels
             writtenFiles.append(outfile+'.tubelabels.txt')
             print >> sys.stderr, "Writing tube labels to {}...".format(writtenFiles[-1])
             ws_std.tubeLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
-        #writtenFiles.append(outfile+'.long.tubelabels.txt')
-        #print >> sys.stderr, "Writing long batch tube labels to {}...".format(writtenFiles[-1])
-        #ws_long.tubeLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
+            #writtenFiles.append(outfile+'.long.tubelabels.txt')
+            #print >> sys.stderr, "Writing long batch tube labels to {}...".format(writtenFiles[-1])
+            #ws_long.tubeLabels(writtenFiles[-1],tags=config['ordersheet']['sequencetags'])
         # write missed intervals
         missedIntervalNames = []
         if allMissedIntervals:
