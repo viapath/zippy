@@ -18,6 +18,7 @@ from collections import defaultdict, OrderedDict, Counter, deque
 from .interval import Interval
 from string import maketrans
 from urllib import unquote
+from copy import deepcopy
 revcmp = maketrans('ACGTNacgtn','TGCANtgcan')
 
 '''function memoizer'''
@@ -28,8 +29,7 @@ class Memoize(object):
     def __call__(self, *args):
         if not args in self.memo:
             self.memo[args] = self.f(*args)
-        #Warning: You may wish to do a deepcopy here if returning objects
-        return self.memo[args]
+        return deepcopy(self.memo[args])
 
 '''returns common prefix (substring)'''
 def commonPrefix(left,right,stripchars='-_ ',commonlength=3):
@@ -617,7 +617,7 @@ def get_snps(database, chrom, start, end):
         snps = []
     except:
         raise
-    return snps
+    return list(snps)
 
 get_memo_snps = Memoize(get_snps)
 
