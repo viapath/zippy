@@ -6,8 +6,12 @@ ZIPPYRESOURCES=$(ZIPPYVAR)/resources
 VPATH=$(ZIPPYRESOURCES)
 
 # docker build (all in one)
-build:
+build-mono:
 	docker build --target mono -t kingspm/zippy .
+
+# docker build (no resources)
+build-bare:
+	docker build --target bare -t kingspm/zippy .
 
 # installs
 native: install resources
