@@ -20,6 +20,17 @@ from string import maketrans
 from urllib import unquote
 revcmp = maketrans('ACGTNacgtn','TGCANtgcan')
 
+'''function memoizer'''
+class Memoize(object):
+    def __init__(self, f):
+        self.f = f
+        self.memo = {}
+    def __call__(self, *args):
+        if not args in self.memo:
+            self.memo[args] = self.f(*args)
+        #Warning: You may wish to do a deepcopy here if returning objects
+        return self.memo[args]
+
 '''returns common prefix (substring)'''
 def commonPrefix(left,right,stripchars='-_ ',commonlength=3):
     if left and right:
@@ -597,6 +608,18 @@ class SNP(object):
             maf = sorted(freqs)[-2] if len(freqs) > 1 else None 
             return maf
 
+'''memoizable SNP retrieval'''
+def get_snps(database, chrom, start, end):
+    db = pysam.TabixFile(database)
+    try:
+        snps = db.fetch(chrom, start, end)
+    except ValueError:
+        snps = []
+    except:
+        raise
+    return snps
+
+get_memo_snps = Memoize(get_snps)
 
 '''Locus'''
 class Locus(object):
@@ -626,13 +649,8 @@ class Locus(object):
         return '-' if self.reverse else '+'
 
     def snpCheck(self,database):
-        db = pysam.TabixFile(database)
-        try:
-            snps = db.fetch(self.chrom,self.offset,self.offset+self.length)
-        except ValueError:
-            snps = []
-        except:
-            raise
+        # use memoized function
+        snps = get_memo_snps(database, self.chrom, self.offset, self.offset+self.length)
         # query database and translate to primer positions
         snp_positions = []
         for vcfline in snps:
