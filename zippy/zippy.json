@@ -6,10 +6,12 @@
     "blacklistcache": "/var/local/zippy/.blacklist.cache",
     "results_folder": "/var/local/zippy/results",
     "uploads_folder": "/var/local/zippy/uploads",
-    "tiling": {
-        "interval": 500,
-        "overlap": 10,
-        "flank" : 15
+    "tiling": { // tiling heuristic
+        "maxlen": 400,  // threshold when an interval is split
+        "splitlen": 300,  // length of the split interval
+        "overlap": 10,  // overlap between split intervals (splitlen-stepping)
+        "flank" : 15,  // added flanks (unreadable seq)
+        "graph": True  // use graph based design (much improved)
     },
     "design": {
         "COMMENT": "DESIGN GENOME AND PRIMER3 CONFIG",

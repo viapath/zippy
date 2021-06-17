@@ -20,7 +20,7 @@ from urllib import quote, unquote
 
 '''GenePred parser with automatic segment numbering and tiling'''
 class GenePred(IntervalList):
-    def __init__(self,fh,getgenes=None,interval=None,overlap=None,flank=0,combine=True,noncoding=False):
+    def __init__(self,fh,getgenes=None,maxlen=None,splitlen=None,overlap=None,flank=0,combine=True,noncoding=False):
         IntervalList.__init__(self, [], source='GenePred')
         counter = Counter()
         intervalindex = defaultdict(list)
@@ -83,7 +83,7 @@ class GenePred(IntervalList):
                             min([ x.chromStart for x in combinedExons[i-1]]) \
                             for i in range(1,len(combinedExons)) ]
                         # combine smallest distance
-                        if any([ d < interval for d in distances ]):
+                        if any([ d < maxlen for d in distances ]):
                             smallestIndex = distances.index(min(distances))
                             recombinedExons = []
                             for i,e in enumerate(combinedExons):
@@ -118,9 +118,9 @@ class GenePred(IntervalList):
         # split interval if necessary
         for ivs in intervalindex.values():
             for iv in ivs:
-                if interval and overlap and interval < len(iv):
+                if splitlen and overlap and maxlen < len(iv):
                     assert '+' not in iv.name  # paranoia
-                    self += iv.tile(interval,overlap,len(f)>3)  # name with suffix if named interval
+                    self += iv.tile(splitlen,overlap,len(f)>3)  # name with suffix if named interval
                 else:
                     self += [ iv ]
         # add flanks
@@ -130,7 +130,7 @@ class GenePred(IntervalList):
 
 '''bed parser with automatic segment numbering and tiling'''
 class BED(IntervalList):
-    def __init__(self,fh,interval=None,overlap=None,flank=0):
+    def __init__(self,fh,maxlen=None,splitlen=None,overlap=None,flank=0):
         IntervalList.__init__(self, [], source='BED')
         counter = Counter()
         intervalindex = defaultdict(list)
@@ -159,7 +159,7 @@ class BED(IntervalList):
         # split interval if necessary
         for ivs in intervalindex.values():
             for iv in ivs:
-                if interval and overlap and interval < len(iv):
+                if splitlen and overlap and maxlen < len(iv):
                     self += iv.tile(interval,overlap,len(f)>3)  # name with suffix if named interval
                 else:
                     self += [ iv ]
