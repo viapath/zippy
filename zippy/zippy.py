@@ -159,8 +159,6 @@ def importPrimerPairs(inputfile,config,primer3=True,keepall=False):
 
     # pair primers (by name or by primerset) MAKE COPIES!!!!
     pairs = {}
-    print 'Placed:', primers
-    print >> sys.stderr, 'Pairing...'
     for p in primers:
         setnames = primersets[p.name] \
             if p.name in primersets.keys() and len(primersets[p.name])>0 \
@@ -491,7 +489,6 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
     else:
         # select by best pairs independently (always print database primers)
         for iv in sorted(ivpairs.keys()):
-            print "IV", unquote(iv.name)
             if not ivpairs[iv]:
                 missedIntervals.append(iv)
             for i, p in enumerate(sorted(ivpairs[iv])):
@@ -715,7 +712,7 @@ def zippyBatchQuery(config, targets, design=True, outfile=None, db=None, predesi
                     print >> fh, '\n'.join([ '\t'.join([sample,unquote(i.name)]) for i in missed ])
     return writtenFiles, sorted(list(set(missedIntervalNames)))
 
-def validateAndImport(config, target, validate, db):
+def validateAndImport(config, target, validate, store, db):
     pairs = importPrimerPairs(target, config, primer3=False, keepall=validate)  # import and locate primer pairs
     if validate:
         print >> sys.stderr, "Validating {} primer pairs...".format(len(pairs))
@@ -734,12 +731,16 @@ def validateAndImport(config, target, validate, db):
                 report_counts[t] +=1
         report_counts['PASS'] = len(pairs)
         # store primers
-        db.addPairs(pairs, config['conditions'])
+        if store:
+            db.addPairs(pairs, config['conditions'])
         # return stat and failed pairs
         return report_counts, failed_pairs
     # no validation
-    db.addPairs(pairs, config['conditions'])  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
-    sys.stderr.write('Added {} primer pairs to database without validation\n'.format(len(pairs)))
+    if store:
+        db.addPairs(pairs, config['conditions'])  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
+        sys.stderr.write('Added {} primer pairs to database without validation\n'.format(len(pairs)))
+    else:
+        sys.stderr.write('Nothing to do :(\n')
     return {}, []
 
 # update storage location for primer
@@ -841,7 +842,9 @@ def main():
     parser_add.add_argument("primers", default=None, metavar="FASTA/TAB", \
         help="Primers or locations to add to database")
     parser_add.add_argument("--check", dest="check", default=False, action="store_true", \
-        help="Check imported primers against designlimits")
+        help="Check primers against designlimits")
+    parser_add.add_argument("--dryrun", dest="store", default=True, action="store_false", \
+        help="Dry run (does not store primers)")
     parser_add.add_argument("-F", dest="outfile", default=None, type=str, \
         help="Output failed imports to file")
     parser_add.set_defaults(which='add')
@@ -919,7 +922,7 @@ def main():
     if options.which=='add':  # read primers and add to database
         # import primer pairs
         if options.primers.split('.')[-1].startswith('fa'):
-            report, failed_pairs = validateAndImport(config, options.primers, options.check, db)
+            report, failed_pairs = validateAndImport(config, options.primers, options.check, options.store, db)
             if failed_pairs:
                 if options.outfile is None:
                     print >> sys.stderr, "FAILED IMPORTS"

@@ -257,6 +257,7 @@ def import_primers():
     uploadFile = request.files['filePath']
     primers = request.form.get('primers')
     validate = request.form.get('validate')
+    store = request.form.get('store')
     # if Primers given
     if (primers and checkPrimerFormat(primers)) or \
         (uploadFile and allowed_file(uploadFile.filename)):
@@ -275,7 +276,7 @@ def import_primers():
             target = fh.name
 
         # run Zippy
-        report_counts, failed_primers = validateAndImport(config, target, validate, db)
+        report_counts, failed_primers = validateAndImport(config, target, validate, store, db)
         # amend report descriptions
         desc = defaultdict(str, {
             "PASS": "Passed validation",
