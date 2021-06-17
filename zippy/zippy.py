@@ -159,6 +159,8 @@ def importPrimerPairs(inputfile,config,primer3=True,keepall=False):
 
     # pair primers (by name or by primerset) MAKE COPIES!!!!
     pairs = {}
+    print 'Placed:', primers
+    print >> sys.stderr, 'Pairing...'
     for p in primers:
         setnames = primersets[p.name] \
             if p.name in primersets.keys() and len(primersets[p.name])>0 \
