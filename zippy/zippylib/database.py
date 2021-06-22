@@ -16,9 +16,12 @@ import sqlite3
 import fnmatch
 import primer3
 from copy import deepcopy
+import networkx as nx
+import math
 from collections import defaultdict
 from . import flatten
 from .primer import Primer, Locus, PrimerPair, Location, parsePrimerName, Tag
+from .interval import Interval
 
 # changes conflicting name
 def changeConflictingName(n):
@@ -34,6 +37,46 @@ def changeConflictingName(n):
     elif len(f)==3:  # add number suffix after exon
         return '_'.join(f[:2]+[str(1)]+f[2:])
     raise Exception('PrimerNameChangeError')
+
+
+def buildPairs(rows,tags=None):
+    primerPairs = []
+    for row in rows:
+        # get reverse status (from name)
+        orientations = [ x[1] for x in map(parsePrimerName,row[5:7]) ]
+        if not any(orientations) or len(set(orientations))==1:
+            print >> sys.stderr, '\rWARNING: {} orientation is ambiguous ({},{}){}\r'.format(row[0],\
+                '???' if orientations[0]==0 else 'rev' if orientations[0]<0 else 'fwd', \
+                '???' if orientations[0]==0 else 'rev' if orientations[1]<0 else 'fwd'," "*20)
+            reverse = False
+        elif orientations[0]>0 or orientations[1]<0:
+            reverse = False
+        elif orientations[1]>0 or orientations[0]<0:
+            reverse = True
+        else:
+            raise Exception('PrimerPairStrandError')
+        # amend tag sequences if supplied
+        # (usually not needed as primers in database are already validated)
+        left_tag = Tag(row[1]) 
+        right_tag = Tag(row[2]) 
+        if tags:
+            tagorder = [1,0] if reverse else [0,1]
+            left_tag =  Tag(row[1], tags[row[1]]['tags'][tagorder[0]])
+            right_tag = Tag(row[2], tags[row[2]]['tags'][tagorder[1]])
+        # build targets
+        leftTargetposition = Locus(row[7], row[8], len(row[3]), False, primer3.calcTm(str(row[3])))
+        rightTargetposition = Locus(row[7], row[9]-len(row[4]), len(row[4]), True, primer3.calcTm(str(row[4])))
+        # build storage locations (if available)
+        leftLocation = Location(*row[10:12]) if all(row[10:12]) else None
+        rightLocation = Location(*row[12:14]) if all(row[12:14]) else None
+        # Build primers
+        leftPrimer = Primer(row[5], row[3], targetposition=leftTargetposition, tag=left_tag, location=leftLocation)
+        rightPrimer = Primer(row[6], row[4], targetposition=rightTargetposition, tag=right_tag, location=rightLocation)
+        # Build pair
+        primerPairs.append(PrimerPair([leftPrimer, rightPrimer],name=row[0],reverse=reverse,cond=row[14]))
+    # return primer pairs
+    return primerPairs
+
 
 # Primer Database
 class PrimerDB(object):
@@ -256,7 +299,6 @@ class PrimerDB(object):
             self.removeOrphans()
             self.writeAmpliconDump()
 
-
     '''adds list of primers to database and automatically renames'''
     def addPrimer(self, *primers):
         try:
@@ -345,6 +387,121 @@ class PrimerDB(object):
         return
 
     '''query for interval or name'''
+    def graphquery(self, query, flank=15, opendb=None, **kwargs):
+        '''returns suitable primer pair path for the specified interval'''
+        # extract all intersecting primers
+        try:
+            self.db = opendb if opendb else sqlite3.connect(self.sqlite)
+        except:
+            raise
+        else:
+            cursor = self.db.cursor()
+            cursor.execute('''SELECT DISTINCT p.pairid, l.tag, r.tag, l.seq, r.seq, p.left, p.right,
+                p.chrom, p.start, p.end, l.vessel, l.well, r.vessel, r.well, p.cond,
+                p.start+length(l.seq) as seqstart, p.end - length(r.seq) as seqend
+                FROM pairs AS p
+                LEFT JOIN primer as l ON p.left = l.name
+                LEFT JOIN primer as r ON p.right = r.name
+                WHERE p.chrom = ?
+                AND seqend > ?
+                AND seqstart < ?
+                ORDER BY p.start;''', \
+                (query.chrom, query.chromStart, query.chromEnd))
+                # 
+            rows = cursor.fetchall()
+        finally:
+            if not opendb:
+                self.db.close()
+
+        # build primer objects
+        try:
+            tags = kwargs.get('sequencetags')
+        except:
+            tags = None
+        primerPairs = buildPairs(rows,tags)
+
+        # create vertices (primer pairs) and edges (overlaps)import networkx as nx
+        G = nx.Graph()
+        start, end = None, 'z' # values ensure they are ordered at start and end (None,1,2,3,'z')
+        for i, p in enumerate(primerPairs):
+            # create edges
+            p_target = p.sequencingTarget()
+            if p_target:
+                # match beginning and end
+                if query.chromStart < (p_target[2]-flank) and (p_target[1]+flank) < query.chromStart:
+                    G.add_edge(start,p)
+                if query.chromEnd < (p_target[2]-flank) and (p_target[1]+flank) < query.chromEnd:
+                    G.add_edge(end,p)
+                # overlap other amplicons ()
+                for j, q in enumerate(primerPairs[i:]):
+                    if i == j:
+                        continue
+                    q_target = q.sequencingTarget()
+                    if q_target and p_target[0] == q_target[0] and \
+                        (p_target[2]-flank) > (q_target[1]+flank) and \
+                            (p_target[1]+flank) < (q_target[2]-flank):
+                        # overlaps
+                        G.add_edge(p,q)
+
+        '''finds best amplicon path (least nodes, longest length, most overlap, least overlap variation)'''
+        def bestPath(graph):
+            def orderNodes(node,x):
+                if node == start:
+                    return start
+                elif node == end:
+                    return end
+                return node.sequencingTarget()[x]
+            def stdev(data):
+                n = len(data)
+                mean = sum(data) / n
+                var = sum((x - mean) ** 2 for x in data) / n
+                std_dev = math.sqrt(var)
+                return std_dev
+            def bestSequence(path):
+                ## longest path
+                try:
+                    path_len = path[-1].sequencingTarget()[2] - path[0].sequencingTarget()[1]
+                except:
+                    path_len = 0
+                ## most overlapping path
+                try:
+                    ovp = list([path[i].sequencingTarget()[2] - path[i+1].sequencingTarget()[1] for i in range(len(path)-1) ])
+                    path_minovp = min(ovp)
+                    path_stdovp = stdev(ovp)
+                    path_invstdovp = 1/path_stdovp if path_stdovp>0 else None
+                except:
+                    path_minovp = 0
+                return (path_len, path_minovp, path_invstdovp) 
+
+            graph_start = sorted(graph.nodes, key=lambda n: orderNodes(n,1))[0]
+            graph_end = sorted(graph.nodes, key=lambda n: orderNodes(n,2))[-1]
+            # get least node paths
+            paths = list(nx.all_shortest_paths(graph, source=graph_start, target=graph_end))
+            # remove start and end nodes
+            amp_paths = map(lambda path: filter(lambda x: x is not start and x is not end, path), paths)
+            # get longest sequenced
+            sorted_paths = sorted(amp_paths, key=bestSequence)
+            return sorted_paths[-1]
+
+        # create subgraphs
+        subgraphs = [G.subgraph(c).copy() for c in nx.connected_components(G)]
+        
+        # merge paths and get missedIntervals
+        pathPairs = []
+        for subgraph in subgraphs:
+            # find best path
+            path = bestPath(subgraph)
+            pathPairs += path
+
+        # create missed
+        missedIntervals = query.subtractAll([ Interval(query.chrom, i.sequencingTarget()[1], i.sequencingTarget()[2]) \
+            for i in pathPairs ])
+        
+        # return primer pairs that would match
+        return pathPairs, missedIntervals
+
+
+    '''query for interval or name'''
     def query(self, query, opendb=None, **kwargs):
         '''returns suitable primer pairs for the specified interval'''
         try:
@@ -391,41 +548,11 @@ class PrimerDB(object):
             if not opendb:
                 self.db.close()
         # return primer pairs that would match
-        primerPairs = []
-        for row in rows:
-            # get reverse status (from name)
-            orientations = [ x[1] for x in map(parsePrimerName,row[5:7]) ]
-            if not any(orientations) or len(set(orientations))==1:
-                print >> sys.stderr, '\rWARNING: {} orientation is ambiguous ({},{}){}\r'.format(row[0],\
-                    '???' if orientations[0]==0 else 'rev' if orientations[0]<0 else 'fwd', \
-                    '???' if orientations[0]==0 else 'rev' if orientations[1]<0 else 'fwd'," "*20)
-                reverse = False
-            elif orientations[0]>0 or orientations[1]<0:
-                reverse = False
-            elif orientations[1]>0 or orientations[0]<0:
-                reverse = True
-            else:
-                raise Exception('PrimerPairStrandError')
-            # amend tag sequences if supplied
-            # (usually not needed as primers in database are already validated)
-            left_tag = Tag(row[1]) 
-            right_tag = Tag(row[2]) 
-            if 'sequencetags' in kwargs.keys():
-                tagorder = [1,0] if reverse else [0,1]
-                left_tag =  Tag(row[1], kwargs['sequencetags'][row[1]]['tags'][tagorder[0]])
-                right_tag = Tag(row[2], kwargs['sequencetags'][row[2]]['tags'][tagorder[1]])
-            # build targets
-            leftTargetposition = Locus(row[7], row[8], len(row[3]), False, primer3.calcTm(str(row[3])))
-            rightTargetposition = Locus(row[7], row[9]-len(row[4]), len(row[4]), True, primer3.calcTm(str(row[4])))
-            # build storage locations (if available)
-            leftLocation = Location(*row[10:12]) if all(row[10:12]) else None
-            rightLocation = Location(*row[12:14]) if all(row[12:14]) else None
-            # Build primers
-            leftPrimer = Primer(row[5], row[3], targetposition=leftTargetposition, tag=left_tag, location=leftLocation)
-            rightPrimer = Primer(row[6], row[4], targetposition=rightTargetposition, tag=right_tag, location=rightLocation)
-            # Build pair
-            primerPairs.append(PrimerPair([leftPrimer, rightPrimer],name=row[0],reverse=reverse,cond=row[14]))
-        return primerPairs  # ordered by midpoint distance
+        try:
+            tags = kwargs.get('sequencetags')
+        except:
+            tags = None
+        return buildPairs(rows,tags) # ordered by midpoint distance
 
     def getLocation(self,loc):
         '''returns whats stored at location'''

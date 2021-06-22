@@ -251,7 +251,11 @@ class PrimerPair(list):
         return hash(self.__str__())
 
     def __eq__(self,other):
-        return self.name == other.name
+        try:
+            return self.name == other.name
+        except:
+            pass
+        return False
 
     def __add__(self, L):
         self._check_list_bound(L)

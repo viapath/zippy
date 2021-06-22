@@ -10,9 +10,12 @@ __status__ = "Production"
 
 import sys
 from math import ceil
+from hashlib import sha1
+from collections import Counter
+from copy import deepcopy
 
 class Interval(object):
-    def __init__(self,chrom,chromStart,chromEnd,name=None,reverse=None,sample=None):
+    def __init__(self,chrom,chromStart,chromEnd,name=None,reverse=None,sample=None,group=None):
         self.chrom = chrom
         self.chromStart = int(chromStart)
         self.chromEnd = int(chromEnd)
@@ -21,6 +24,7 @@ class Interval(object):
         self.strand = 0 if reverse is None else -1 if reverse else 1
         self.sample = sample
         self.subintervals = IntervalList([])
+        self.group = group  # the grouping name, used for tiling graph resolution
         return
 
     def midpoint(self):
@@ -50,19 +54,20 @@ class Interval(object):
         return "\t".join(map(str,[self.chrom, self.chromStart, self.chromEnd, self.name]))
 
     def tile(self,i,o,suffix=True):  # interval, overlap
-        splitintervals = int(ceil( (len(self)-o) / float(i-o) ))  # interval number
-        optimalsize = int(ceil( (len(self) + splitintervals*o - o) / float(splitintervals) ))  # optimal interval size
+        # identify tiling group if not done so
+        if not self.group:
+            self.group = sha1(str(self)).hexdigest()
+        stepping = i-o  # tile stepping
+        extendedstart, extendedend = self.chromStart-o, self.chromEnd-stepping
         # get tile spans (and number of exons)
         tilespan = []
-        for n,tilestart in enumerate(range(self.chromStart, self.chromEnd, optimalsize-o)):
-            tileend = min(tilestart+optimalsize, self.chromEnd)
+        for n,tilestart in enumerate(range(extendedstart, extendedend, stepping)):
+            tileend = tilestart+i
             tilespan.append((tilestart,tileend))
-            if tileend == self.chromEnd:
-                break
         tiles = []
         for n,t in enumerate(tilespan):
             tilenumber = len(tilespan)-n if self.strand < 0 else n+1
-            tiles.append(Interval(self.chrom,t[0],t[1],self.name+'_'+str(tilenumber) if suffix else None, self.strand < 0))
+            tiles.append(Interval(self.chrom,t[0],t[1],self.name+'_'+str(tilenumber) if suffix else None, self.strand < 0, group=self.group))
         return tiles
 
     def extend(self,flank):
@@ -103,6 +108,36 @@ class Interval(object):
                     merged.append(self.subintervals[i])
             self.subintervals = IntervalList(merged)
 
+    def subtractAll(self, others):
+        c = Counter()
+        # change map
+        for iv in others:
+            if iv.chrom == self.chrom:
+                c[max(self.chromStart,iv.chromStart)] += 1
+                c[min(self.chromEnd, iv.chromEnd)] -= 1
+        # reduce
+        start = self.chromStart
+        cum = 0
+        missed = []
+        for pos in sorted(c):
+            if pos > start and not cum:
+                missed.append((start, pos))
+            cum += c[pos]
+            if not cum: # start of an uncovered interval
+                start = pos
+        if pos < self.chromEnd:
+            missed.append((pos, self.chromEnd))
+        # build intervals
+        subtracted = []
+        for i, m in enumerate(missed):
+            x = deepcopy(self)
+            x.chromStart = m[0]
+            x.chromEnd = m[1]
+            x.name = self.name+'_SLICE'+str(i+1) 
+            x.group = self.name
+            subtracted.append(x)
+        # return remaining interval slices
+        return subtracted
 
 '''list of intervals'''
 class IntervalList(list):
