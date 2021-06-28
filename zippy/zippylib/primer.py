@@ -213,7 +213,7 @@ class PrimerPair(list):
         list.__init__(self, elements)
         self.length = length  # pair of primers by default
         self.reversed = reverse
-        self.name = name
+        self._name = name
         self.tier = tier  # design tier reference (-1 as default)
         self.cond = cond
         self.failed = []  # vaildation failures [str]
@@ -299,6 +299,18 @@ class PrimerPair(list):
             self[0].targetposition.offset+self[0].targetposition.length if self[0] and self[1] and self[0].targetposition else '',
             self[1].targetposition.offset if self[0] and self[1] and self[1].targetposition else '',
             self.cond)
+
+    @property
+    def name(self):
+        if self._name:
+            return self._name
+        # infer from primer pairs (name)
+        if all(self):
+            return commonPrefix(self[0].name, self[1].name)
+
+    @name.setter
+    def name(self,name):
+        self._name = name
 
     def sequencingTarget(self):
         if self[0].targetposition and self[1].targetposition:
@@ -500,7 +512,7 @@ class PrimerPair(list):
 '''fasta/primer'''
 class Primer(object):
     def __init__(self,name,seq,targetposition=None,tag=None,loci=[],location=None):
-        self.rank = -1
+        self.rank = -1  # negative means from database
         self.name = name
         self.seq = str(seq.upper())
         self.tag = tag
@@ -527,6 +539,7 @@ class Primer(object):
 
     def __len__(self):
         return len(self.seq)
+
 
     def taggedseq(self):
         return str(self.tag.seq+self.seq)
@@ -708,7 +721,8 @@ class Primer3(object):
                 # store pairs (reference primers)
                 if int(m.group(1)) not in designedPairs.keys():
                     designedPairs[int(m.group(1))] = PrimerPair([None, None])
-                designedPairs[int(m.group(1))][0 if m.group(2).startswith('LEFT') else 1] = designedPrimers[v['SEQUENCE']]
+                inpair = 0 if m.group(2).startswith('LEFT') else 1
+                designedPairs[int(m.group(1))][inpair] = designedPrimers[v['SEQUENCE']]
                 # all other datafields
                 designedPrimers[v['SEQUENCE']].meta = v
         # store

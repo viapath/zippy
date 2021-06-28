@@ -82,7 +82,7 @@ class GenePred(IntervalList):
                         distances = [ max([ x.chromEnd for x in combinedExons[i]]) - \
                             min([ x.chromStart for x in combinedExons[i-1]]) \
                             for i in range(1,len(combinedExons)) ]
-                        # combine smallest distance
+                        # combine smallest distance (include flanks)
                         if any([ d < maxlen for d in distances ]):
                             smallestIndex = distances.index(min(distances))
                             recombinedExons = []
@@ -115,14 +115,17 @@ class GenePred(IntervalList):
                         exonNumber = len(g.subintervals) - i if g.strand < 0 else i + 1
                         e.name += '_{}'.format(str(exonNumber))
                         intervalindex[e.name].append(e)
-        # split interval if necessary
+        # # split interval if necessary
+        # for ivs in intervalindex.values():
+        #     for iv in ivs:
+        #         if splitlen and overlap and maxlen < len(iv):
+        #             assert '+' not in iv.name  # paranoia
+        #             self += iv.tile(splitlen,overlap,len(f)>3)  # name with suffix if named interval
+        #         else:
+        #             self += [ iv ]
+        # add intervals
         for ivs in intervalindex.values():
-            for iv in ivs:
-                if splitlen and overlap and maxlen < len(iv):
-                    assert '+' not in iv.name  # paranoia
-                    self += iv.tile(splitlen,overlap,len(f)>3)  # name with suffix if named interval
-                else:
-                    self += [ iv ]
+            self += ivs
         # add flanks
         for e in self:
             e.extend(flank)
@@ -156,13 +159,16 @@ class BED(IntervalList):
             if len(ivs)>1:
                 for i,iv in enumerate(ivs):
                     iv.name += '-{:02d}'.format(i+1)
-        # split interval if necessary
+        # # split interval if necessary
+        # for ivs in intervalindex.values():
+        #     for iv in ivs:
+        #         if splitlen and overlap and maxlen < len(iv):
+        #             self += iv.tile(interval,overlap,len(f)>3)  # name with suffix if named interval
+        #         else:
+        #             self += [ iv ]
+        # add intervals
         for ivs in intervalindex.values():
-            for iv in ivs:
-                if splitlen and overlap and maxlen < len(iv):
-                    self += iv.tile(interval,overlap,len(f)>3)  # name with suffix if named interval
-                else:
-                    self += [ iv ]
+            self += ivs
         # add flanks
         for e in self:
             e.extend(flank)

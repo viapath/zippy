@@ -387,122 +387,7 @@ class PrimerDB(object):
         return
 
     '''query for interval or name'''
-    def graphquery(self, query, flank=15, opendb=None, **kwargs):
-        '''returns suitable primer pair path for the specified interval'''
-        # extract all intersecting primers
-        try:
-            self.db = opendb if opendb else sqlite3.connect(self.sqlite)
-        except:
-            raise
-        else:
-            cursor = self.db.cursor()
-            cursor.execute('''SELECT DISTINCT p.pairid, l.tag, r.tag, l.seq, r.seq, p.left, p.right,
-                p.chrom, p.start, p.end, l.vessel, l.well, r.vessel, r.well, p.cond,
-                p.start+length(l.seq) as seqstart, p.end - length(r.seq) as seqend
-                FROM pairs AS p
-                LEFT JOIN primer as l ON p.left = l.name
-                LEFT JOIN primer as r ON p.right = r.name
-                WHERE p.chrom = ?
-                AND seqend > ?
-                AND seqstart < ?
-                ORDER BY p.start;''', \
-                (query.chrom, query.chromStart, query.chromEnd))
-                # 
-            rows = cursor.fetchall()
-        finally:
-            if not opendb:
-                self.db.close()
-
-        # build primer objects
-        try:
-            tags = kwargs.get('sequencetags')
-        except:
-            tags = None
-        primerPairs = buildPairs(rows,tags)
-
-        # create vertices (primer pairs) and edges (overlaps)import networkx as nx
-        G = nx.Graph()
-        start, end = None, 'z' # values ensure they are ordered at start and end (None,1,2,3,'z')
-        for i, p in enumerate(primerPairs):
-            # create edges
-            p_target = p.sequencingTarget()
-            if p_target:
-                # match beginning and end
-                if query.chromStart < (p_target[2]-flank) and (p_target[1]+flank) < query.chromStart:
-                    G.add_edge(start,p)
-                if query.chromEnd < (p_target[2]-flank) and (p_target[1]+flank) < query.chromEnd:
-                    G.add_edge(end,p)
-                # overlap other amplicons ()
-                for j, q in enumerate(primerPairs[i:]):
-                    if i == j:
-                        continue
-                    q_target = q.sequencingTarget()
-                    if q_target and p_target[0] == q_target[0] and \
-                        (p_target[2]-flank) > (q_target[1]+flank) and \
-                            (p_target[1]+flank) < (q_target[2]-flank):
-                        # overlaps
-                        G.add_edge(p,q)
-
-        '''finds best amplicon path (least nodes, longest length, most overlap, least overlap variation)'''
-        def bestPath(graph):
-            def orderNodes(node,x):
-                if node == start:
-                    return start
-                elif node == end:
-                    return end
-                return node.sequencingTarget()[x]
-            def stdev(data):
-                n = len(data)
-                mean = sum(data) / n
-                var = sum((x - mean) ** 2 for x in data) / n
-                std_dev = math.sqrt(var)
-                return std_dev
-            def bestSequence(path):
-                ## longest path
-                try:
-                    path_len = path[-1].sequencingTarget()[2] - path[0].sequencingTarget()[1]
-                except:
-                    path_len = 0
-                ## most overlapping path
-                try:
-                    ovp = list([path[i].sequencingTarget()[2] - path[i+1].sequencingTarget()[1] for i in range(len(path)-1) ])
-                    path_minovp = min(ovp)
-                    path_stdovp = stdev(ovp)
-                    path_invstdovp = 1/path_stdovp if path_stdovp>0 else None
-                except:
-                    path_minovp = 0
-                return (path_len, path_minovp, path_invstdovp) 
-
-            graph_start = sorted(graph.nodes, key=lambda n: orderNodes(n,1))[0]
-            graph_end = sorted(graph.nodes, key=lambda n: orderNodes(n,2))[-1]
-            # get least node paths
-            paths = list(nx.all_shortest_paths(graph, source=graph_start, target=graph_end))
-            # remove start and end nodes
-            amp_paths = map(lambda path: filter(lambda x: x is not start and x is not end, path), paths)
-            # get longest sequenced
-            sorted_paths = sorted(amp_paths, key=bestSequence)
-            return sorted_paths[-1]
-
-        # create subgraphs
-        subgraphs = [G.subgraph(c).copy() for c in nx.connected_components(G)]
-        
-        # merge paths and get missedIntervals
-        pathPairs = []
-        for subgraph in subgraphs:
-            # find best path
-            path = bestPath(subgraph)
-            pathPairs += path
-
-        # create missed
-        missedIntervals = query.subtractAll([ Interval(query.chrom, i.sequencingTarget()[1], i.sequencingTarget()[2]) \
-            for i in pathPairs ])
-        
-        # return primer pairs that would match
-        return pathPairs, missedIntervals
-
-
-    '''query for interval or name'''
-    def query(self, query, opendb=None, **kwargs):
+    def query(self, query, any_overlap=False, opendb=None, **kwargs):
         '''returns suitable primer pairs for the specified interval'''
         try:
             self.db = opendb if opendb else sqlite3.connect(self.sqlite)
@@ -510,6 +395,7 @@ class PrimerDB(object):
             raise
         else:
             cursor = self.db.cursor()
+            # DATE QUERY
             datematch = re.compile("([0-9\s-]+)$")
             if datematch.match(str(query)): # query date
                 subSearchName = '%'+query+'%'
@@ -521,6 +407,7 @@ class PrimerDB(object):
                     where p.dateadded LIKE ?
                     ORDER BY p.pairid;''', \
                     (subSearchName,))
+            # NAME QUERY
             elif type(query) in [str,unicode]:  # use primerpair name
                 subSearchName = '%'+query+'%'
                 cursor.execute('''SELECT DISTINCT p.pairid, l.tag, r.tag, l.seq, r.seq, p.left, p.right,
@@ -531,6 +418,20 @@ class PrimerDB(object):
                     WHERE p.pairid LIKE ?
                     ORDER BY p.pairid;''', \
                     (subSearchName,))
+            # ANY INTERVAL OVERALP
+            elif any_overlap:
+                cursor.execute('''SELECT DISTINCT p.pairid, l.tag, r.tag, l.seq, r.seq, p.left, p.right,
+                    p.chrom, p.start, p.end, l.vessel, l.well, r.vessel, r.well, p.cond,
+                    p.start+length(l.seq) as seqstart, p.end - length(r.seq) as seqend
+                    FROM pairs AS p
+                    LEFT JOIN primer as l ON p.left = l.name
+                    LEFT JOIN primer as r ON p.right = r.name
+                    WHERE p.chrom = ?
+                    AND seqend > ?
+                    AND seqstart < ?
+                    ORDER BY p.start;''', \
+                    (query.chrom, query.chromStart, query.chromEnd))
+            # BY MIDPOINT
             else:  # is interval
                 cursor.execute('''SELECT DISTINCT p.pairid, l.tag, r.tag, l.seq, r.seq, p.left, p.right,
                     p.chrom, p.start, p.end, l.vessel, l.well, r.vessel, r.well, p.cond,

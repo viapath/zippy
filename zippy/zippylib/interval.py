@@ -8,11 +8,12 @@ __maintainer__ = "David Brawand"
 __email__ = "dbrawand@nhs.net"
 __status__ = "Production"
 
-import sys
-from math import ceil
+import sys, os, re, ast
+from math import ceil, sqrt
 from hashlib import sha1
 from collections import Counter
 from copy import deepcopy
+import networkx as nx
 
 class Interval(object):
     def __init__(self,chrom,chromStart,chromEnd,name=None,reverse=None,sample=None,group=None):
@@ -24,7 +25,7 @@ class Interval(object):
         self.strand = 0 if reverse is None else -1 if reverse else 1
         self.sample = sample
         self.subintervals = IntervalList([])
-        self.group = group  # the grouping name, used for tiling graph resolution
+        self._group = group  # the grouping name, used for tiling graph resolution
         return
 
     def midpoint(self):
@@ -53,10 +54,17 @@ class Interval(object):
     def __str__(self):
         return "\t".join(map(str,[self.chrom, self.chromStart, self.chromEnd, self.name]))
 
+    @property
+    def group(self):
+        return self._group or self.name
+    @group.setter
+    def group(self,g):
+        self._group = g
+
+    def isCombined(self):
+        return True if re.match(r'[A-Z0-9]+_\d+\+\d+',self.name) else False
+
     def tile(self,i,o,suffix=True):  # interval, overlap
-        # identify tiling group if not done so
-        if not self.group:
-            self.group = sha1(str(self)).hexdigest()
         stepping = i-o  # tile stepping
         extendedstart, extendedend = self.chromStart-o, self.chromEnd-stepping
         # get tile spans (and number of exons)
@@ -107,8 +115,93 @@ class Interval(object):
                 else:
                     merged.append(self.subintervals[i])
             self.subintervals = IntervalList(merged)
+    
+    def ampliconPath(self,primerPairs,flank):
+        # create vertices (primer pairs) and edges (overlaps)import networkx as nx
+        G = nx.Graph()
+        start, end = None, 'z' # values ensure they are ordered at start and end (None,1,2,3,'z')
+        for i, p in enumerate(primerPairs):
+            # create edges
+            p_target = p.sequencingTarget()
+            if p_target:
+                # match beginning and end
+                if self.chromStart < (p_target[2]-flank) and (p_target[1]+flank) < self.chromStart:
+                    G.add_edge(start,p)
+                if self.chromEnd < (p_target[2]-flank) and (p_target[1]+flank) < self.chromEnd:
+                    G.add_edge(end,p)
+                # overlap other amplicons ()
+                for j, q in enumerate(primerPairs[i:]):
+                    if i == j:
+                        continue
+                    q_target = q.sequencingTarget()
+                    if q_target and p_target[0] == q_target[0] and \
+                        (p_target[2]-flank) > (q_target[1]+flank) and \
+                            (p_target[1]+flank) < (q_target[2]-flank):
+                        # overlaps
+                        G.add_edge(p,q)
+
+        '''finds best amplicon path (least nodes, longest length, most overlap, least overlap variation)'''
+        def bestPath(graph):
+            def orderNodes(node,x):
+                if node == start:
+                    return start
+                elif node == end:
+                    return end
+                return node.sequencingTarget()[x]
+            def stdev(data):
+                n = len(data)
+                mean = sum(data) / n
+                var = sum((x - mean) ** 2 for x in data) / n
+                std_dev = sqrt(var)
+                return std_dev
+            def bestSequence(path):
+                ## longest path
+                try:
+                    path_len = path[-1].sequencingTarget()[2] - path[0].sequencingTarget()[1]
+                except:
+                    path_len = 0
+                ## most overlapping path
+                try:
+                    ovp = list([path[i].sequencingTarget()[2] - path[i+1].sequencingTarget()[1] for i in range(len(path)-1) ])
+                    path_minovp = min(ovp)
+                    path_stdovp = stdev(ovp)
+                    path_invstdovp = 1/path_stdovp if path_stdovp>0 else None
+                except Exception as e:
+                    path_minovp = 0
+                    path_invstdovp = 0
+                return (path_len, path_minovp, path_invstdovp) 
+
+            graph_start = sorted(graph.nodes, key=lambda n: orderNodes(n,1))[0]
+            graph_end = sorted(graph.nodes, key=lambda n: orderNodes(n,2))[-1]
+            # get least node paths
+            paths = list(nx.all_shortest_paths(graph, source=graph_start, target=graph_end))
+            # remove start and end nodes
+            amp_paths = map(lambda path: filter(lambda x: x is not start and x is not end, path), paths)
+            # get longest sequenced
+            sorted_paths = sorted(amp_paths, key=bestSequence)
+            return sorted_paths[-1]
+
+        # create subgraphs
+        subgraphs = [G.subgraph(c).copy() for c in nx.connected_components(G)]
+        
+        # merge paths and get missedIntervals
+        pathPairs = []
+        for subgraph in subgraphs:
+            # find best path
+            path = bestPath(subgraph)
+            pathPairs += path
+
+        # create missed
+        missedIntervals = self.subtractAll([ Interval(self.chrom, i.sequencingTarget()[1], i.sequencingTarget()[2]) \
+            for i in pathPairs ])
+        
+        # return primer pairs that would match
+        return pathPairs, missedIntervals
+
 
     def subtractAll(self, others):
+        if not others:
+            return [ self ]
         c = Counter()
         # change map
         for iv in others:
@@ -133,7 +226,7 @@ class Interval(object):
             x = deepcopy(self)
             x.chromStart = m[0]
             x.chromEnd = m[1]
-            x.name = self.name+'_SLICE'+str(i+1) 
+            x.name = sha1(' '.join(map(str,[x.chrom,x.chromStart,x.chromEnd]))).hexdigest()
             x.group = self.name
             subtracted.append(x)
         # return remaining interval slices
