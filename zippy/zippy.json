@@ -188,8 +188,9 @@
         }
     },
     "ordersheet": {
+        "paired": true,
         "extracolumns": [
-            "25nm",
+            "25RR",
             "STD"
         ],
         "sequencetags" : {

@@ -235,15 +235,18 @@ def adhoc_design():
         # generate filename
         outfile = locus if re.match('[A-Z0-9]+$',locus) else locus.replace(':','_') 
         downloadFile = os.path.join(downloadFolder, '.'.join([outfile, timestamp, 'txt']))
+        orderFile = os.path.join(downloadFolder, '.'.join([outfile, timestamp, 'csv']))
+        arrayOfFiles = [ downloadFile, orderFile ]
         # run Zippy
         primerTable, resultList, missedIntervals = zippyPrimerQuery(config, target, design, downloadFile, db, store, tiers, gap)
+        with open(orderFile,'w') as fh:
+            for pp in resultList:
+                print >> fh, pp.order(fixed=config['ordersheet']['extracolumns'], \
+                    paired=config['ordersheet']['paired'], delim=',')
         # get files
-        arrayOfFiles = [ downloadFile ]
         arrayOfFiles = list([ f[len(app.config['DOWNLOAD_FOLDER']):].lstrip('/') for f in arrayOfFiles if f.startswith(app.config['DOWNLOAD_FOLDER'])])
         # get missed and render template
-        missedIntervalNames = []
-        for interval in missedIntervals:
-            missedIntervalNames.append(interval.name)
+        missedIntervalNames = [ interval.name for interval in missedIntervals ]
         return render_template('/adhoc_result.html', primerTable=primerTable, \
             resultList=resultList, missedIntervals=missedIntervalNames, outputFiles=arrayOfFiles)
     else:

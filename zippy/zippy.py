@@ -80,7 +80,6 @@ seqhash = lambda x,y: hashlib.sha1(','.join([x,y])).hexdigest()  # sequence pair
     config:    CONFIGURATION DICT
     primer3:   PRIMER3 PRIMERS (disables deep amplicon searching)
     keepall:   KEEP ALL PAIRS (even if they do not yield an amplicon)
-
 '''
 def importPrimerPairs(inputfile,config,primer3=True,keepall=False):
     # read table/fasta
@@ -154,7 +153,7 @@ def importPrimerPairs(inputfile,config,primer3=True,keepall=False):
 
     # Align primers to genome
     primers = primerfile.createPrimers(config['design']['bowtieindex'], \
-        delete=False,tags=primer_tags_seqs, \
+        delete=False, tags=primer_tags_seqs, \
         tmThreshold=config['design']['mispriming']['minimaltm'], \
         endMatch=config['design']['mispriming']['identity3prime'])  # places in genome
 
@@ -196,6 +195,7 @@ def importPrimerPairs(inputfile,config,primer3=True,keepall=False):
                 print >> sys.stderr, "PRIMER", p.name, parsePrimerName(p.name)
                 print >> sys.stderr, "PAIRS", pairs[setname]
                 raise
+
     # check if any unpaired primers
     for k,v in pairs.items():
         if not all(v):
@@ -264,6 +264,7 @@ def importPrimerPairs(inputfile,config,primer3=True,keepall=False):
             else:
                 validPairs.append(p)
     return validPairs
+
 
 '''checks (mispriming, amplicons, snpcheck) primerpairs and generates simple report'''
 def checkPrimerPairs(pairs, db, config):
@@ -355,7 +356,7 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
         progress = Progressbar(len(intervals),'Querying database')
         for i, iv in enumerate(intervals):
             sys.stderr.write('\r'+progress.show(i))
-            pp = db.query(iv, True)
+            pp = db.query(iv, True, **config['ordersheet'])
             primerpairs, missed = iv.ampliconPath(pp, config['tiling']['flank'])
             # print '\n', iv.group, '>>', [ m.name for m in missed ] 
             ivpairs[iv] = primerpairs
@@ -443,12 +444,10 @@ def getPrimers(intervals, db, design, config, tiers=[0], rename=None, compatible
                 for i,pair in enumerate(pairs):
                     sys.stderr.write('\r'+progress.show(i))
                     if pair.uniqueid() not in existing_primers:
-                        for primer in pair:
+                        for j, primer in enumerate(pair):
                             # SNPcheck
                             primer.snpCheckPrimer(config['snpcheck']['common'],
                                 config['snpcheck']['maf'])
-                            # add tag
-                            primer.tag = Tag(config['design']['tag'])
                         # check designlimits
                         if not pair.check(config['designlimits']):
                             # rename (for variant based naming which is too rich)
@@ -587,7 +586,6 @@ def zippyPrimerQuery(config, targets, design=True, outfile=None, db=None, store=
     else:
         print >> sys.stdout, '\n'.join([ '\t'.join(map(str,l)) for l in primerTable ])
     ## print and store primer pairs
-    # if db:
     if store and db and design:
         db.addPairs(resultList, config['conditions'])  # store pairs in database (assume they are correctly designed as mispriming is ignored and capped at 1000)
         print >> sys.stderr, "Primer designs stored in database"

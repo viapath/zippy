@@ -164,6 +164,7 @@ class Tag(object):
     def __str__(self):
         return self.tag
 
+
 '''storage location class'''
 class Location(object):
     def __init__(self, vessel, well):
@@ -209,10 +210,10 @@ class Location(object):
 
 '''primer pair (list)'''
 class PrimerPair(list):
-    def __init__(self, elements, length=2, name=None, reverse=False, cond=None, tier=-1):
+    def __init__(self, elements, length=2, name=None, reverse=None, cond=None, tier=-1):
         list.__init__(self, elements)
         self.length = length  # pair of primers by default
-        self.reversed = reverse
+        self._reversed = reverse
         self._name = name
         self.tier = tier  # design tier reference (-1 as default)
         self.cond = cond
@@ -313,6 +314,30 @@ class PrimerPair(list):
     @name.setter
     def name(self,name):
         self._name = name
+
+    @property
+    def reversed(self):
+        if self._reversed is not None:
+            return self._reversed
+        # infer from name
+        orientations = [ y[1] for y in map(parsePrimerName, [ x.name for x in self ]) ]
+        if orientations[0]>0 or orientations[1]<0:
+            self._reversed = False
+        elif orientations[1]>0 or orientations[0]<0:
+            self._reversed = True
+        else:
+            raise Exception('PrimerPairStrandError')
+        return self._reversed
+
+    @reversed.setter
+    def reversed(self, r):
+        self._reversed = r
+
+    def addTagSequences(self,tags):
+        tagorder = [1,0] if self.reversed else [0,1]
+        for i, p in enumerate(self):
+            if p.tag.tag:
+                p.tag.seq = tags[p.tag.tag]['tags'][tagorder[i]]
 
     def sequencingTarget(self):
         if self[0].targetposition and self[1].targetposition:
@@ -485,6 +510,14 @@ class PrimerPair(list):
     def fasta(self):
         return '\n'.join([ '>'+self[0].name, self[0].seq, '>'+self[1].name, self[1].seq ])
 
+    def order(self,fixed=[],paired=True,delim='\t'):
+        return delim.join([
+            self.name,
+            self[0].taggedseq(),
+            self[1].taggedseq()
+        ] + fixed) if paired else '\n'.join([ \
+            delim.join([ self[0].name, p.taggedseq() ]+fixed) for p in self ])
+
     def display(self, prefix=''):
         left = self[0].display(False)
         right = self[1].display(True)
@@ -509,7 +542,6 @@ class PrimerPair(list):
         
         # join with prefix
         return '\n'.join(list([ prefix+line for line in result ]))
-
 
 '''fasta/primer'''
 class Primer(object):
