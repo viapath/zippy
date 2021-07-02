@@ -5,6 +5,9 @@ ZIPPYVAR=/var/local/zippy
 ZIPPYRESOURCES=$(ZIPPYVAR)/resources
 VPATH=$(ZIPPYRESOURCES)
 
+publish: build-bare
+	docker push kingspm/zippy
+
 # docker build (all in one)
 build-mono:
 	docker build --target mono -t kingspm/zippy .

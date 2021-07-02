@@ -9,6 +9,7 @@ celery==3.1.23
 cffi==1.6.0
 cssmin==0.2.0
 Cython==0.24
+decorator==4.4.2
 dominate==2.2.0
 factory-boy==2.6.1
 fake-factory==0.5.7
