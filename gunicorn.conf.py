@@ -14,5 +14,3 @@ workers = multiprocessing.cpu_count() * 2 + 1
 timeout = 3 * 60  # timeout 3 minutes
 keepalive = 24 * 60 * 60  # keep connections alive for 1 day
 capture_output = True  # redirect stderr/stdout to logfile
-syslog = True  # send to syslog as well
-syslog_prefix = 'ZIPPY'

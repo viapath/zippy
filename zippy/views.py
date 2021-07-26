@@ -5,6 +5,7 @@ import re
 import json
 import time
 import bcrypt
+import logging
 import hashlib
 import subprocess
 import tempfile
@@ -19,6 +20,11 @@ from .zippy import validateAndImport, zippyBatchQuery, zippyPrimerQuery, \
 from .zippylib import ascii_encode_dict
 from .zippylib.primer import Location, checkPrimerFormat
 from .zippylib.database import PrimerDB
+
+
+# ensure gunicorn captures whats written to STDOUT
+app.logger.addHandler(logging.StreamHandler(sys.stdout))
+app.logger.setLevel(logging.DEBUG)
 
 app.config['ALLOWED_EXTENSIONS'] = set(['txt', 'batch', 'vcf', 'genepred', 'bed', 'csv', 'tsv', 'fasta', 'fa'])
 app.secret_key = 'Zippy is the best handpuppet out there'
