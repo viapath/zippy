@@ -113,7 +113,7 @@
     },
     "report": {
         "auth": "Frances Smith",
-        "docid": "LF-HAE-PND147 Edition 4",
+        "docid": "LF-HAE-PND147 Edition 5",
         "site": "KINGS COLLEGE HOSPITAL, MOLECULAR PATHOLOGY",
         "logo": "zippy.png",
         "pairs": 1,
@@ -129,7 +129,7 @@
     },
     "l_report": {
         "auth": "Frances Smith",
-        "docid": "LF-HAE-PND147 Edition 4",
+        "docid": "LF-HAE-PND147 Edition 5",
         "site": "KINGS COLLEGE HOSPITAL, MOLECULAR PATHOLOGY",
         "logo": "zippy.png",
         "pairs": 1,
@@ -145,7 +145,7 @@
     },
     "alpha_report_1": {
         "auth": "Frances Smith",
-        "docid": "LF-HAE-PND147 Edition 4",
+        "docid": "LF-HAE-PND147 Edition 5",
         "site": "KINGS COLLEGE HOSPITAL, MOLECULAR PATHOLOGY",
         "logo": "zippy.png",
         "pairs": 1,
@@ -161,7 +161,7 @@
       },
       "alpha_report_2": {
           "auth": "Frances Smith",
-          "docid": "LF-HAE-PND147 Edition 4",
+          "docid": "LF-HAE-PND147 Edition 5",
           "site": "KINGS COLLEGE HOSPITAL, MOLECULAR PATHOLOGY",
           "logo": "zippy.png",
           "pairs": 1,
@@ -177,7 +177,7 @@
         },
       "beta_report": {
           "auth": "Frances Smith",
-          "docid": "LF-HAE-PND147 Edition 4",
+          "docid": "LF-HAE-PND147 Edition 5",
           "site": "KINGS COLLEGE HOSPITAL, MOLECULAR PATHOLOGY",
           "logo": "zippy.png",
           "pairs": 1,
