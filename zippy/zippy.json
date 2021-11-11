@@ -123,7 +123,7 @@
             "qsolution": 2,
             "water":0,
             "excess": 0.15,
-            "program": "ngsconfirm",
+            "program": "Ngs_confirms",
             "volume": 12.5
         }
     },
@@ -139,7 +139,7 @@
             "qsolution": 5,
             "water": 5.5,
             "excess": 0.15,
-            "program": "A1_TDZippy",
+            "program": "Zippy_Long",
             "volume": 25
         }
     },
@@ -190,7 +190,7 @@
               "taq": 0.2,
               "water": 10.8,
               "excess": 0.15,
-              "program": "Beta_seq",
+              "program": "BETA_ZIPPY",
               "volume": 25
           }
     },
