@@ -436,7 +436,7 @@ class Report(object):
             self.elements.append(Paragraph(tableTitle, self.styles["Heading4"]))
             self.elements.append(Spacer(1, 2))
 
-        if program == 'ngsconfirm':
+        if program == 'Ngs_confirms':
             data = [['','Temp','Time','No. of Cycles'],
             ['Stage 1', '95', '15m', '1'],
             ['Stage 2', '94', '30s', '35'],
@@ -465,7 +465,7 @@ class Report(object):
             self.elements.append(KeepTogether(t))
             self.elements.append(Spacer(1, 12))
 
-        if program == 'A1_TDZippy':
+        if program == 'Zippy_Long':
             data = [['','Temp','Time','No. of Cycles'],
             ['Stage 1', '94', '14m', '1'],
             ['Stage 2', '95', '30s', '5'],
@@ -561,14 +561,14 @@ class Report(object):
             self.elements.append(KeepTogether(t))
             self.elements.append(Spacer(1, 12))
 
-        if program == 'Beta_seq':
+        if program == 'BETA_ZIPPY':
             data = [['','Temp','Time','No. of Cycles'],
-            ['Stage 1', '94', '10m', '1'],
+            ['Stage 1', '95', '10m', '1'],
             ['Stage 2', '94', '30s', '32'],
             ['', '57', '30s', ''],
             ['', '72', '30s', ''],
             ['Stage 3', '72', '5m', '1'],
-            ['Stage 4', '10', '10m', '1']]
+            ['Stage 4', '10', '10m', 'HOLD']]
             t = Table(data, colWidths=[2.5*cm,2.0*cm,2.0*cm,3.0*cm], rowHeights=0.6*cm)
             t.setStyle(TableStyle([
                 ('BOX', (0,0), (3,-1), 1, colors.black),
