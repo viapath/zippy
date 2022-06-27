@@ -54,7 +54,7 @@ pytest==2.9.0
 python-dateutil==2.5.3
 python-editor==1.0
 pytz==2016.4
-reportlab==3.3.0
+reportlab==3.5.55
 six==1.10.0
 SQLAlchemy==1.0.12
 testfixtures==4.9.1
