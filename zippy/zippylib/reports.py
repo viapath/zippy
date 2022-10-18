@@ -402,7 +402,7 @@ class Report(object):
         #add format here
         data = [['Reagent','Quantity','LOT','Expiry','','Reactions', str(reactions) ],
             ['10x Buffer', str("{0:.0f}".format((1.+excess)*reactions*pcrbuffer))+' µl', '', '', '', 'Excess', str((excess)*100)+' %' ],
-            ['2nM dNTPs', str("{0:.0f}".format((1.+excess)*reactions*dNTPs))+' µl', '', '', '', 'PCR Program', program ],
+            ['2mM dNTPs', str("{0:.0f}".format((1.+excess)*reactions*dNTPs))+' µl', '', '', '', 'PCR Program', program ],
             ['25mM MgCl2', str("{0:.0f}".format((1.+excess)*reactions*mgcl2))+' µl', '', '', '', 'Reaction Vol.', volume ],
             ['BSA', str("{0:.0f}".format((1.+excess)*reactions*bsa))+' µl', '', '', '', 'PCR Block', '' ],
             ['Taq', str("{0:.0f}".format((1.+excess)*reactions*taq))+' µl', '', '', '', '', '' ],
